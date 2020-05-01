@@ -81,7 +81,6 @@ namespace QuantumHangar
 
         //Grid Stored Materials
         [ProtoMember(19)] public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
-
         [ProtoMember(20)] public byte[] GridDefinition;
 
     }
@@ -140,8 +139,11 @@ namespace QuantumHangar
         public string Seller { get; set; }
         public string SellerFaction { get; set; }
         public int TotalAmount { get; set; }
+        public int TotalPerPlayer { get; set; }
         public bool Forsale { get; set; }
         public int NumberOfBuys { get; set; }
+
+        //public Dictionary<ulong, int> PlayersPurchased = new Dictionary<ulong, int>();
     }
 
     public class TimeStamp

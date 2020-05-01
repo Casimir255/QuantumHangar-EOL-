@@ -120,6 +120,8 @@ namespace QuantumHangar
                 {
                     return;
                 }
+
+
                 else
                 {
                     foreach (MyCubeGrid Grids in result.grids)

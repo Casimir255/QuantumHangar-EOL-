@@ -25,12 +25,11 @@ namespace QuantumHangar
 
         public void RegisterHandlers()
         {
-
             if (!HandlersInitilized)
             {
                 QuantumHangar.Main.Debug("Registering Event Handlers");
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(2934, MessageHandler);
-                
+
                 HandlersInitilized = true;
             }
         }
@@ -48,13 +47,13 @@ namespace QuantumHangar
         }
         private void MessageHandler(byte[] bytes)
         {
-            
+
             try
             {
                 //var type = (MessageType)bytes[0];
                 //MyLog.Default.WriteLineAndConsole(bytes.ToString());
 
-               
+
                 Message RecievedMessage = MyAPIGateway.Utilities.SerializeFromBinary<Message>(bytes);
 
 
@@ -65,7 +64,7 @@ namespace QuantumHangar
                 }
                 else if (RecievedMessage.Type == MessageType.SendDefinition)
                 {
-                   // Main.SendDefinition(RecievedMessage.GridDefinitions.name);
+                    // Main.SendDefinition(RecievedMessage.GridDefinitions.name);
                 }
                 else if (RecievedMessage.Type == MessageType.PurchasedGrid)
                 {
@@ -96,29 +95,25 @@ namespace QuantumHangar
         public static void SendMessageToMod(Message message)
         {
 
-                byte[] barr = MyAPIGateway.Utilities.SerializeToBinary(message);
-
-
-                MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, barr);
-           
-
-            //QuantumHangar.Main.Debug(barr.Length.ToString());
+            byte[] barr = MyAPIGateway.Utilities.SerializeToBinary(message);
+            MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, barr);
         }
 
 
         public static void SendListToModOnInitilize()
         {
-                //Debug("Sending List to Client!");
-                Message Newmessage = new Message();
+            //We send the server offers and the global player offers together.
+            //This lets us keep admin offers per server. (Kinda cool)
+            Message Newmessage = new Message();
             List<MarketList> AllItems = new List<MarketList>();
             AllItems.AddRange(Main.GridList);
             AllItems.AddRange(Main.PublicOfferseGridList);
 
-                Newmessage.MarketBoxItmes = AllItems;
-                Newmessage.GridDefinitions = null;
-                Newmessage.Type = MessageType.RequestAllItems;
+            Newmessage.MarketBoxItmes = AllItems;
+            Newmessage.GridDefinitions = null;
+            Newmessage.Type = MessageType.RequestAllItems;
 
-                SendMessageToMod(Newmessage);
+            SendMessageToMod(Newmessage);
 
         }
 
@@ -126,13 +121,13 @@ namespace QuantumHangar
         public static void AddSingleItem(MarketList item)
         {
 
-                //Debug("Sending List to Client!");
-                Message Newmessage = new Message();
-                Newmessage.MarketBoxItmes.Add(item);
-                Newmessage.GridDefinitions = null;
-                Newmessage.Type = MessageType.AddOne;
+            //Debug("Sending List to Client!");
+            Message Newmessage = new Message();
+            Newmessage.MarketBoxItmes.Add(item);
+            Newmessage.GridDefinitions = null;
+            Newmessage.Type = MessageType.AddOne;
 
-                SendMessageToMod(Newmessage);
+            SendMessageToMod(Newmessage);
 
 
         }
@@ -140,13 +135,13 @@ namespace QuantumHangar
         public static void RemoveSingleItem(MarketList item)
         {
 
-                //Debug("Sending List to Client!");
-                Message Newmessage = new Message();
-                Newmessage.MarketBoxItmes.Add(item);
-                Newmessage.GridDefinitions = null;
-                Newmessage.Type = MessageType.RemoveOne;
+            //Debug("Sending List to Client!");
+            Message Newmessage = new Message();
+            Newmessage.MarketBoxItmes.Add(item);
+            Newmessage.GridDefinitions = null;
+            Newmessage.Type = MessageType.RemoveOne;
 
-                SendMessageToMod(Newmessage);
+            SendMessageToMod(Newmessage);
         }
 
     }
@@ -166,7 +161,7 @@ namespace QuantumHangar
             RequestAll,
             AddItem,
             RemoveItem,
-            
+
 
             //Check to see if the seller is online on any server
             PlayerOnline,
@@ -189,12 +184,12 @@ namespace QuantumHangar
                 Server.DataReceived += Server_DataReceived;
 
                 //Server.DelimiterDataReceived += (sender, msg) => {
-                    //Console.WriteLine("From client: "+msg.MessageString);
-                    //CrossServerMessage RecievedData = new CrossServerMessage();
-                    //RecievedData.GridDefinition = Main.GridDefinition;
-                    //RecievedData.List = Main.GridList;
-                    //RecievedData.BalanceUpdate = Main.PlayerAccountUpdate;
-                    //msg.Reply(JsonConvert.SerializeObject(RecievedData));
+                //Console.WriteLine("From client: "+msg.MessageString);
+                //CrossServerMessage RecievedData = new CrossServerMessage();
+                //RecievedData.GridDefinition = Main.GridDefinition;
+                //RecievedData.List = Main.GridList;
+                //RecievedData.BalanceUpdate = Main.PlayerAccountUpdate;
+                //msg.Reply(JsonConvert.SerializeObject(RecievedData));
                 //};
             }
             catch (System.InvalidOperationException)
@@ -221,7 +216,7 @@ namespace QuantumHangar
             CrossServerMessage RecievedData = JsonConvert.DeserializeObject<CrossServerMessage>(e.MessageString);
             Main.Debug("Client Data Recieved! " + RecievedData.Type.ToString());
 
-           
+
 
             if (RecievedData.Type == MessageType.AddItem)
             {
@@ -285,13 +280,17 @@ namespace QuantumHangar
                 Accounts accounts = new Accounts();
                 accounts.PlayerAccounts = Main.PlayerAccounts;
 
-
-
-                using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "PlayerAccounts.json")))
+                try
                 {
-                    JsonSerializer serializer = new JsonSerializer();
-                    serializer.Serialize(file, accounts);
+                    File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
+                 
                 }
+                catch (Exception a)
+                {
+                    Main.Debug("IO Exception!", a, Main.ErrorType.Warn);
+                }
+
+               
 
                 /*
                 //Need to check to see if the player is online!
@@ -338,7 +337,7 @@ namespace QuantumHangar
                 CrossServerMessage AllData = new CrossServerMessage();
                 //AllData.GridDefinition = Main.GridDefinition;
                 AllData.List = Main.GridList;
-                //AllData.BalanceUpdate = Main.PlayerAccountUpdate;
+                //AllData.BalanceUpdate = Main.PlayerAccounts;
                 AllData.Type = MessageType.RequestAll;
 
                 string AllDataString = JsonConvert.SerializeObject(AllData);
@@ -353,7 +352,7 @@ namespace QuantumHangar
 
             //Save data to file (This is server!)
             MarketData Data = new MarketData();
-           // Data.GridDefinition = Main.GridDefinition;
+            // Data.GridDefinition = Main.GridDefinition;
             Data.List = Main.GridList;
             //Data.BalanceUpdate = Main.PlayerAccountUpdate;
 
@@ -368,7 +367,7 @@ namespace QuantumHangar
         //Client data recieved
         private void Client_DelimiterDataReceived(object sender, SimpleTCP.Message e)
         {
-            
+
             //if we recieve data as client we need to update the market list from the one that the server sent
             try
             {
@@ -390,11 +389,11 @@ namespace QuantumHangar
                 }
                 else if (RecievedData.Type == MessageType.RemoveItem)
                 {
-                    
+
                     if (Main.GridList.Any(x => x.Name == RecievedData.List[0].Name))
                     {
                         Main.Debug("Removing: " + RecievedData.List[0].Name + " from market!");
-                        Main.GridList.RemoveAll( x => x.Name == RecievedData.List[0].Name);
+                        Main.GridList.RemoveAll(x => x.Name == RecievedData.List[0].Name);
                         //Main.GridDefinition.RemoveAll(x => x.name == RecievedData.List[0].Name);
 
                         //Send update to clients on this game server!
@@ -428,27 +427,10 @@ namespace QuantumHangar
 
                         }
                     }
-                    
-                    
-                    Accounts accounts = new Accounts();
-                    accounts.PlayerAccounts = Main.PlayerAccounts;
-
-                    try
-                    {
-                        using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "PlayerAccounts.json")))
-                        {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.Serialize(file, accounts);
-                        }
-                    }catch(Exception a)
-                    {
-                        Main.Debug("IO Exception!", a, Main.ErrorType.Warn);
-                    }
-                    
 
 
                 }
-                else if(RecievedData.Type == MessageType.PlayerOnline)
+                else if (RecievedData.Type == MessageType.PlayerOnline)
                 {
                     //Player was online somewhere!
                     //var first = RecievedData.BalanceUpdate.First();
@@ -501,7 +483,7 @@ namespace QuantumHangar
 
                 string MarketServerData = JsonConvert.SerializeObject(Message);
                 //Write to file and broadcast to all clients!
-                Main.Debug("Sending new market data to clients! " + Message.Type.ToString()) ;
+                Main.Debug("Sending new market data to clients! " + Message.Type.ToString());
                 if (Message.Type == MessageType.AddItem)
                 {
                     //Main.Debug("Point1");
@@ -541,7 +523,8 @@ namespace QuantumHangar
 
                         if (!Main.PlayerAccounts.ContainsKey(account.SteamID))
                         {
-                            if (!account.AccountAdjustment) {
+                            if (!account.AccountAdjustment)
+                            {
                                 Main.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
                             }
                         }
@@ -556,10 +539,10 @@ namespace QuantumHangar
                                 //Add this to the general list
                                 Main.PlayerAccounts[account.SteamID] = account.AccountBalance + Main.PlayerAccounts[account.SteamID];
                             }
-                            
+
                         }
 
-                        
+
                     }
 
                     Accounts accounts = new Accounts();
@@ -581,7 +564,7 @@ namespace QuantumHangar
                     //ulong key = first.Key;
 
 
-                   // Main.PlayerAccountUpdate.Remove(key);
+                    // Main.PlayerAccountUpdate.Remove(key);
 
                     //Broadcast to all clients!
                     Server.BroadcastLine(MarketServerData);
@@ -615,11 +598,12 @@ namespace QuantumHangar
                     //Send to server to get reply
                     Client.Write(MarketClientData);
 
-                    if(Message.Type == MessageType.AddItem)
+                    if (Message.Type == MessageType.AddItem)
                     {
                         //Send update to clients on this game server!
                         Comms.AddSingleItem(Message.List[0]);
-                    }else if(Message.Type == MessageType.RemoveItem)
+                    }
+                    else if (Message.Type == MessageType.RemoveItem)
                     {
                         //Send update to clients on this game server!
                         Comms.RemoveSingleItem(Message.List[0]);
@@ -646,10 +630,10 @@ namespace QuantumHangar
                 catch (Exception g)
                 {
                     Main.Debug("CrossServer Market Network Failed Fatally!", g, Main.ErrorType.Fatal);
-                    
+
                 }
             }
-            
+
 
             return true;
         }

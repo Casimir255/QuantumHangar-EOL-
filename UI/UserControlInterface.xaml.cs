@@ -91,8 +91,8 @@ namespace QuantumHangar.UI
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             //Refresh list
-            string PublicOffersDir = System.IO.Path.Combine(Main.Dir, "PublicOffers");
-            string[] subdirectoryEntries = Directory.GetFiles(PublicOffersDir, "*.sbc");
+            
+            string[] subdirectoryEntries = Directory.GetFiles(Main.ServerOffersDir, "*.sbc");
 
             //Get only filenames
             string[] FolderGrids = new string[subdirectoryEntries.Count()];
@@ -143,7 +143,10 @@ namespace QuantumHangar.UI
         {
 
             //Update all public offer market items!
-
+            if(!Main.IsRunning)
+            {
+                return;
+            }
 
             //Need to remove existing ones
             for (int i = 0; i < Main.GridList.Count; i++)
@@ -160,10 +163,11 @@ namespace QuantumHangar.UI
 
             //Clear list
             Main.PublicOfferseGridList.Clear();
-            
+
+
             foreach (PublicOffers offer in Plugin.Config.PublicOffers)
             {
-                if (offer.Forsale)
+                if (offer.Forsale && (offer.Name != null || offer.Name != ""))
                 {
                     string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
 
@@ -207,19 +211,15 @@ namespace QuantumHangar.UI
                 }
             }
 
+
             //Update Everything!
             Comms.SendListToModOnInitilize();
 
             MarketData Data = new MarketData();
             Data.List = Main.PublicOfferseGridList;
 
-            /*
-            using (StreamWriter file = File.CreateText(System.IO.Path.Combine(Main.Dir, "Market.json")))
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.Serialize(file, Data);
-            }
-            */
+            //Write to file
+            File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
             //This will force the market to update the market items
         }
 

@@ -537,7 +537,7 @@
                                         </GroupBox>
                                     </StackPanel>
                                 </TabItem>
-                                <TabItem Header="Public Offers" IsEnabled="{Binding HostServer}">
+                                <TabItem Header="Server Offers">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="100"/>
@@ -561,7 +561,8 @@
                                                 <DataGridTextColumn Header="Seller" Binding="{Binding Path=Seller,Mode=TwoWay}"/>
                                                 <DataGridTextColumn Header="SellerFactionTag" Binding="{Binding Path=SellerFaction,Mode=TwoWay}"/>
                                                 <DataGridTextColumn Header="Description" Binding="{Binding Path=Description,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="Quantity" Binding="{Binding Path=TotalAmount,Mode=TwoWay}"/>
+                                                <DataGridTextColumn Header="MaxQuantity" Binding="{Binding Path=TotalAmount,Mode=TwoWay}"/>
+                                                <DataGridTextColumn Header="MaxPerPlayer" Binding="{Binding Path=TotalPerPlayer,Mode=TwoWay}" />
                                                 <DataGridCheckBoxColumn Header="Forsale" Binding="{Binding Path=Forsale,Mode=TwoWay}" />
                                                 <DataGridTextColumn Header="Total Buys" Binding="{Binding Path=NumberOfBuys,Mode=TwoWay}" IsReadOnly="True" />
                                             </DataGrid.Columns>

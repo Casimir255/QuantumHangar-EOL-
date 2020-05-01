@@ -25,6 +25,7 @@ using Torch.Session;
 using Torch.API.Session;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using QuantumHangar.Utilities;
 
 namespace QuantumHangar
 {
@@ -42,7 +43,8 @@ namespace QuantumHangar
 
         public static List<MarketList> GridList = new List<MarketList>();
         public static List<MarketList> PublicOfferseGridList = new List<MarketList>();
-        public static string PublicMarketDir;
+        public static string ServerMarketFileDir;
+        public static string ServerOffersDir;
 
 
         public Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
@@ -51,6 +53,7 @@ namespace QuantumHangar
         public static TorchSessionManager TorchSession;
 
         private static bool EnableDebug = true;
+        public static bool IsRunning = false;
 
         public static bool IsHostServer = false;
 
@@ -107,7 +110,6 @@ namespace QuantumHangar
             {
                 if (Config.GridMarketEnabled)
                 {
-
                     //Attempt to create market servers!
                     if (MarketServers.CreateServers() == false)
                     {
@@ -125,31 +127,12 @@ namespace QuantumHangar
                         Accounts Accounts = new Accounts();
                         string MarketPath = Path.Combine(Config.FolderDirectory, "Market.json");
                         string PlayerAccountsPath = Path.Combine(Config.FolderDirectory, "PlayerAccounts.json");
-                        string PublicOffers = Path.Combine(Config.FolderDirectory, "PublicOffers");
-                        PublicMarketDir = Path.Combine(StoragePath, "PublicMarket.json");
-                        Directory.CreateDirectory(PublicOffers);
-
-                        /*
-                        Log.Info("Creating File watcher!");
-                        FileWatcher = new FileSystemWatcher();
-                        FileWatcher.Path = PublicOffers;
-                        FileWatcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite| NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                        // Only watch text files.
-                        FileWatcher.Filter = "*.SBC";
-                        FileWatcher.Changed += new FileSystemEventHandler(OnChanged);
-                        FileWatcher.Created += new FileSystemEventHandler(OnChanged);
-                        FileWatcher.Deleted += new FileSystemEventHandler(OnChanged);
+                        ServerOffersDir = Path.Combine(StoragePath, "PublicOffers");
+                        ServerMarketFileDir = Path.Combine(ServerOffersDir, "HangarServerOffers.json");
+                        Directory.CreateDirectory(ServerOffersDir);
 
 
-                        //Need to scan initial files
-
-
-
-                        FileWatcher.EnableRaisingEvents = true;
-                        */
-
-
-
+                        //Initilize loading of files!
                         if (File.Exists(MarketPath))
                         {
                             using (StreamReader file = File.OpenText(MarketPath))
@@ -160,9 +143,9 @@ namespace QuantumHangar
                         }
 
 
-                        if (File.Exists(PublicMarketDir))
+                        if (File.Exists(ServerMarketFileDir))
                         {
-                            using (StreamReader file = File.OpenText(PublicMarketDir))
+                            using (StreamReader file = File.OpenText(ServerMarketFileDir))
                             {
                                 JsonSerializer serializer = new JsonSerializer();
                                 PublicData = (MarketData)serializer.Deserialize(file, typeof(MarketData));
@@ -228,7 +211,7 @@ namespace QuantumHangar
                 case TorchSessionState.Loaded:
                     Comms = new Comms();
                     Comms.Main = this;
-
+                    IsRunning = true;
                     Comms.RegisterHandlers();
 
                     MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
@@ -236,7 +219,6 @@ namespace QuantumHangar
                     PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
 
                     //Guid for BlockLimiter:
-                    //11fca5c4-01b6-4fc3-a215-602e2325be2b
                     Guid BlockLimiterGUID = new Guid("11fca5c4-01b6-4fc3-a215-602e2325be2b");
                     Plugins.Plugins.TryGetValue(BlockLimiterGUID, out ITorchPlugin BlockLimiterT);
 
@@ -246,10 +228,6 @@ namespace QuantumHangar
                         Main.Debug("Plugin: " + BlockLimiterT.Name + " " + BlockLimiterT.Version + " is installed!");
                         try
                         {
-                            
-                            //Sample value
-                            MyObjectBuilder_CubeGrid[] grid = null;
-
                             //Grab refrence to TorchPluginBase class in the plugin
                             Type Class = BlockLimiterT.GetType();
 
@@ -499,15 +477,35 @@ namespace QuantumHangar
 
                 if (!File.Exists(GridPath))
                 {
-                    ChatManager.SendMessageAsOther("GridMarket", "Public offer got manually deleted from folder! Blame admin!", VRageMath.Color.Yellow, grid.BuyerSteamid);
+                    ChatManager.SendMessageAsOther("GridMarket", "Server Offer got manually deleted from folder! Blame admin!", VRageMath.Color.Yellow, grid.BuyerSteamid);
                     Main.Debug("Someone tried to buy a ship that doesnt exist! Did you delete it?? @"+ GridPath);
                 }
 
-                
+                //Need to check if player can buy
+                PublicOffers Offer = Config.PublicOffers.First(x => x.Name == Item.Name);
+                int Index = Config.PublicOffers.IndexOf(Offer);
+
+                //Dictionary<ulong, int> PlayerBuys = Offer.PlayersPurchased;
+
+                /*
+                if (Offer.TotalPerPlayer != 0)
+                {
+                    if (PlayerBuys.TryGetValue(grid.BuyerSteamid, out int Value))
+                    {
+                        if(Value >= Offer.TotalPerPlayer)
+                        {
+                            ChatManager.SendMessageAsOther("GridMarket", "You cannot buy anymore of this grid!", VRageMath.Color.Yellow, grid.BuyerSteamid);
+                            return;
+                        }
+                    }
+                }*/
+
+
+
                 //File check complete!
                 Main.Debug("Old Buyers Balance: " + BuyerBallance);
-                //Main.Debug("Old Sellers Balance: " + SellerBallance);
 
+                //Create PlayerAccount
                 PlayerAccount BuyerAccount = new PlayerAccount(Player.DisplayName, grid.BuyerSteamid, BuyerBallance - Item.Price);
 
 
@@ -553,8 +551,31 @@ namespace QuantumHangar
                 //Write all files!
                 File.WriteAllText(Path.Combine(BuyerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(BuyerData));
 
-                PublicOffers Offer = Config.PublicOffers.First(x => x.Name == Item.Name);
                 Offer.NumberOfBuys++;
+
+
+                /*
+                //Add PerPlayerSave
+                if (Offer.TotalPerPlayer != 0)
+                {
+                    if (PlayerBuys.TryGetValue(grid.BuyerSteamid, out int Value))
+                    {
+                        PlayerBuys[grid.BuyerSteamid] = Value + 1;
+                    }
+                    else
+                    {
+                        PlayerBuys.Add(grid.BuyerSteamid, 1);
+                    }
+                }
+                */
+
+                //Check Total Limit
+                if(Offer.NumberOfBuys >= Offer.TotalAmount)
+                {
+                    Config.PublicOffers[Index].Forsale = false;
+                    //Update offers and refresh
+                    GridMarket.UpdatePublicOffers(Config);
+                }
 
             }
             else
@@ -671,30 +692,28 @@ namespace QuantumHangar
         }
         public void PluginDispose()
         {
+            //Un register events
             MP.PlayerJoined -= MP_PlayerJoined;
             MP.PlayerLeft -= MP_PlayerLeft;
             Comms.UnregisterHandlers();
-            //FileWatcher.Created -= OnChanged;
-            //FileWatcher.Deleted -= OnChanged;
-            //FileWatcher.Dispose();
+
 
             //Save market data!
             MarketData Data = new MarketData();
-            //Data.GridDefinition = Main.GridDefinition;
             Data.List = Main.GridList;
-
-
-
-            using (StreamWriter file = File.CreateText(System.IO.Path.Combine(Main.Dir, "Market.json")))
+            //Save market Items
+            if (Config.GridMarketEnabled && File.Exists(System.IO.Path.Combine(Main.Dir, "Market.json")))
             {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.Serialize(file, Data);
-            }
+                using (StreamWriter file = File.CreateText(System.IO.Path.Combine(Main.Dir, "Market.json")))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(file, Data);
+                }
 
-
-            if (Config.GridMarketEnabled && IsHostServer)
-            {
-                MarketServers.Dispose();
+                if (IsHostServer)
+                {
+                    MarketServers.Dispose();
+                }
             }
         }
 
@@ -745,14 +764,11 @@ namespace QuantumHangar
         //private long _currentCooldown;
 
         private string grid;
-
-
         public void StartCooldown(string command)
         {
             this.grid = command;
             _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
-
         public bool CheckCommandStatus(string command)
         {
 

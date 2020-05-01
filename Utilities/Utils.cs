@@ -1143,9 +1143,6 @@ namespace QuantumHangar
 
     public class HangarChecks
     {
-        
-
-
         //Hangar Save
         public static bool RequireCurrency(CommandContext Context, Main Plugin, Result result)
         {
@@ -1764,11 +1761,6 @@ namespace QuantumHangar
             //CreateNewGridStamp
             Grid = new GridStamp();
 
-
-
-
-
-
             float DisassembleRatio = 0;
             double EstimatedValue = 0;
 
@@ -1803,8 +1795,6 @@ namespace QuantumHangar
                 foreach (MyCubeBlock SingleBlock in SingleGrid.GetFatBlocks())
                 {
                     var Block = (IMyCubeBlock)SingleBlock;
-
-
 
                     if (Block as IMyLargeTurretBase != null)
                     {
@@ -1852,7 +1842,7 @@ namespace QuantumHangar
 
 
             //Get default
-            Grid.GridName = result.grids[0].DisplayName;
+            Grid.GridName = result.biggestGrid.DisplayName;
             Grid.GridID = result.grids[0].EntityId;
             Grid.MarketValue = EstimatedValue;
 
