@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantumHangar", "QuantumHangar.csproj", "{336836F1-76B8-43FB-ABEB-257E299E440D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HangarStoreMod", "..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\244850\2015575529\Data\Scripts\HangarStoreMod\HangarStoreMod.csproj", "{AC9B5B5D-5CBE-4535-ACBF-BB0D6F1E6204}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{336836F1-76B8-43FB-ABEB-257E299E440D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{336836F1-76B8-43FB-ABEB-257E299E440D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{336836F1-76B8-43FB-ABEB-257E299E440D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{336836F1-76B8-43FB-ABEB-257E299E440D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC9B5B5D-5CBE-4535-ACBF-BB0D6F1E6204}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC9B5B5D-5CBE-4535-ACBF-BB0D6F1E6204}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC9B5B5D-5CBE-4535-ACBF-BB0D6F1E6204}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC9B5B5D-5CBE-4535-ACBF-BB0D6F1E6204}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EFE0A962-192A-4A84-A4F7-42BDC0D52C14}
+	EndGlobalSection
+EndGlobal
