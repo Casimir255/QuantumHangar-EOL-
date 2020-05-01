@@ -553,7 +553,8 @@
                                         <Button Margin="2,2,2,2" Click="Button_Click_1" ToolTip="Scans the PublicOffers Dir for grids">Refresh list</Button>
 
                                         <Button Margin="2,2,2,2" Click="Button_Click_2" Grid.Column="1" ToolTip="Scans the PublicOffers Dir for grids">Update Market</Button>
-
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center">Server Offers folder is now located @Torch/Instance/HangarServerOffers folder</TextBlock>
+                                        
                                         <DataGrid x:Name="Imported" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"  VerticalAlignment="Top" ItemsSource="{Binding PublicOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" LostFocus="Imported_LostFocus">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />

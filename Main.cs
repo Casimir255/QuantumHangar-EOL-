@@ -127,7 +127,7 @@ namespace QuantumHangar
                         Accounts Accounts = new Accounts();
                         string MarketPath = Path.Combine(Config.FolderDirectory, "Market.json");
                         string PlayerAccountsPath = Path.Combine(Config.FolderDirectory, "PlayerAccounts.json");
-                        ServerOffersDir = Path.Combine(StoragePath, "PublicOffers");
+                        ServerOffersDir = Path.Combine(StoragePath, "HangarServerOffers");
                         ServerMarketFileDir = Path.Combine(ServerOffersDir, "HangarServerOffers.json");
                         Directory.CreateDirectory(ServerOffersDir);
 
