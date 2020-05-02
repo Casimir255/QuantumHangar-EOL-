@@ -3,6 +3,7 @@ using NLog;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -264,6 +265,13 @@ namespace QuantumHangar.UI
                 SmallGBox.Visibility = Visibility.Visible;
                 SmallGText.Visibility = Visibility.Visible;
             }
+        }
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+
+            Process.Start(Main.ServerOffersDir);
+
         }
     }
 
