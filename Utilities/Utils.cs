@@ -163,7 +163,7 @@ namespace QuantumHangar
                 {
                     Main.Debug("Attempting to load grid!");
                     AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, playerPosition, context);
-                    
+
                     return GravityAligner.Start();
                 }
             }
@@ -2213,7 +2213,6 @@ namespace QuantumHangar
                                     short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
                                     if (TotalNumberOfBlocks > ServerLimit)
                                     {
-
                                         chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + ServerBlockLimits.Key + " limits! " + TotalNumberOfBlocks + "/" + ServerLimit);
                                         //Player would be over their block type limits
                                         return false;
@@ -2262,7 +2261,6 @@ namespace QuantumHangar
             }
             else
             {
-
                 //chat.Respond("Load Failed!");
                 return false;
             }
