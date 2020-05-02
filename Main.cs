@@ -543,10 +543,12 @@ namespace QuantumHangar
                 SendAccountUpdate.BalanceUpdate.Add(BuyerAccount);
 
                 MarketServers.Update(SendAccountUpdate);
+                
                 ChatManager.SendMessageAsOther("HangarMarket", Player.DisplayName + " just bought a " + grid.name, VRageMath.Color.Yellow);
 
                 //Write all files!
-                File.WriteAllText(Path.Combine(BuyerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(BuyerData));
+                FileSaver.Save(Path.Combine(BuyerPath, "PlayerInfo.json"), BuyerData);
+                //File.WriteAllText(Path.Combine(BuyerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(BuyerData));
 
                 Offer.NumberOfBuys++;
 
@@ -663,8 +665,10 @@ namespace QuantumHangar
                 ChatManager.SendMessageAsOther("HangarMarket", Player.DisplayName + " just bought a " + grid.name, VRageMath.Color.Yellow);
 
                 //Write all files!
-                File.WriteAllText(Path.Combine(SellerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(SellerData));
-                File.WriteAllText(Path.Combine(BuyerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(BuyerData));
+                FileSaver.Save(Path.Combine(SellerPath, "PlayerInfo.json"), SellerData);
+                FileSaver.Save(Path.Combine(BuyerPath, "PlayerInfo.json"), BuyerData);
+                //File.WriteAllText(Path.Combine(SellerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(SellerData));
+                //File.WriteAllText(Path.Combine(BuyerPath, "PlayerInfo.json"), JsonConvert.SerializeObject(BuyerData));
             }
             //Transfer Grid and transfer Author/owner!
         }
@@ -679,14 +683,13 @@ namespace QuantumHangar
             //Save market data!
             MarketData Data = new MarketData();
             Data.List = Main.GridList;
+
+
             //Save market Items
-            if (Config.GridMarketEnabled && File.Exists(System.IO.Path.Combine(Main.Dir, "Market.json")))
+            if (Config.GridMarketEnabled)
             {
-                using (StreamWriter file = File.CreateText(System.IO.Path.Combine(Main.Dir, "Market.json")))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    serializer.Serialize(file, Data);
-                }
+                FileSaver.Save(System.IO.Path.Combine(Main.Dir, "Market.json"), Data);
+                //File.WriteAllText(System.IO.Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
                 if (IsHostServer)
                 {

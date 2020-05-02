@@ -602,7 +602,8 @@ namespace QuantumHangar
                         return;
                     }
                     chat.Respond("You removed " + Grid.GridName + " from the market!");
-                    File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                    FileSaver.Save(Path.Combine(IDPath, "PlayerInfo.json"), Data);
+                    //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
                 }
 
 
@@ -622,7 +623,8 @@ namespace QuantumHangar
                             }
 
                             chat.Respond("You removed " + grid.GridName + " from the market!");
-                            File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                            FileSaver.Save(Path.Combine(IDPath, "PlayerInfo.json"), Data);
+                            //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
                         }
                     }
                 }
@@ -1024,7 +1026,8 @@ namespace QuantumHangar
                 }
 
                 //Overwrite file
-                File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                FileSaver.Save(Path.Combine(path, "PlayerInfo.json"), Data);
+                //File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
             }
             else
                 chat.Respond("Export Failed!");

@@ -1544,7 +1544,9 @@ namespace QuantumHangar
 
 
                 //Overwrite file
-                File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                FileSaver.Save(Path.Combine(path, "PlayerInfo.json"), Data);
+
+                //File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
 
 
 
@@ -1773,7 +1775,8 @@ namespace QuantumHangar
 
 
                 //Overwrite file
-                File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                FileSaver.Save(Path.Combine(path, "PlayerInfo.json"), Data);
+                //File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
                 return true;
             }
             else
@@ -2253,7 +2256,8 @@ namespace QuantumHangar
 
                 Data.Timer = stamp;
 
-                File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                FileSaver.Save(Path.Combine(IDPath, "PlayerInfo.json"), Data);
+                //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
                 return true;
             }
             else
@@ -2360,8 +2364,8 @@ namespace QuantumHangar
             Plugin.MarketServers.Update(SendMessage);
 
 
-
-            File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+            FileSaver.Save(Path.Combine(IDPath, "PlayerInfo.json"), Data);
+            //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
             return true;
         }
     }
@@ -2588,12 +2592,8 @@ namespace QuantumHangar
                     }
                 }
 
-
-                File.WriteAllText(Path.Combine(subdir, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
-
-
-
-
+                FileSaver.Save(Path.Combine(subdir, "PlayerInfo.json"), Data);
+                //File.WriteAllText(Path.Combine(subdir, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
 
 
             }
@@ -2745,8 +2745,8 @@ namespace QuantumHangar
                         cubeGrid.Close();
                         //MyEntities.GetEntityById(cubeGrid.EntityId).Delete();
 
-
-                        File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
+                        FileSaver.Save(Path.Combine(path, "PlayerInfo.json"), Data);
+                        //File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
                         Main.Debug("Grid " + result.biggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
                         //Main.Debug("G");
                     }

@@ -229,7 +229,8 @@ namespace QuantumHangar.UI
             Data.List = Main.PublicOfferseGridList;
 
             //Write to file
-            File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
+            FileSaver.Save(Main.ServerMarketFileDir, Data);
+            //File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
             //This will force the market to update the market items
         }
 

@@ -282,7 +282,8 @@ namespace QuantumHangar
 
                 try
                 {
-                    File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
+                    FileSaver.Save(Path.Combine(Main.Dir, "PlayerAccounts.json"), accounts);
+                    //File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
                  
                 }
                 catch (Exception a)
@@ -356,8 +357,10 @@ namespace QuantumHangar
             Data.List = Main.GridList;
             //Data.BalanceUpdate = Main.PlayerAccountUpdate;
 
-            string FileData = JsonConvert.SerializeObject(Data);
-            File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), FileData);
+            //string FileData = JsonConvert.SerializeObject(Data);
+
+            FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+            //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), FileData);
 
 
             //throw new NotImplementedException();
@@ -455,15 +458,9 @@ namespace QuantumHangar
                 //Data.GridDefinition = Main.GridDefinition;
                 Data.List = Main.GridList;
 
-
-                using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "Market.json")))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    serializer.Serialize(file, Data);
-                }
-
-
-
+                //Save
+                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
             }
             catch (Exception c)
@@ -541,20 +538,21 @@ namespace QuantumHangar
                             }
 
                         }
-
-
                     }
 
                     Accounts accounts = new Accounts();
                     accounts.PlayerAccounts = Main.PlayerAccounts;
 
+                    FileSaver.Save(Path.Combine(Main.Dir, "PlayerAccounts.json"), accounts);
+                    //File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
 
-
+                    /*
                     using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "PlayerAccounts.json")))
                     {
                         JsonSerializer serializer = new JsonSerializer();
                         serializer.Serialize(file, accounts);
                     }
+                    */
 
                 }
                 else if (Message.Type == MessageType.PlayerOnline)
@@ -580,14 +578,8 @@ namespace QuantumHangar
                 //Data.GridDefinition = Main.GridDefinition;
                 Data.List = Main.GridList;
 
-
-
-                using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "Market.json")))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    serializer.Serialize(file, Data);
-                }
-                //We also need to save file at the end
+                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
             }
             else
@@ -645,7 +637,7 @@ namespace QuantumHangar
 
             if (Main.IsHostServer)
             {
-                Server.DataReceived += Server_DataReceived;
+                Server.DataReceived -= Server_DataReceived;
             }
             else
             {

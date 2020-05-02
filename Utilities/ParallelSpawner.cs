@@ -20,6 +20,7 @@ namespace QuantumHangar
 {
     public class ParallelSpawner
     {
+        //Rexxars spicy ParallelSpawner
         private readonly int _maxCount;
         private readonly MyObjectBuilder_CubeGrid[] _grids;
         private readonly Action<HashSet<IMyCubeGrid>> _callback;

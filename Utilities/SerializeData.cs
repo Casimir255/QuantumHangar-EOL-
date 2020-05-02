@@ -8,7 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.IO;
+using Newtonsoft.Json;
 
 namespace QuantumHangar
 {
@@ -28,6 +29,23 @@ namespace QuantumHangar
 
         SendDefinition,
         PurchasedGrid,
+    }
+
+
+    public class FileSaver
+    {
+        public static void Save(string dir, object data)
+        {
+            try
+            {
+                File.WriteAllText(dir, JsonConvert.SerializeObject(data));
+            }
+            catch(Exception e)
+            {
+                //Failed to write file!
+                Main.Debug("Unable to save file @" + dir, e, Main.ErrorType.Fatal);
+            }
+        }
     }
 
     [ProtoContract]
