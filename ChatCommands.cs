@@ -896,6 +896,25 @@ namespace QuantumHangar
             });
         }
 
+
+        [Command("help", "Gives basic instructions on various hangar commands")]
+        [Permission(MyPromoteLevel.None)]
+        public void HangarHelp()
+        {
+            Chat chat = new Chat(Context);
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine("!hangar save (Saves the grid you are looking at)");
+            stringBuilder.AppendLine("!hangar list (Lists all the grids in your hangar with their number)");
+            stringBuilder.AppendLine("!hangar load [NameOrNumber] (Loads the specified grid from hangar)");
+            stringBuilder.AppendLine("!hangar sell [NameOrNumber] [Price] [\"Description\"] (Put grid up for sale)");
+            stringBuilder.AppendLine("!hangar info [NameOrNumber] (Provides info about the grid in your hangar)");
+            stringBuilder.AppendLine("!hangar removeoffer [NameOrNumber] (Removes a ship form the market)");
+
+
+            chat.Respond(stringBuilder.ToString());
+        }
+
     }
 
 

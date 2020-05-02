@@ -91,8 +91,18 @@ namespace QuantumHangar.UI
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             //Refresh list
-            
-            string[] subdirectoryEntries = Directory.GetFiles(Main.ServerOffersDir, "*.sbc");
+            string[] subdirectoryEntries = null;
+
+            try
+            {
+                subdirectoryEntries = Directory.GetFiles(Main.ServerOffersDir, "*.sbc");
+            }
+            catch (Exception b)
+            {
+                //Prevent from continuing
+                Main.Debug("Unable to get ServerOffersFolder!", b, Main.ErrorType.Fatal);
+                return;
+            }
 
             //Get only filenames
             string[] FolderGrids = new string[subdirectoryEntries.Count()];

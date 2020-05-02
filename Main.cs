@@ -38,9 +38,6 @@ namespace QuantumHangar
         public Settings Config => _config?.Data;
 
         private Persistent<Settings> _config;
-        //public static List<GridsForSale> GridDefinition = new List<GridsForSale>();
-
-
         public static List<MarketList> GridList = new List<MarketList>();
         public static List<MarketList> PublicOfferseGridList = new List<MarketList>();
         public static string ServerMarketFileDir;
@@ -588,12 +585,6 @@ namespace QuantumHangar
                 PlayerInfo SellerData = new PlayerInfo();
 
 
-
-                
-
-
-
-
                 try
                 {
                     SellerData = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(SellerPath, "PlayerInfo.json")));
@@ -612,20 +603,9 @@ namespace QuantumHangar
                 SendMessage.List.Add(Item);
                 MarketServers.Update(SendMessage);
 
-                //KeyValuePair<ulong, long> BuyerAcc = new KeyValuePair<ulong, long>(grid.BuyerSteamid, BuyerBallance - Item.Price);
-                //KeyValuePair<ulong, long> SellerAcc= new KeyValuePair<ulong, long>(grid.SellerSteamid, SellerBallance+ Item.Price);
-
-                //Main.Debug("Old Buyers Balance: " + BuyerBallance);
-                //Main.Debug("Old Sellers Balance: " + SellerBallance);
 
                 PlayerAccount BuyerAccount = new PlayerAccount(Player.DisplayName, grid.BuyerSteamid, BuyerBallance - Item.Price);
                 PlayerAccount SellerAccount = new PlayerAccount(Item.Seller, Item.Steamid, Item.Price, true);
-
-                //Main.Debug("New Buyers Balance: " + BuyerAccount.AccountBalance);
-                //Main.Debug("New Sellers Balance: " + SellerAccount.AccountBalance);
-
-                //EconUtils.TryUpdatePlayerBalance(BuyerAccount);
-                //EconUtils.TryUpdatePlayerBalance(SellerAccount);
 
 
 
@@ -674,8 +654,6 @@ namespace QuantumHangar
 
                 //We need to send to all to remove the item from the list
 
-
-
                 CrossServerMessage SendAccountUpdate = new CrossServerMessage();
                 SendAccountUpdate.Type = CrossServer.MessageType.PlayerAccountUpdated;
                 SendAccountUpdate.BalanceUpdate.Add(BuyerAccount);
@@ -720,10 +698,6 @@ namespace QuantumHangar
 
         public static void Debug(string message, Exception e = null, ErrorType error = ErrorType.Debug)
         {
-            if (!EnableDebug)
-            {
-                return;
-            }
 
             if (e != null)
             {
@@ -747,6 +721,11 @@ namespace QuantumHangar
             }
             else
             {
+                if (!EnableDebug)
+                {
+                    return;
+                }
+
                 Log.Info(message);
 
             }
