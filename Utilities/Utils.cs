@@ -131,7 +131,7 @@ namespace QuantumHangar
                     Main.Debug("No ShipBlueprints in File '" + path + "'");
 
                     if (context != null)
-                        Chat.Respond("There arent any Grids in your file to import!",context);
+                        Chat.Respond("There arent any Grids in your file to import!", context);
 
                     return false;
                 }
@@ -141,8 +141,6 @@ namespace QuantumHangar
                     Main.Debug("Block Limiter Checker Failed");
                     return false;
                 }
-
-
 
 
 
@@ -163,211 +161,14 @@ namespace QuantumHangar
                 }
                 else
                 {
-
-
-                    List<MyObjectBuilder_CubeGrid> TotalGrids = new List<MyObjectBuilder_CubeGrid>();
-                    List<MyObjectBuilder_Cockpit> cockpits = new List<MyObjectBuilder_Cockpit>();
-                    Vector3D direction = playerPosition;
-
-
-                    foreach (var shipBlueprint in shipBlueprints)
-                    {
-                        TotalGrids.AddRange(shipBlueprint.CubeGrids.ToList());
-                        foreach (MyObjectBuilder_CubeGrid grid in shipBlueprint.CubeGrids)
-                        {
-                            cockpits.AddRange(grid.CubeBlocks.OfType<MyObjectBuilder_Cockpit>().ToList());
-                        }
-                    }
-
-                    MyObjectBuilder_CubeGrid[] array = TotalGrids.ToArray();
-                    if (array.Length == 0)
-                    {
-                        return false;
-                    }
-
-
-                        Main.Debug("Total Grids to be pasted: " + TotalGrids.Count());
-
-
-                        if (cockpits.Count > 0)
-                        {
-                            //Main.Debug("Cockpits found!");
-                            foreach (MyObjectBuilder_Cockpit Block in cockpits)
-                            {
-                                if (Block.IsMainCockpit)
-                                {
-                                    Main.Debug("Main cockpit found! Attempting to Align!");
-                                    direction = new Vector3D(Block.Orientation.x, Block.Orientation.y, Block.Orientation.z);
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Main.Debug("No Cockpits");
-                        }
-
-
-
-                        Vector3D position = playerPosition;
-
-                        float gravityOffset = 0f;
-                        float gravityRotation = 0f;
-
-                        Vector3 vector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(position);
-                        if (vector == Vector3.Zero)
-                        {
-                            vector = MyGravityProviderSystem.CalculateArtificialGravityInPoint(position);
-                        }
-                        Vector3D vector3D;
-                        if (vector != Vector3.Zero)
-                        {
-                            Main.Debug("Attempting to correct!");
-                            vector.Normalize();
-                            vector3D = -vector;
-                            position += vector * gravityOffset;
-                            if (direction == Vector3D.Zero)
-                            {
-                                direction = Vector3D.CalculatePerpendicularVector(vector);
-                                if (gravityRotation != 0f)
-                                {
-                                    MatrixD matrixa = MatrixD.CreateFromAxisAngle(vector3D, gravityRotation);
-                                    direction = Vector3D.Transform(direction, matrixa);
-                                }
-                            }
-                        }
-                        else if (direction == Vector3D.Zero)
-                        {
-                            direction = Vector3D.Right;
-                            vector3D = Vector3D.Up;
-                        }
-                        else
-                        {
-                            vector3D = Vector3D.CalculatePerpendicularVector(-direction);
-                        }
-
-                    //Re orientate
-
-                    MatrixD worldMatrix = MatrixD.CreateWorld(position, direction, vector3D);
-
-
-
-                    return AlignToPlanetMath(array, TotalGrids,position,direction,vector3D,context);
-
-
-
-
-
-
-
-                    //MyEntities.CreateFromObjectBuilder(grid, true,null,null,null,null,true,true);
-
-
-
-
-
+                    Main.Debug("Attempting to load grid!");
+                    AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, playerPosition, context);
+                    
+                    return GravityAligner.Start();
                 }
             }
 
             return false;
-        }
-
-        private static bool AlignToPlanetMath(MyObjectBuilder_CubeGrid[] array, List<MyObjectBuilder_CubeGrid> TotalGrids, Vector3D position, Vector3D direction, Vector3D vector3D, CommandContext context)
-        {
-
-            MatrixD worldMatrix = MatrixD.CreateWorld(position, direction, vector3D);
-
-            int num = 0;
-            MatrixD matrix = MatrixD.Identity;
-
-            Parallel.For(0, array.Length, i =>
-            {
-                array[i] = (MyObjectBuilder_CubeGrid)TotalGrids[i].Clone();
-                if (array[i].CubeBlocks.Count > num)
-                {
-                    num = array[i].CubeBlocks.Count;
-                    matrix = (array[i].PositionAndOrientation.HasValue ? array[i].PositionAndOrientation.Value.GetMatrix() : MatrixD.Identity);
-                }
-
-            });
-
-            MyEntities.RemapObjectBuilderCollection(array);
-            MatrixD matrix2;
-            if (true)
-            {
-                Vector3D value = Vector3D.Zero;
-                if (TotalGrids[0].PositionAndOrientation.HasValue)
-                {
-                    value = TotalGrids[0].PositionAndOrientation.Value.Position;
-                }
-                matrix2 = MatrixD.CreateWorld(-value, direction, vector3D);
-            }
-            else
-            {
-                //matrix2 = MatrixD.CreateWorld(-prefabDefinition.BoundingSphere.Center, Vector3D.Forward, Vector3D.Up);
-            }
-            //bool ignoreMemoryLimits2 = MyEntities.IgnoreMemoryLimits;
-            MyEntities.IgnoreMemoryLimits = true;
-
-
-            Parallel.For(0, array.Length, j =>
-            {
-                MatrixD newWorldMatrix;
-
-                    if (array[j].PositionAndOrientation.HasValue)
-                    {
-                        MatrixD matrix3 = array[j].PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(matrix);
-                        newWorldMatrix = matrix3 * worldMatrix;
-                        array[j].PositionAndOrientation = new MyPositionAndOrientation(newWorldMatrix);
-                    }
-                    else
-                    {
-                        newWorldMatrix = worldMatrix;
-                        array[j].PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
-                    }
-                
-
-
-            });
-
-
-
-
-
-
-
-            /* Where do we want to paste the grids? Lets find out. */
-            var pos = FindPastePosition(array, position);
-            if (pos == null)
-            {
-
-                Log.Warn("No free Space found!");
-
-                if (context != null)
-                    Chat.Respond("No free space available!",context);
-
-                return false;
-            }
-
-            var newPosition = pos.Value;
-
-            /* Update GridsPosition if that doesnt work get out of here. */
-            if (!UpdateGridsPosition(array, newPosition))
-            {
-
-                if (context != null)
-                    Chat.Respond("The File to be imported does not seem to be compatible with the server!",context);
-
-                return false;
-            }
-
-
-            MyEntities.RemapObjectBuilderCollection(array);
-
-            ParallelSpawner spawner = new ParallelSpawner(array);
-            spawner.Start();
-
-            return true;
         }
 
         private static bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
@@ -620,7 +421,8 @@ namespace QuantumHangar
             double deltaZ = 0;
 
 
-            foreach(MyObjectBuilder_CubeGrid grid in grids) {
+            foreach (MyObjectBuilder_CubeGrid grid in grids)
+            {
 
                 var position = grid.PositionAndOrientation;
 
@@ -887,7 +689,7 @@ namespace QuantumHangar
 
                         MyCubeGrid grid = node.NodeData;
 
-                        
+
 
 
 
@@ -1154,7 +956,7 @@ namespace QuantumHangar
             IMyPlayer Player = Context.Player;
             if (!Plugin.Config.RequireCurrency)
             {
-                
+
                 return true;
             }
             else
@@ -1539,7 +1341,7 @@ namespace QuantumHangar
 
                     if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
                     {
-                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!",Context);
+                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
                         return false;
                     }
                 }
@@ -1719,7 +1521,7 @@ namespace QuantumHangar
             string path = GridMethods.CreatePathForPlayer(Plugin.Config.FolderDirectory, Player.SteamUserId);
             if (GridMethods.BackupSignleGridStatic(Plugin.Config.FolderDirectory, Player.SteamUserId, result.grids, null, true))
             {
-                Chat.Respond("Save Complete!",Context);
+                Chat.Respond("Save Complete!", Context);
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
                 stamp.PlayerID = Player.Identity.IdentityId;
@@ -1750,7 +1552,7 @@ namespace QuantumHangar
             }
             else
             {
-                Chat.Respond("Export Failed!",Context);
+                Chat.Respond("Export Failed!", Context);
                 return false;
             }
 
@@ -1948,7 +1750,7 @@ namespace QuantumHangar
             string path = GridMethods.CreatePathForPlayer(Plugin.Config.FolderDirectory, Player.SteamUserId);
             if (GridMethods.BackupSignleGridStatic(Plugin.Config.FolderDirectory, Player.SteamUserId, result.grids, null, true))
             {
-                Chat.Respond("Save Complete!",Context);
+                Chat.Respond("Save Complete!", Context);
 
                 //Load player file and update!
 
@@ -1976,18 +1778,20 @@ namespace QuantumHangar
             }
             else
             {
-                Chat.Respond("Export Failed!",Context);
+                Chat.Respond("Export Failed!", Context);
                 return false;
             }
 
         }
 
-        public static bool CheckGravity(CommandContext Context, Main Plugin) {
+        public static bool CheckGravity(CommandContext Context, Main Plugin)
+        {
 
 
             if (!Plugin.Config.AllowInGravity)
             {
-                if (!Vector3D.IsZero(Context.Player.GetPosition())){
+                if (!Vector3D.IsZero(Context.Player.GetPosition()))
+                {
                     Chat.Respond("Saving & Loading in gravity has been disabled!", Context);
                     return false;
                 }
@@ -2091,21 +1895,24 @@ namespace QuantumHangar
                 {
                     try
                     {
-
-                        MarketList Item = Main.GridList.First(x => x.Name == Grid.GridName);
-
-                        //We dont need to remove the item here anymore. (When the server broadcasts, we can remove it there)
-                        //Main.GridList.Remove(Item);
+                        if (Main.GridList.Any(x => x.Name == Grid.GridName))
+                        {
+                            MarketList Item = Main.GridList.First(x => x.Name == Grid.GridName);
 
 
+                            //We need to send to all to add one item to the list!
+                            CrossServerMessage SendMessage = new CrossServerMessage();
+                            SendMessage.Type = CrossServer.MessageType.RemoveItem;
+                            SendMessage.List.Add(Item);
 
-                        //We need to send to all to add one item to the list!
-                        CrossServerMessage SendMessage = new CrossServerMessage();
-                        SendMessage.Type = CrossServer.MessageType.RemoveItem;
-                        SendMessage.List.Add(Item);
+                            Plugin.MarketServers.Update(SendMessage);
+                        }
+                        else
+                        {
+                            Grid.GridForSale = false;
+                            return true;
+                        }
 
-                        Plugin.MarketServers.Update(SendMessage);
-                        Main.Debug("Point4");
                     }
                     catch (Exception e)
                     {
@@ -2304,14 +2111,14 @@ namespace QuantumHangar
                 else
                 {
                     //BlockLimiter
-                    if(Main.CheckFuture == null)
+                    if (Main.CheckFuture == null)
                     {
                         //BlockLimiter is null!
                         Chat.Respond("Blocklimiter Plugin not installed or Loaded!", Context);
                         Main.Debug("BLimiter plugin not installed or loaded! May require a server restart!");
                         return false;
                     }
-                    
+
 
                     List<MyObjectBuilder_CubeGrid> grids = new List<MyObjectBuilder_CubeGrid>();
                     foreach (var shipBlueprint in shipblueprints)
@@ -2322,8 +2129,8 @@ namespace QuantumHangar
                         }
                     }
 
-                    Main.Debug("Grids count: "+grids.Count());
-                    object value = Main.CheckFuture.Invoke(null, new object[] { grids.ToArray() , Player.Identity.IdentityId});
+                    Main.Debug("Grids count: " + grids.Count());
+                    object value = Main.CheckFuture.Invoke(null, new object[] { grids.ToArray(), Player.Identity.IdentityId });
 
                     //Convert to value return type
                     bool ValueReturn = (bool)value;
@@ -2334,7 +2141,7 @@ namespace QuantumHangar
                     }
                     else
                     {
-                        Chat.Respond("Grid would be over Server-Blocklimiter limits!",Context);
+                        Chat.Respond("Grid would be over Server-Blocklimiter limits!", Context);
                         Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
                         return false;
                     }
@@ -2387,29 +2194,29 @@ namespace QuantumHangar
                         //Double check to see if the list is null
                         if (PlayerBuiltBlocks != null)
                         {
-                                foreach (KeyValuePair<string, short> ServerBlockLimits in MySession.Static.BlockTypeLimits)
+                            foreach (KeyValuePair<string, short> ServerBlockLimits in MySession.Static.BlockTypeLimits)
+                            {
+                                if (PlayerBuiltBlocks.ContainsKey(ServerBlockLimits.Key))
                                 {
-                                    if (PlayerBuiltBlocks.ContainsKey(ServerBlockLimits.Key))
+                                    int TotalNumberOfBlocks = PlayerBuiltBlocks[ServerBlockLimits.Key];
+
+                                    if (blockLimits.BlockTypeBuilt.TryGetValue(ServerBlockLimits.Key, out MyBlockLimits.MyTypeLimitData LimitData))
                                     {
-                                        int TotalNumberOfBlocks = PlayerBuiltBlocks[ServerBlockLimits.Key];
+                                        //Grab their existing block count for the block limit
+                                        TotalNumberOfBlocks += LimitData.BlocksBuilt;
+                                    }
 
-                                        if (blockLimits.BlockTypeBuilt.TryGetValue(ServerBlockLimits.Key, out MyBlockLimits.MyTypeLimitData LimitData))
-                                        {
-                                            //Grab their existing block count for the block limit
-                                            TotalNumberOfBlocks += LimitData.BlocksBuilt;
-                                        }
-
-                                        //Compare to see if they would be over!
-                                        short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
-                                        if (TotalNumberOfBlocks > ServerLimit)
-                                        {
+                                    //Compare to see if they would be over!
+                                    short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
+                                    if (TotalNumberOfBlocks > ServerLimit)
+                                    {
 
                                         chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + ServerBlockLimits.Key + " limits! " + TotalNumberOfBlocks + "/" + ServerLimit);
-                                            //Player would be over their block type limits
-                                            return false;
-                                        }
+                                        //Player would be over their block type limits
+                                        return false;
                                     }
                                 }
+                            }
                         }
 
                     }
@@ -2435,7 +2242,7 @@ namespace QuantumHangar
 
             if (GridMethods.LoadGrid(path, playerPosition, false, Player, true, Context, Plugin))
             {
-                
+
                 chat.Respond("Load Complete!");
                 Data.Grids.Remove(Grid);
                 File.Delete(path);
@@ -2451,7 +2258,7 @@ namespace QuantumHangar
             }
             else
             {
-               
+
                 //chat.Respond("Load Failed!");
                 return false;
             }
