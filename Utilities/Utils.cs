@@ -2030,7 +2030,7 @@ namespace QuantumHangar
 
                             foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
                             {
-
+                                
                                 MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
                                 if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
                                 {

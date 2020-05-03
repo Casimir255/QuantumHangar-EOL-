@@ -60,12 +60,6 @@ namespace QuantumHangar.UI
 
         }
 
-        private void Grid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            ContextMenu cm = this.FindResource("GridButton") as ContextMenu;
-            cm.PlacementTarget = sender as Button;
-            cm.IsOpen = true;
-        }
 
 
         private void RefreshItems(object sender, RoutedEventArgs e)
@@ -80,9 +74,6 @@ namespace QuantumHangar.UI
    
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-        }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -170,7 +161,7 @@ namespace QuantumHangar.UI
                 Main.GridList.RemoveAt(i);
             }
 
-            string PublicOfferPath = System.IO.Path.Combine(Main.Dir, "PublicOffers");
+            string PublicOfferPath = Main.ServerOffersDir;
 
             //Clear list
             Main.PublicOfferseGridList.Clear();
@@ -180,8 +171,10 @@ namespace QuantumHangar.UI
             {
                 if (offer.Forsale && (offer.Name != null || offer.Name != ""))
                 {
-                    string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
+                    
 
+                    string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
+                    Main.Debug("Blueprint Path: "+ GridFilePath);
 
                     MyObjectBuilderSerializer.DeserializeXML(GridFilePath, out MyObjectBuilder_Definitions myObjectBuilder_Definitions);
                     MyObjectBuilder_ShipBlueprintDefinition[] shipBlueprint = null;
