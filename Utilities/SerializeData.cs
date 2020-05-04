@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace QuantumHangar
 {
@@ -36,15 +37,69 @@ namespace QuantumHangar
     {
         public static void Save(string dir, object data)
         {
+    
+                /*
+                string illegal = "\"M\"\\a/ry/ h**ad:>> a\\/:*?\"| li*tt|le|| la\"mb.?";
+                string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+                Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
+                illegal = r.Replace(illegal, "");
+                */
+
+
+                //FileInfo file = new FileInfo(dir);
+
+                var p = Task.Run(() => FileSaveTask(dir,data));
+
+                //File.WriteAllText(dir, JsonConvert.SerializeObject(data));
+
+        }
+
+        private static void FileSaveTask(string dir, object data)
+        {
             try
             {
+
+
                 File.WriteAllText(dir, JsonConvert.SerializeObject(data));
-            }
-            catch(Exception e)
+
+            }catch(Exception e)
             {
-                //Failed to write file!
                 Main.Debug("Unable to save file @" + dir, e, Main.ErrorType.Fatal);
             }
+
+
+        }
+
+        protected static bool IsFileLocked(FileInfo file)
+        {
+            try
+            {
+                using (FileStream stream = file.Open(FileMode.Open, FileAccess.Write, FileShare.None))
+                {
+                    stream.Close();
+                }
+            }
+            catch (IOException)
+            {
+                //the file is unavailable because it is:
+                //still being written to
+                //or being processed by another thread
+                //or does not exist (has already been processed)
+                return true;
+            }
+
+            //file is not locked
+            return false;
+        }
+
+        public static string CheckInvalidCharacters(string filename)
+        {
+            //This will get any invalid file names and remove those characters
+
+            string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
+            return r.Replace(filename, "");
+
         }
     }
 

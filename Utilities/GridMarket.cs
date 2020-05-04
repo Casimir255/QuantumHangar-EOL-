@@ -28,7 +28,7 @@ namespace QuantumHangar.Utilities
                 Main.GridList.RemoveAt(i);
             }
 
-            string PublicOfferPath = System.IO.Path.Combine(Main.Dir, "PublicOffers");
+            string PublicOfferPath = Main.ServerOffersDir;
 
             //Clear list
             Main.PublicOfferseGridList.Clear();
@@ -84,6 +84,8 @@ namespace QuantumHangar.Utilities
 
             MarketData Data = new MarketData();
             Data.List = Main.PublicOfferseGridList;
+
+            FileSaver.Save(Main.ServerMarketFileDir, Data);
 
             /*
             using (StreamWriter file = File.CreateText(System.IO.Path.Combine(Main.Dir, "Market.json")))

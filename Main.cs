@@ -243,7 +243,7 @@ namespace QuantumHangar
                             Log.Warn(e, "Could not connect to Blocklimiter Plugin.");
                         }
                     }
-                    
+
 
 
 
@@ -344,7 +344,12 @@ namespace QuantumHangar
                 {
                     if (Config.AutoHangarGrids)
                     {
-                        var t = Task.Run(() => HangarScans.AutoHangar(Config));
+                        Debug("Attempting Autohangar!");
+                        //Stamp.AddHours(.5);
+                        BackgroundWorker worker = new BackgroundWorker();
+                        worker.DoWork += new DoWorkEventHandler(HangarScans.AutoHangar);
+                        worker.RunWorkerAsync(Config);
+
                     }
 
                     if (Config.AutosellHangarGrids)
@@ -366,11 +371,23 @@ namespace QuantumHangar
         {
             //Need to check hangar of the person who bought the grid
 
+            if (!Config.GridMarketEnabled)
+            {
+                return;
+            }
             //Get Item from market list for price
             MarketList Item = null;
+
+            List<MarketList> Allitems = new List<MarketList>();
+
+            //Incluse all offers!
+            Allitems.AddRange(GridList);
+            Allitems.AddRange(PublicOfferseGridList);
+
+
             try
             {
-                Item = GridList.First(x => x.Name == grid.name);
+                Item = Allitems.First(x => x.Name == grid.name);
             }
             catch
             {
@@ -464,7 +481,7 @@ namespace QuantumHangar
             if (Item.Steamid == 0)
             {
                 //Check to see if the item existis in the dir
-                string PublicOfferPath = System.IO.Path.Combine(Main.Dir, "PublicOffers");
+                string PublicOfferPath = ServerOffersDir;
                 string GridPath = Path.Combine(PublicOfferPath, Item.Name + ".sbc");
 
                 //Add counter just in case some idiot
@@ -479,8 +496,19 @@ namespace QuantumHangar
                 }
 
                 //Need to check if player can buy
-                PublicOffers Offer = Config.PublicOffers.First(x => x.Name == Item.Name);
-                int Index = Config.PublicOffers.IndexOf(Offer);
+                PublicOffers Offer;
+                int Index;
+                try
+                {
+                    Offer = Config.PublicOffers.First(x => x.Name == Item.Name);
+                    Index = Config.PublicOffers.IndexOf(Offer);
+                }catch(Exception e)
+                {
+                    ChatManager.SendMessageAsOther("GridMarket", "Unknown error! Contact admin!", VRageMath.Color.Yellow, grid.BuyerSteamid);
+                    Main.Debug("Unknown error! @" + GridPath,e,ErrorType.Fatal);
+                    return;
+                    //Something went wrong
+                }
 
                 //Dictionary<ulong, int> PlayerBuys = Offer.PlayersPurchased;
 

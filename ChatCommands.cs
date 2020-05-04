@@ -21,11 +21,12 @@ using VRage.Game.Definitions;
 using VRage.Game.ObjectBuilders.ComponentSystem;
 using BankingAndCurrency = Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.GameSystems;
+using System.ComponentModel;
 
 namespace QuantumHangar
 {
 
-    [Category("hangar")]
+    [Torch.Commands.Category("hangar")]
     public class ChatCommands : CommandModule
     {
         public const ushort NETWORK_ID = 8934;
@@ -475,6 +476,8 @@ namespace QuantumHangar
             {
                 GridStamp Grid = Data.Grids[result - 1];
 
+
+
                 if (Grid.GridForSale == true)
                 {
                     chat.Respond("Selected grid is already on the market!");
@@ -920,7 +923,7 @@ namespace QuantumHangar
     }
 
 
-    [Category("hangarmod")]
+    [Torch.Commands.Category("hangarmod")]
     public class AdminCommands : CommandModule
     {
 
@@ -1032,6 +1035,17 @@ namespace QuantumHangar
             else
                 chat.Respond("Export Failed!");
 
+        }
+
+        [Command("AutoHangar", "Runs AutoHangar")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void RunAuto()
+        {
+            Main.Debug("Attempting Autohangar!");
+            //Stamp.AddHours(.5);
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += new DoWorkEventHandler(HangarScans.AutoHangar);
+            worker.RunWorkerAsync(Plugin.Config);
         }
 
         [Command("load", "loads targeted grid from hangar ignoring limits")]
