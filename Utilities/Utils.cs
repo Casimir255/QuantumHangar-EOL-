@@ -2635,7 +2635,7 @@ namespace QuantumHangar
                     DateTime LastLogin;
                     LastLogin = player.LastLoginTime;
                     //Main.Debug(LastLogin.ToString() + " || " + DateTime.Now.ToString());
-                    if (LastLogin.AddDays(Config.AutoHangarDayAmount) > DateTime.Now)
+                    if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
                     {
                         ExportPlayerIdentities.Add(player);
                     }
@@ -2921,20 +2921,6 @@ namespace QuantumHangar
          * 
          * WE can change the balance of any player anytime via steamID/playerID and balance.
          * All we have to do is check to see if that player exsists.
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
          * 
          */
 

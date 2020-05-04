@@ -1037,7 +1037,7 @@ namespace QuantumHangar
 
         }
 
-        [Command("AutoHangar", "Runs AutoHangar")]
+        [Command("AutoHangar", "Runs AutoHangar based off of configs")]
         [Permission(MyPromoteLevel.Admin)]
         public void RunAuto()
         {
@@ -1340,8 +1340,6 @@ namespace QuantumHangar
 
             });
         }
-
-
 
         [Command("removeoffer", "Removes active grid from market")]
         [Permission(MyPromoteLevel.None)]

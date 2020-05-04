@@ -91,6 +91,8 @@ namespace QuantumHangar
             string path = Path.Combine(StoragePath, "QuantumHangar.cfg");
 
 
+
+
             _config = Persistent<Settings>.Load(path);
 
             if (Config.FolderDirectory == null || Config.FolderDirectory == "")
@@ -316,20 +318,43 @@ namespace QuantumHangar
             // BackgroundWorker worker = sender as BackgroundWorker;
 
             //Go ahead and check if player is in the dictionary. This means we need to wait until the player complteley connects
+
+            DateTime Timer = DateTime.Now;
+            Debug("Starting player watcher!");
+            int LoopCounter = 0;
+            int BadLoopCounter = 0;
             while (obj.State == ConnectionState.Connected)
             {
+                BadLoopCounter++;
+
+                if (Timer.AddSeconds(5) > DateTime.Now)
+                    continue;
+
+                LoopCounter++;
+
+
+                //Debug("Checking playerID!");
                 long IdentityID = MySession.Static.Players.TryGetIdentityId(obj.SteamId);
 
                 if (IdentityID != 0)
                 {
                     bool Updated = EconUtils.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
-
                     Main.Debug("Account updated: " + Updated);
                     return;
                 }
+
+
+                //Perform sanity vibe check
+                if (LoopCounter >= 100)
+                {
+                    //Fucking who cares. return
+                    return;
+                }
+
+                Timer = DateTime.Now;
             }
 
-            Main.Debug("PlayerLoopFinished!");
+            Debug("PlayerLoopFinished! "+LoopCounter+":"+BadLoopCounter);
 
         }
 
