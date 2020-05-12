@@ -151,15 +151,6 @@ namespace QuantumHangar.UI
             }
 
             //Need to remove existing ones
-            for (int i = 0; i < Main.GridList.Count; i++)
-            {
-                if (Main.GridList[i].Steamid != 0)
-                    continue;
-
-
-                Main.Debug("Removing public offer: " + Main.GridList[i].Name);
-                Main.GridList.RemoveAt(i);
-            }
 
             string PublicOfferPath = Main.ServerOffersDir;
 
@@ -172,6 +163,10 @@ namespace QuantumHangar.UI
                 if (offer.Forsale && (offer.Name != null || offer.Name != ""))
                 {
                     
+
+
+
+
 
                     string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
                     Main.Debug("Blueprint Path: "+ GridFilePath);
@@ -190,7 +185,7 @@ namespace QuantumHangar.UI
                     MyObjectBuilder_CubeGrid grid = shipBlueprint[0].CubeGrids[0];
                     byte[] Definition = MyAPIGateway.Utilities.SerializeToBinary(grid);
 
-                    //HangarChecks.GetPublicOfferBPDetails(shipBlueprint, out GridStamp stamp);
+                    HangarChecks.GetPublicOfferBPDetails(shipBlueprint, out GridStamp stamp);
 
 
                     //Straight up add new ones
@@ -202,11 +197,14 @@ namespace QuantumHangar.UI
                     NewList.Price = offer.Price;
                     NewList.Description = offer.Description;
                     NewList.GridDefinition = Definition;
-                    //NewList.GridBuiltPercent = stamp.GridBuiltPercent;
-                    //NewList.NumberofBlocks = stamp.NumberofBlocks;
-                    //NewList.SmallGrids = stamp.SmallGrids;
-                    //NewList.LargeGrids = stamp.LargeGrids;
-                    // NewList.BlockTypeCount = stamp.BlockTypeCount;
+                    
+
+                    NewList.GridBuiltPercent = stamp.GridBuiltPercent;
+                    NewList.NumberofBlocks = stamp.NumberofBlocks;
+                    NewList.SmallGrids = stamp.SmallGrids;
+                    NewList.LargeGrids = stamp.LargeGrids;
+                    NewList.BlockTypeCount = stamp.BlockTypeCount;
+
 
                     //Need to setTotalBuys
                     Main.PublicOfferseGridList.Add(NewList);

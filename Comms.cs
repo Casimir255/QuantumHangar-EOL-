@@ -162,7 +162,6 @@ namespace QuantumHangar
             AddItem,
             RemoveItem,
 
-
             //Check to see if the seller is online on any server
             PlayerOnline,
             PlayerAccountUpdated, //Return to server that the seller has been found and can be removed from the dictionary. (if true)
@@ -229,6 +228,11 @@ namespace QuantumHangar
 
                 //Send update to clients on this game server!
                 Comms.AddSingleItem(RecievedData.List[0]);
+
+                //Save data to file (This is server!)
+                MarketData Data = new MarketData();
+                Data.List = Main.GridList;
+                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
             }
             else if (RecievedData.Type == MessageType.RemoveItem)
             {
@@ -244,6 +248,11 @@ namespace QuantumHangar
                     //Send update to clients on this game server!
                     Comms.RemoveSingleItem(RecievedData.List[0]);
                 }
+
+                //Save data to file (This is server!)
+                MarketData Data = new MarketData();
+                Data.List = Main.GridList;
+                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
             }
             else if (RecievedData.Type == MessageType.PlayerAccountUpdated)
             {
@@ -351,15 +360,6 @@ namespace QuantumHangar
 
 
 
-            //Save data to file (This is server!)
-            MarketData Data = new MarketData();
-            // Data.GridDefinition = Main.GridDefinition;
-            Data.List = Main.GridList;
-            //Data.BalanceUpdate = Main.PlayerAccountUpdate;
-
-            //string FileData = JsonConvert.SerializeObject(Data);
-
-            FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
             //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), FileData);
 
 
@@ -459,7 +459,7 @@ namespace QuantumHangar
                 Data.List = Main.GridList;
 
                 //Save
-                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                //FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
                 //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
             }
@@ -494,6 +494,11 @@ namespace QuantumHangar
                     //Send update to clients on this game server!
                     Comms.AddSingleItem(Message.List[0]);
                     //Main.Debug("Point3");
+
+                    //Save data to file (This is server!)
+                    MarketData Data = new MarketData();
+                    Data.List = Main.GridList;
+                    FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
                 }
                 else if (Message.Type == MessageType.RemoveItem)
                 {
@@ -506,6 +511,12 @@ namespace QuantumHangar
 
                     //Send update to clients on this game server!
                     Comms.RemoveSingleItem(Message.List[0]);
+
+
+                    //Save data to file (This is server!)
+                    MarketData Data = new MarketData();
+                    Data.List = Main.GridList;
+                    FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
                 }
                 else if (Message.Type == MessageType.PlayerAccountUpdated)
                 {
@@ -544,15 +555,6 @@ namespace QuantumHangar
                     accounts.PlayerAccounts = Main.PlayerAccounts;
 
                     FileSaver.Save(Path.Combine(Main.Dir, "PlayerAccounts.json"), accounts);
-                    //File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
-
-                    /*
-                    using (StreamWriter file = File.CreateText(Path.Combine(Main.Dir, "PlayerAccounts.json")))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Serialize(file, accounts);
-                    }
-                    */
 
                 }
                 else if (Message.Type == MessageType.PlayerOnline)
@@ -569,16 +571,8 @@ namespace QuantumHangar
                 }
                 else if (Message.Type == MessageType.PurchasedGrid)
                 {
-
                     var t = Task.Run(() => Main.PurchaseGrid(Message.GridDefinition[0]));
                 }
-
-                //Save data to file (This is server!)
-                MarketData Data = new MarketData();
-                //Data.GridDefinition = Main.GridDefinition;
-                Data.List = Main.GridList;
-
-                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
                 //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
             }

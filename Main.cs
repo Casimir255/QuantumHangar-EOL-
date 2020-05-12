@@ -26,6 +26,7 @@ using Torch.API.Session;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using QuantumHangar.Utilities;
+using Torch.Managers.PatchManager;
 
 namespace QuantumHangar
 {
@@ -84,13 +85,15 @@ namespace QuantumHangar
         public static ChatManagerServer ChatManager;
         
 
+
+
         public override void Init(ITorchBase torch)
         {
             base.Init(torch);
             //Grab Settings
             string path = Path.Combine(StoragePath, "QuantumHangar.cfg");
 
-
+            
 
 
             _config = Persistent<Settings>.Load(path);
@@ -197,9 +200,20 @@ namespace QuantumHangar
 
             EnableDebug = Config.AdvancedDebug;
             Dir = Config.FolderDirectory;
+
+
+            
+
+            PatchManager manager = DependencyProviderExtensions.GetManager<PatchManager>(Torch.Managers);
+
+            Patcher.Apply(manager.AcquireContext(),this);
             //Load files
         }
-
+        private static void AfterSave(bool __result)
+        {
+            Main.Debug("Fineshed Saving! " + __result);
+            return;
+        }
 
 
         private void SessionChanged(ITorchSession session, TorchSessionState state)
@@ -247,7 +261,7 @@ namespace QuantumHangar
                     }
 
 
-
+                    
 
 
                     MP.PlayerJoined += MP_PlayerJoined;
@@ -274,8 +288,9 @@ namespace QuantumHangar
             if (!Config.GridMarketEnabled)
                 return;
 
-            if (obj.State == ConnectionState.Connected)
+            try
             {
+                Debug("PlayerState: " + obj.State.ToString());
                 Main.Debug("Attempting to send account data!");
                 EconUtils.TryGetPlayerBalance(obj.SteamId, out long balance);
 
@@ -288,6 +303,9 @@ namespace QuantumHangar
 
                 //Send data to all servers!
                 MarketServers.Update(message);
+            }catch(Exception e)
+            {
+                Debug("Unable to update players balance!", e, ErrorType.Warn);
             }
             //throw new NotImplementedException();
         }
@@ -303,7 +321,6 @@ namespace QuantumHangar
 
             if (PlayerAccounts.ContainsKey(obj.SteamId))
             {
-
                 BackgroundWorker worker = new BackgroundWorker();
                 worker.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
                 worker.RunWorkerAsync(obj);
@@ -338,6 +355,13 @@ namespace QuantumHangar
 
                 if (IdentityID != 0)
                 {
+                    if(PlayerAccounts[obj.SteamId] < 0)
+                    {
+                        PlayerAccounts[obj.SteamId] = 0;
+                        return;
+                    }
+
+
                     bool Updated = EconUtils.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
                     Main.Debug("Account updated: " + Updated);
                     return;
@@ -412,6 +436,10 @@ namespace QuantumHangar
 
             try
             {
+
+
+
+
                 Item = Allitems.First(x => x.Name == grid.name);
             }
             catch
@@ -427,7 +455,7 @@ namespace QuantumHangar
 
             if (Buyer == null)
             {
-                Debug("Unable to get steamID!");
+                Debug("Unable to get steamID. Glitched player?");
                 return;
                 //Some kind of error message directed to player.
             }
@@ -462,6 +490,11 @@ namespace QuantumHangar
                 //New player. Go ahead and create new. Should not have a timer.
             }
 
+
+
+            
+
+
             //Adjust player prices (We need to check if buyer has enough moneyies hehe)
             bool RetrieveSuccessful = EconUtils.TryGetPlayerBalance(grid.BuyerSteamid, out long BuyerBallance);
             if (!RetrieveSuccessful || BuyerBallance < Item.Price)
@@ -469,6 +502,9 @@ namespace QuantumHangar
                 ChatManager.SendMessageAsOther("GridMarket", "Unable to purchase grid! Not enough credits!", VRageMath.Color.Yellow, grid.BuyerSteamid);
                 return;
             }
+
+
+
 
             string NewGridName = Item.Name;
             bool FileStilExists = true;
@@ -535,22 +571,17 @@ namespace QuantumHangar
                     //Something went wrong
                 }
 
-                //Dictionary<ulong, int> PlayerBuys = Offer.PlayersPurchased;
 
-                /*
-                if (Offer.TotalPerPlayer != 0)
+
+                if (Offer.TotalPerPlayer != 0 && !OfferChecks.WithinPlayerLimits(Item.PlayerPurchases, grid.BuyerSteamid, Offer.TotalPerPlayer))
                 {
-                    if (PlayerBuys.TryGetValue(grid.BuyerSteamid, out int Value))
-                    {
-                        if(Value >= Offer.TotalPerPlayer)
-                        {
-                            ChatManager.SendMessageAsOther("GridMarket", "You cannot buy anymore of this grid!", VRageMath.Color.Yellow, grid.BuyerSteamid);
-                            return;
-                        }
-                    }
-                }*/
+                    ChatManager.SendMessageAsOther("GridMarket", "Youve reached your buy limit on this grid!", VRageMath.Color.Yellow, grid.BuyerSteamid);
+                    return;
+                }
 
 
+
+               
 
                 //File check complete!
                 Main.Debug("Old Buyers Balance: " + BuyerBallance);
@@ -605,24 +636,13 @@ namespace QuantumHangar
 
                 Offer.NumberOfBuys++;
 
-
-                /*
-                //Add PerPlayerSave
                 if (Offer.TotalPerPlayer != 0)
                 {
-                    if (PlayerBuys.TryGetValue(grid.BuyerSteamid, out int Value))
-                    {
-                        PlayerBuys[grid.BuyerSteamid] = Value + 1;
-                    }
-                    else
-                    {
-                        PlayerBuys.Add(grid.BuyerSteamid, 1);
-                    }
+                    OfferChecks.AddPlayerPurchase(ref PublicOfferseGridList, Item, grid.BuyerSteamid);
                 }
-                */
 
                 //Check Total Limit
-                if(Offer.NumberOfBuys >= Offer.TotalAmount)
+                if (Offer.NumberOfBuys >= Offer.TotalAmount)
                 {
                     Config.PublicOffers[Index].Forsale = false;
                     //Update offers and refresh
@@ -741,11 +761,9 @@ namespace QuantumHangar
             //Save market Items
             if (Config.GridMarketEnabled)
             {
-                FileSaver.Save(System.IO.Path.Combine(Main.Dir, "Market.json"), Data);
-                //File.WriteAllText(System.IO.Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
-
                 if (IsHostServer)
                 {
+                    FileSaver.Save(System.IO.Path.Combine(Main.Dir, "Market.json"), Data);
                     MarketServers.Dispose();
                 }
             }
@@ -787,8 +805,6 @@ namespace QuantumHangar
             }
 
         }
-
-
     }
 
 

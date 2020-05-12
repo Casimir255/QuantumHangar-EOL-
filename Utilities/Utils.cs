@@ -147,6 +147,28 @@ namespace QuantumHangar
 
 
 
+                if (Plugin.Config.OnLoadTransfer)
+                {
+                    //Will transfer pcu to new player
+                    foreach (MyObjectBuilder_ShipBlueprintDefinition definition in shipBlueprints)
+                    {
+
+                        foreach (MyObjectBuilder_CubeGrid CubeGridDef in definition.CubeGrids)
+                        {
+                            foreach (MyObjectBuilder_CubeBlock block in CubeGridDef.CubeBlocks)
+                            {
+                                block.Owner = player.Identity.IdentityId;
+                                block.BuiltBy = player.Identity.IdentityId;
+                                //Could turnoff warheads etc here
+                            }
+                        }
+                    }
+                }
+
+
+
+
+
                 if (!Plugin.Config.AutoOrientateToSurface)
                 {
                     foreach (var shipBlueprint in shipBlueprints)
@@ -1802,7 +1824,9 @@ namespace QuantumHangar
 
             if (!Plugin.Config.AllowInGravity)
             {
-                if (!Vector3D.IsZero(Context.Player.GetPosition()))
+
+
+                if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Context.Player.GetPosition())))
                 {
                     Chat.Respond("Saving & Loading in gravity has been disabled!", Context);
                     return false;
@@ -1811,6 +1835,8 @@ namespace QuantumHangar
 
             return true;
         }
+
+
 
         //Hagar Load
 
@@ -2388,7 +2414,7 @@ namespace QuantumHangar
                 return false;
             }
 
-            
+
 
             Parallel.Invoke(() =>
             {
@@ -2659,6 +2685,14 @@ namespace QuantumHangar
                         continue;
                     }
 
+
+                    if (id == 0)
+                    {
+                        //Sanity check
+                        continue;
+                    }
+
+
                     string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
                     PlayerInfo Data = new PlayerInfo();
                     //Get PlayerInfo from file
@@ -2673,9 +2707,47 @@ namespace QuantumHangar
                     }
 
 
+
                     ConcurrentBag<List<MyCubeGrid>> gridGroups = GridFinder.FindGridList(player.IdentityId, false);
                     if (gridGroups.Count == 0)
                         continue;
+
+
+                    long LargestGridID = 0;
+
+                    if (Config.KeepPlayersLargestGrid)
+                    {
+                        //First need to find their largets grid
+                        int BlocksCount = 0;
+
+
+                        foreach (List<MyCubeGrid> grids in gridGroups)
+                        {
+                            int GridBlockCounts = 0;
+                            int LargestSingleGridCount = 0;
+                            MyCubeGrid LargetsGrid = grids[0];
+                            foreach (MyCubeGrid grid in grids)
+                            {
+                                if (grid.BlocksCount > LargestSingleGridCount)
+                                {
+                                    LargestSingleGridCount = grid.BlocksCount;
+                                    LargetsGrid = grid;
+                                }
+                            }
+
+                            GridBlockCounts = LargetsGrid.BlocksCount;
+
+                            if (GridBlockCounts > BlocksCount)
+                            {
+                                BlocksCount = GridBlockCounts;
+                                LargestGridID = LargetsGrid.EntityId;
+                            }
+
+                        }
+                    }
+
+
+
 
                     foreach (List<MyCubeGrid> grids in gridGroups)
                     {
@@ -2683,64 +2755,108 @@ namespace QuantumHangar
                             continue;
 
 
+                        if (grids[0].IsRespawnGrid && Config.DeleteRespawnPods)
+                        {
+                            grids[0].Close();
+                            continue;
+                        }
+
+
+                        Result result = new Result();
+
+                        result.grids = grids;
+
+                        var BiggestGrid = grids[0];
                         foreach (MyCubeGrid grid in grids)
                         {
-                            if (grid.IsRespawnGrid && Config.DeleteRespawnPods)
+                            if (grid.BlocksCount > BiggestGrid.BlocksCount)
                             {
-                                grid.Close();
-                                continue;
-                            }
-
-                            if (HangarGrid)
-                            {
-                                Result result = new Result();
-
-                                result.grids.Add(grid);
-                                result.biggestGrid = grid;
-                                result.GetGrids = true;
-
-                                //Check for existing grid names
-                                string GridName = FileSaver.CheckInvalidCharacters(grid.DisplayName);
-                                if (Data.Grids.Any(x => x.GridName == GridName))
-                                {
-                                    //There is already a grid with that name!
-                                    bool NameCheckDone = false;
-                                    int a = 0;
-                                    while (!NameCheckDone)
-                                    {
-                                        a++;
-                                        if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
-                                        {
-                                            NameCheckDone = true;
-                                            break;
-                                        }
-
-                                    }
-                                    //Main.Debug("Saving grid name: " + GridName);
-                                    GridName = GridName + "[" + a + "]";
-                                    result.grids[0].DisplayName = GridName;
-                                    result.biggestGrid.DisplayName = GridName;
-                                }
-
-
-
-                                result.biggestGrid.DisplayName = GridName;
-                                if (GridMethods.BackupSignleGridStatic(Config.FolderDirectory, id, result.grids, null, true))
-                                {
-                                    //Load player file and update!
-                                    //Fill out grid info and store in file
-                                    HangarChecks.GetBPDetails(result, Config, out GridStamp Grid);
-
-                                    Grid.GridName = GridName;
-                                    Data.Grids.Add(Grid);
-                                    grid.Close();
-                                    GridCounter++;
-                                    Main.Debug(result.biggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
-                                }
-                                else
-                                    Main.Debug(result.biggestGrid.DisplayName + " FAILED to Hangar due to inactivity!");
+                                BiggestGrid = grid;
                             }
                         }
+
+
+                        if (Config.KeepPlayersLargestGrid)
+                        {
+                            if (BiggestGrid.EntityId == LargestGridID)
+                            {
+                                //Skip players largest grid
+                                continue;
+                            }
+                        }
+
+
+                        //Grid Size Checks
+                        if (BiggestGrid.GridSizeEnum == MyCubeSize.Large)
+                        {
+                            if (BiggestGrid.IsStatic && !Config.AutoHangarStaticGrids)
+                            {
+                                continue;
+                            }
+                            else if (!BiggestGrid.IsStatic && !Config.AutoHangarLargeGrids)
+                            {
+                                continue;
+                            }
+                        }
+                        else if (BiggestGrid.GridSizeEnum == MyCubeSize.Small && !Config.AutoHangarSmallGrids)
+                        {
+                            continue;
+                        }
+
+
+
+
+                        result.biggestGrid = BiggestGrid;
+                        result.GetGrids = true;
+
+                        //Check for existing grid names
+                        string GridName = FileSaver.CheckInvalidCharacters(BiggestGrid.DisplayName);
+                        if (Data.Grids.Any(x => x.GridName == GridName))
+                        {
+                            //There is already a grid with that name!
+                            bool NameCheckDone = false;
+                            int a = 0;
+                            while (!NameCheckDone)
+                            {
+                                a++;
+                                if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
+                                {
+                                    NameCheckDone = true;
+                                    break;
+                                }
+
+                            }
+                            //Main.Debug("Saving grid name: " + GridName);
+                            GridName = GridName + "[" + a + "]";
+                            result.grids[0].DisplayName = GridName;
+                            result.biggestGrid.DisplayName = GridName;
+                        }
+
+
+
+                        result.biggestGrid.DisplayName = GridName;
+                        if (GridMethods.BackupSignleGridStatic(Config.FolderDirectory, id, result.grids, null, true))
+                        {
+                            //Load player file and update!
+                            //Fill out grid info and store in file
+                            HangarChecks.GetBPDetails(result, Config, out GridStamp Grid);
+
+                            Grid.GridName = GridName;
+                            Data.Grids.Add(Grid);
+
+
+                            foreach (MyCubeGrid grid in grids)
+                            {
+                                grid.Close();
+                            }
+
+                            GridCounter++;
+                            Main.Debug(result.biggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
+                        }
+                        else
+                            Main.Debug(result.biggestGrid.DisplayName + " FAILED to Hangar due to inactivity!");
+
+
                     }
 
                     //Save players file!
@@ -2749,7 +2865,7 @@ namespace QuantumHangar
                 stopWatch.Stop();
                 TimeSpan ts = stopWatch.Elapsed;
 
-                Main.Debug("AutoHangar: Finished Hangaring -" + GridCounter + " grids! Action took: "+ts.ToString());
+                Main.Debug("AutoHangar: Finished Hangaring -" + GridCounter + " grids! Action took: " + ts.ToString());
 
 
 
@@ -2912,6 +3028,166 @@ namespace QuantumHangar
         }
 
 
+        public static void HangarReset(string HangarDir)
+        {
+            String[] subdirectoryEntries = Directory.GetDirectories(HangarDir);
+            foreach (string subdir in subdirectoryEntries)
+            {
+                string FolderName = new DirectoryInfo(subdir).Name;
+
+
+                //Main.Debug(FolderName);
+                ulong SteamID;
+                try
+                {
+                    SteamID = Convert.ToUInt64(FolderName);
+                }
+                catch
+                {
+                    continue;
+                    //Not a valid steam dir;
+                }
+
+
+                PlayerInfo Data = new PlayerInfo();
+                try
+                {
+                    Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(subdir, "PlayerInfo.json")));
+
+                    if (Data == null || Data.Grids == null || Data.Grids.Count == 0)
+                    {
+                        continue;
+                    }
+
+
+
+
+                    var ext = new List<string> { "sbc" };
+                    var myFiles = Directory.GetFiles(subdir, "*.sbc", SearchOption.AllDirectories);
+
+                    List<GridStamp> NewGrids = new List<GridStamp>();
+                    NewGrids = Data.Grids;
+                    for (int i = 0; i < Data.Grids.Count(); i++)
+                    {
+
+                        if (!myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == Data.Grids[i].GridName))
+                        {
+
+                            Main.Debug("Removing grid: " + NewGrids[i].GridName + "! It doesnt exist in the folder!!");
+                            NewGrids.RemoveAt(i);
+
+                        }
+
+                    }
+
+
+                    Data.Grids = NewGrids;
+                    FileSaver.Save(Path.Combine(subdir, "PlayerInfo.json"), Data);
+
+
+                }
+                catch (Exception e)
+                {
+
+                    //Main.Debug("Unable File IO exception!", e, Main.ErrorType.Warn);
+                    //File is prob null/missing
+                    continue;
+                }
+            }
+        }
+
+
+        public static bool UnderPlanet(Vector3D Position)
+        {
+            if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Position)))
+            {
+                MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(Position);
+
+                Main.Debug("Planet Min Radius: " + planet.MinimumRadius);
+
+                double distance = Vector3D.Distance(Position, planet.PositionComp.GetPosition());
+
+                Main.Debug("Your distance from center: " + distance);
+
+
+                if (distance < planet.MinimumRadius * .7)
+                {
+                    //Will save grid!
+                    Main.Debug("Will save grid");
+                    return true;
+                }
+                else
+                {
+                    Main.Debug("Wont save grid");
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+
+
+
+        }
+
+    }
+
+
+    public class OfferChecks
+    {
+
+        public static bool WithinPlayerLimits(Dictionary<ulong, int> Players, ulong ID, int BuyLimit)
+        {
+
+            if (Players.TryGetValue(ID, out int value))
+            {
+                if (value >= BuyLimit)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                //Player is not even in the collection
+                return true;
+            }
+        }
+        public static void AddPlayerPurchase(ref List<MarketList> PublicMarketItems, MarketList Item, ulong ID)
+        {
+            Dictionary<ulong, int> Players = Item.PlayerPurchases;
+            //Added player to list
+            if (Players.TryGetValue(ID, out int value))
+            {
+                Players[ID] = value + 1;
+            }
+            else
+            {
+                //No value for player. Add
+                Players.Add(ID, 1);
+            }
+
+
+
+            for (int i = 0; i < PublicMarketItems.Count(); i++)
+            {
+                if (PublicMarketItems[i].Name == Item.Name)
+                {
+                    //Re-apply new dictionary
+                    PublicMarketItems[i].PlayerPurchases = Players;
+                    return;
+                }
+            }
+
+
+        }
+
+
     }
 
 
@@ -2923,8 +3199,6 @@ namespace QuantumHangar
          * All we have to do is check to see if that player exsists.
          * 
          */
-
-
 
         public static bool TryUpdatePlayerBalance(PlayerAccount Account)
         {
@@ -2947,12 +3221,14 @@ namespace QuantumHangar
 
 
                 long OriginalBalance = MyBankingSystem.GetBalance(IdentityID);
+                long BalanceAdjuster = Account.AccountBalance - OriginalBalance;
 
-                long NewBalance = Account.AccountBalance - OriginalBalance;
-                MyBankingSystem.ChangeBalance(IdentityID, NewBalance);
+                if (BalanceAdjuster == 0)
+                {
+                    return true;
+                }
 
-
-
+                MyBankingSystem.ChangeBalance(IdentityID, BalanceAdjuster);
                 Main.Debug("Player " + IdentityID + " account has been updated! ");
 
                 return true;

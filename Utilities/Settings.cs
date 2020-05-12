@@ -103,6 +103,7 @@ namespace QuantumHangar
         public ObservableCollection<PublicOffers> PublicOffers { get => _PublicOffers; set => SetValue(ref _PublicOffers, value); }
 
 
+
         private bool _CrossServerEcon = false;
         public bool CrossServerEcon { get => _CrossServerEcon; set => SetValue(ref _CrossServerEcon, value); }
 
@@ -121,12 +122,28 @@ namespace QuantumHangar
         private int _AutoHangarDayAmount = 20;
         public int AutoHangarDayAmount { get => _AutoHangarDayAmount; set => SetValue(ref _AutoHangarDayAmount, value); }
 
+        private bool _HangarGridsFallenInPlanet = false;
+        public bool HangarGridsFallenInPlanet { get => _HangarGridsFallenInPlanet; set => SetValue(ref _HangarGridsFallenInPlanet, value); }
+
+        private bool _KeepPlayersLargestGrid = false;
+        public bool KeepPlayersLargestGrid { get => _KeepPlayersLargestGrid; set => SetValue(ref _KeepPlayersLargestGrid, value); }
+
+        private bool _AutoHangarStaticGrids = true;
+        public bool AutoHangarStaticGrids { get => _AutoHangarStaticGrids; set => SetValue(ref _AutoHangarStaticGrids, value); }
+
+        private bool _AutoHangarLargeGrids = true;
+        public bool AutoHangarLargeGrids { get => _AutoHangarLargeGrids; set => SetValue(ref _AutoHangarLargeGrids, value); }
+
+        private bool _AutoHangarSmallGrids = true;
+        public bool AutoHangarSmallGrids { get => _AutoHangarSmallGrids; set => SetValue(ref _AutoHangarSmallGrids, value); }
 
 
+        private bool _OnLoadTransfer = false;
+        public bool OnLoadTransfer { get => _OnLoadTransfer; set => SetValue(ref _OnLoadTransfer, value); }
 
         //ExtendedConfigs
 
-            //Single slot
+        //Single slot
         private int _SingleMaxBlocks = 0;
         public int SingleMaxBlocks { get => _SingleMaxBlocks; set => SetValue(ref _SingleMaxBlocks, value); }
 

@@ -64,7 +64,7 @@ namespace QuantumHangar
 
             }catch(Exception e)
             {
-                Main.Debug("Unable to save file @" + dir, e, Main.ErrorType.Fatal);
+                Main.Debug("Unable to save file @" + dir, e, Main.ErrorType.Trace);
             }
 
 
@@ -102,6 +102,9 @@ namespace QuantumHangar
 
         }
     }
+
+
+    
 
     [ProtoContract]
     public class Message
@@ -156,6 +159,12 @@ namespace QuantumHangar
         [ProtoMember(19)] public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
         [ProtoMember(20)] public byte[] GridDefinition;
 
+
+
+
+        //We do not send this to the block. We just keep this in the market item
+        [ProtoIgnore] public Dictionary<ulong, int> PlayerPurchases = new Dictionary<ulong, int>();
+
     }
 
     public class PlayerAccount
@@ -164,6 +173,7 @@ namespace QuantumHangar
         public ulong SteamID;
         public long AccountBalance;
         public bool AccountAdjustment;
+
 
         public PlayerAccount()
         {
@@ -194,6 +204,7 @@ namespace QuantumHangar
     {
         public List<GridsForSale> GridDefinition = new List<GridsForSale>();
         public List<MarketList> List = new List<MarketList>();
+       
     }
 
     public class CrossServerMessage
@@ -216,7 +227,6 @@ namespace QuantumHangar
         public bool Forsale { get; set; }
         public int NumberOfBuys { get; set; }
 
-        //public Dictionary<ulong, int> PlayersPurchased = new Dictionary<ulong, int>();
     }
 
     public class TimeStamp
@@ -229,6 +239,7 @@ namespace QuantumHangar
     {
         public List<GridStamp> Grids = new List<GridStamp>();
         public TimeStamp Timer;
+        public List<GridStamp> GridBackups = new List<GridStamp>();
     }
 
     public class GridStamp

@@ -27,6 +27,7 @@ namespace QuantumHangar
 {
 
     [Torch.Commands.Category("hangar")]
+    
     public class ChatCommands : CommandModule
     {
         public const ushort NETWORK_ID = 8934;
@@ -133,8 +134,6 @@ namespace QuantumHangar
 
             });
         }
-
-
 
         [Command("load", "Loads given grid from hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -758,8 +757,6 @@ namespace QuantumHangar
             //myAccountInfo.Balance
         }
 
-
-
         [Command("info", "Provides information about the ship in your hangar")]
         [Permission(MyPromoteLevel.None)]
         public void HangarDetails(string GridNameOrNumber)
@@ -1209,7 +1206,7 @@ namespace QuantumHangar
         }
 
         [Command("info", "Provides information about the ship in your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.SpaceMaster)]
         public void HangarDetails(string NameOrID, string GridNameOrNumber)
         {
             Parallel.Invoke(() =>
@@ -1342,7 +1339,7 @@ namespace QuantumHangar
         }
 
         [Command("removeoffer", "Removes active grid from market")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.SpaceMaster)]
         public void RemoveOffer(string GridNameOrOfferNumber)
         {
             return;
@@ -1441,6 +1438,20 @@ namespace QuantumHangar
 
 
             });
+        }
+
+        [Command("forceupdate", "updates all players hangar folders. (you can drag/drop/remove .sbc files)")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void ForceUpdate()
+        {
+            var p = Task.Run(() => HangarScans.HangarReset(Plugin.Config.FolderDirectory));
+        }
+
+        [Command("checkgravity", "Checks if player is worthy of thy gravity save")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void checkgravity()
+        {
+            HangarScans.UnderPlanet(Context.Player.GetPosition());
         }
     }
 

@@ -387,8 +387,11 @@ namespace QuantumHangar
             _context.Respond(response, Color.Yellow, "Hangar");
         }
 
+        
+
         public static void Respond(string response, CommandContext context)
         {
+            
             context.Respond(response, Color.Yellow, "Hangar");
         }
     }

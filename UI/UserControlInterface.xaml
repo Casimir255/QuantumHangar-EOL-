@@ -8,15 +8,6 @@
              d:DesignHeight="550" d:DesignWidth="550">
 
     <UserControl.Resources>
-        <ContextMenu x:Key="GridButton">
-
-            <MenuItem Header="Refresh" Click="RefreshItems"/>
-            <MenuItem Header="Delete?" Click="MenuItem_Click_1"/>
-            <Separator />
-            <MenuItem Header="Huh?" />
-            
-            
-        </ContextMenu>
         <converters:EnumBooleanConverter x:Key="enumBooleanConverter" />
         <converters:TextToBoolConverter x:Key="TextToBoolConverter"/>
     </UserControl.Resources>
@@ -67,11 +58,10 @@
                                 </Bold>
                                 <LineBreak/>
                                
-                                -Optimizations and improvements! (Use more background workers)<LineBreak/>
+                                -Optimizations and improvements!<LineBreak/>
                                 -Fix the console block to auto-center<LineBreak/>
-                                -Solid projection<LineBreak/>
                                 -Move ALL sell features to the block. (No player commands)<LineBreak/>
-                                -String formats (For pricing)<LineBreak/>
+                                -String formatting (For pricing)<LineBreak/>
                                 
                                             
 
@@ -82,7 +72,8 @@
                                     <Hyperlink>https://steamcommunity.com/sharedfiles/filedetails/?id=2015575529</Hyperlink><LineBreak/>
                                     For tutorial on how to use:<LineBreak/>
                                     <Hyperlink>https://youtu.be/Ck0DMqywC-w</Hyperlink><LineBreak/>
-                                    
+                                    For reporting bugs, requests, and features:<LineBreak/>
+                                    <Hyperlink>https://github.com/BobDaRoss/QuantumHangarIssues/issues</Hyperlink>
                                     
                                 </Bold>
                             </TextBlock>
@@ -131,6 +122,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
@@ -161,8 +153,10 @@
 
                                     <TextBlock Grid.Column="0" Grid.Row ="10" Margin="3" Grid.ColumnSpan="2" ToolTip="Only single grids in your hangar. (no connectors etc)">Allow saving of subgrids (Connectors and Gear): <LineBreak/> pistons/rotors are included by default!</TextBlock>
                                     <CheckBox Grid.Row="10" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding EnableSubGrids}"/>
-                                    
-                                    
+
+
+                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="11" Text="TransferGrid on load (Cross-Server without Sync)"  Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="This is useful if you are not using cross server sync plugins. Note there are exploits in doing this"/>
+                                    <CheckBox Grid.Row="11" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding OnLoadTransfer}"> (Will transfer Authorship/Ownership)</CheckBox>
                                 </Grid>
                             </GroupBox>
 
@@ -259,7 +253,7 @@
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="140"/>
                                         <ColumnDefinition Width="280"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
@@ -277,21 +271,21 @@
                                     <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
                                     <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxPCU}"/>
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="Allow Static Grids" Margin="3"/>
+                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="Allow Static Grids:" Margin="3"/>
                                     <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AllowStaticGrids}">(On/Off)</CheckBox>
                                     <TextBlock Grid.Column="1" Grid.Row ="2" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="2" Width="100" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxStaticGrids}" IsEnabled="{Binding AllowStaticGrids}"/>
+                                    <TextBox Grid.Column="3" Grid.Row="2" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxStaticGrids}" IsEnabled="{Binding AllowStaticGrids}"/>
 
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="Allow Large Grids" Margin="3"/>
+                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="Allow Large Grids:" Margin="3"/>
                                     <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AllowLargeGrids}">(On/Off)</CheckBox>
                                     <TextBlock Grid.Column="1" Grid.Row ="3" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="3" Width="100" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxLargeGrids}" IsEnabled="{Binding AllowLargeGrids}"/>
+                                    <TextBox Grid.Column="3" Grid.Row="3" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxLargeGrids}" IsEnabled="{Binding AllowLargeGrids}"/>
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="Allow Small Grids" Margin="3"/>
+                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="Allow Small Grids:" Margin="3"/>
                                     <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AllowSmallGrids}">(On/Off)</CheckBox>
                                     <TextBlock Grid.Column="1" Grid.Row ="4" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="4" Width="100" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxSmallGrids}" IsEnabled="{Binding AllowSmallGrids}"/>
+                                    <TextBox Grid.Column="3" Grid.Row="4" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxSmallGrids}" IsEnabled="{Binding AllowSmallGrids}"/>
                                 </Grid>
                                 
                                 
@@ -308,7 +302,7 @@
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="155"/>
                                         <ColumnDefinition Width="280"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
@@ -327,17 +321,62 @@
                                     <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxPCU}"/>
 
                                     <TextBlock Grid.Column="0" Grid.Row ="2" Grid.ColumnSpan="2" Text="Max Amount of Static grids:"  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="2" Width="100" HorizontalAlignment="Right" Margin="2" Text="{Binding TotalMaxStaticGrids}"/>
+                                    <TextBox Grid.Column="1" Grid.Row="2" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxStaticGrids}"/>
 
                                     <TextBlock Grid.Column="0" Grid.Row ="3" Grid.ColumnSpan="2" Text="Max Amount of Large grids: "  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="3" Width="100" HorizontalAlignment="Right" Margin="2" Text="{Binding TotalMaxLargeGrids}" />
+                                    <TextBox Grid.Column="1" Grid.Row="3" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxLargeGrids}" />
 
                                     <TextBlock Grid.Column="0" Grid.Row ="4" Grid.ColumnSpan="2" Text="Max Amount of Small grids:"  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="4" Width="100" HorizontalAlignment="Right" Margin="2" Text="{Binding TotalMaxSmallGrids}" />
+                                    <TextBox Grid.Column="1" Grid.Row="4" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxSmallGrids}" />
 
                                 </Grid>
 
 
+                            </GroupBox>
+
+                            <GroupBox IsEnabled="{Binding AutoHangarGrids}">
+                                <GroupBox.Header>
+                                    <TextBlock>
+                                        <Span FontWeight="Bold">AutoHangar Configs</Span>
+                                        <Span>Configs for AutoHangar</Span>
+                                    </TextBlock>
+
+                                </GroupBox.Header>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="0" Text="AutoHangar grids that fall into Planet:" Margin="3"/>
+                                    <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding HangarGridsFallenInPlanet}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
+
+                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="1" Text="Keep Player's largest grid in game:" Margin="3"/>
+                                    <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding KeepPlayersLargestGrid}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
+
+                                    
+                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="AutoHangar Static Grids:" Margin="3"/>
+                                    <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AutoHangarStaticGrids}">(On/Off)</CheckBox>
+
+
+                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="AutoHangar Large Grids:" Margin="3"/>
+                                    <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoHangarLargeGrids}">(On/Off)</CheckBox>
+
+
+                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="AutoHangar Small Grids:" Margin="3"/>
+                                    <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AutoHangarSmallGrids}">(On/Off)</CheckBox>
+                                    
+                                   
+
+                                </Grid>
                             </GroupBox>
 
                             <GroupBox>
