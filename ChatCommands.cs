@@ -22,6 +22,7 @@ using VRage.Game.ObjectBuilders.ComponentSystem;
 using BankingAndCurrency = Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.GameSystems;
 using System.ComponentModel;
+using Sandbox.Game.Multiplayer;
 
 namespace QuantumHangar
 {
@@ -58,11 +59,18 @@ namespace QuantumHangar
                     return;
                 }
 
-                if (!HangarChecks.CheckGravity(Context, Plugin))
+
+
+                if (!HangarChecks.CheckSaveLocationRestriction(Context, Plugin))
                 {
                     return;
                 }
 
+
+                if (!HangarChecks.CheckGravity(Context, Plugin))
+                {
+                    return;
+                }
 
                 //Check Player Hangar Limits
                 if (!HangarChecks.CheckHanagarLimits(Context, Plugin, out PlayerInfo Data))
@@ -167,6 +175,11 @@ namespace QuantumHangar
                     return;
                 }
 
+
+                if (!HangarChecks.CheckLoadLocationRestriction(Context, Plugin))
+                {
+                    return;
+                }
 
                 if (!HangarChecks.CheckGravity(Context, Plugin))
                 {
@@ -385,18 +398,19 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.None)]
         public void GridSell(string GridNameOrNumber, string price, string description)
         {
+            if (!Plugin.Config.PluginEnabled || !Plugin.Config.GridMarketEnabled)
+            {
+                Chat.Respond("GridMarket is not enabled!", Context);
+                return;
+            }
+                
+
             var t = Task.Run(() => TaskedGridSell(Context, Plugin, GridNameOrNumber, price, description));
         }
         private static void TaskedGridSell(CommandContext Context, Main Plugin, string GridNameOrNumber, string price, string description)
         {
             //Put in background worker
             Chat chat = new Chat(Context);
-            if (!Plugin.Config.PluginEnabled || !Plugin.Config.GridMarketEnabled)
-            {
-                chat.Respond("Grid Market is not enabled!");
-                return;
-            }
-
 
             if (Context.Player == null)
             {
@@ -528,10 +542,12 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.None)]
         public void RemoveOffer(string GridNameOrNumber)
         {
+            if (!Plugin.Config.PluginEnabled || !Plugin.Config.GridMarketEnabled)
+                return;
+
             Parallel.Invoke(() =>
             {
-                if (!Plugin.Config.PluginEnabled)
-                    return;
+
 
                 Chat chat = new Chat(Context);
 
@@ -1039,7 +1055,7 @@ namespace QuantumHangar
         public void RunAuto()
         {
             Main.Debug("Attempting Autohangar!");
-            //Stamp.AddHours(.5);
+            //AutoHangarStamp.AddHours(.5);
             BackgroundWorker worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(HangarScans.AutoHangar);
             worker.RunWorkerAsync(Plugin.Config);
@@ -1440,19 +1456,25 @@ namespace QuantumHangar
             });
         }
 
-        [Command("forceupdate", "updates all players hangar folders. (you can drag/drop/remove .sbc files)")]
+        [Command("forceupdate", "updates all players hangar folders. (you can remove files)")]
         [Permission(MyPromoteLevel.Admin)]
         public void ForceUpdate()
         {
             var p = Task.Run(() => HangarScans.HangarReset(Plugin.Config.FolderDirectory));
         }
 
-        [Command("checkgravity", "Checks if player is worthy of thy gravity save")]
+        [Command("autohangarinsideplanet", "Scans all grids to see if they are inside voxel")]
         [Permission(MyPromoteLevel.Admin)]
         public void checkgravity()
         {
-            HangarScans.UnderPlanet(Context.Player.GetPosition());
+            Main.Debug("Scanning Grid in voxels!");
+            //AutoHangarStamp.AddHours(.5);
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += new DoWorkEventHandler(HangarScans.UnderPlanet);
+            worker.RunWorkerAsync(Plugin.Config);
+
         }
+
     }
 
 

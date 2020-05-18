@@ -1,4 +1,5 @@
-﻿using Sandbox.Game.World;
+﻿using Sandbox.Game.Multiplayer;
+using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,14 +18,20 @@ namespace QuantumHangar.Utilities
 
         public static void Apply(PatchContext ctx, Main plugin)
         {
-            var SaveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
-            new Type[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
-            if (SaveMethod == null)
+            if (plugin.Config.PluginEnabled)
             {
-                throw new InvalidOperationException("Couldn't find Save");
+
+                var SaveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
+                new Type[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
+                if (SaveMethod == null)
+                {
+                    throw new InvalidOperationException("Couldn't find Save");
+                }
+                ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
+                Plugin = plugin;
+
+
             }
-            ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
-            Plugin = plugin;
         }
 
         private static MethodInfo Method(string name)
@@ -54,6 +61,11 @@ namespace QuantumHangar.Utilities
             if (Plugin == null)
             {
                 Main.Debug("Major Error! Plugin refrence is null!");
+                return;
+            }
+
+            if(!Plugin.Config.PluginEnabled || !Plugin.Config.CrossServerEcon)
+            {
                 return;
             }
             //Saving all online player balances

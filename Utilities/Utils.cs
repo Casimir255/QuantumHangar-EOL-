@@ -36,6 +36,8 @@ using VRage.Network;
 using System.ComponentModel;
 using System.Collections;
 using System.Diagnostics;
+using Sandbox.Game.Entities.Interfaces;
+using SpaceEngineers.Game.Entities.Blocks;
 
 namespace QuantumHangar
 {
@@ -157,6 +159,9 @@ namespace QuantumHangar
                         {
                             foreach (MyObjectBuilder_CubeBlock block in CubeGridDef.CubeBlocks)
                             {
+
+
+
                                 block.Owner = player.Identity.IdentityId;
                                 block.BuiltBy = player.Identity.IdentityId;
                                 //Could turnoff warheads etc here
@@ -302,7 +307,7 @@ namespace QuantumHangar
 
             if (Config.EnableSubGrids)
             {
-
+                //If we include subgrids in the grid grab
 
                 long EntitiyID = character.Entity.EntityId;
 
@@ -317,37 +322,82 @@ namespace QuantumHangar
                 if (groups.Count() > 1)
                     return null;
 
+
                 foreach (var group in groups)
                 {
                     foreach (var node in group.Nodes)
                     {
+                        MyCubeGrid Grid = node.NodeData;
 
-                        MyCubeGrid grid = node.NodeData;
+                        if (Grid.Physics == null)
+                            continue;
 
+                        grids.Add(Grid);
+                    }
 
-                        if (Config.AutoDisconnectGearConnectors)
+                }
+
+                for(int i = 0; i < grids.Count(); i++)
+                {
+                    MyCubeGrid grid = grids[i];
+
+                    if (Config.AutoDisconnectGearConnectors && !grid.BigOwners.Contains(character.GetPlayerIdentityId()))
+                    {
+                        //This disabels enemy grids that have clamped on
+                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
                         {
-                            bool ClearEntitiyID = true;
-                            foreach (long ID in grid.BigOwners)
-                            {
-                                if (ID != EntitiyID)
-                                {
-                                    ClearEntitiyID = false;
-                                }
-                            }
+                            gear.AutoLock = false;
+                            gear.RequestLock(false);
+                        }
 
-                            if (!ClearEntitiyID)
+                    }
+                    else if (Config.AutoDisconnectGearConnectors && grid.BigOwners.Contains(character.GetPlayerIdentityId()))
+                    {
+                        //This will check to see 
+                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                        {
+                            IMyEntity Grid = gear.GetAttachedEntity();
+                            if (Grid == null || Grid.EntityId == 0)
                             {
                                 continue;
                             }
+
+                            MyCubeGrid attactedGrid = (MyCubeGrid)Grid;
+                            if ((MyCubeGrid)attactedGrid == null || attactedGrid.EntityId == 0)
+                            {
+                                //If grid is attacted to voxel or something
+                                gear.AutoLock = false;
+                                gear.RequestLock(false);
+
+                                continue;
+                            }
+
+                            
+                            //If the attaced grid is enemy
+                            if (!attactedGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
+                            {
+                                gear.AutoLock = false;
+                                gear.RequestLock(false);
+
+                            }
                         }
-
-                        if (grid.Physics == null)
-                            continue;
-
-                        grids.Add(grid);
                     }
                 }
+
+
+                for (int i = 0; i < grids.Count(); i++)
+                {
+                    if (!grids[i].BigOwners.Contains(character.GetPlayerIdentityId()))
+                    {
+                        grids.RemoveAt(i);
+                    }
+                }
+
+
+
+
+
+
 
             }
             else
@@ -364,12 +414,23 @@ namespace QuantumHangar
                 if (groups.Count > 1)
                     return null;
 
+
+
+
                 foreach (var group in groups)
                 {
                     foreach (var node in group.Nodes)
                     {
 
                         MyCubeGrid grid = node.NodeData;
+
+
+                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                        {
+                            gear.AutoLock = false;
+                            gear.RequestLock(false);
+                        }
+
 
                         if (grid.Physics == null)
                             continue;
@@ -719,10 +780,6 @@ namespace QuantumHangar
                     {
 
                         MyCubeGrid grid = node.NodeData;
-
-
-
-
 
 
                         if (grid.Physics == null)
@@ -1837,6 +1894,52 @@ namespace QuantumHangar
         }
 
 
+        public static bool CheckSaveLocationRestriction(CommandContext Context, Main Plugin)
+        {
+            if (Plugin.Config.RestrictSavingAroundPoint)
+            {
+                //Get save point
+                Vector3D SavePoint = new Vector3D(Plugin.Config.SavePointX, Plugin.Config.SavePointY, Plugin.Config.SavePointZ);
+
+                Vector3D PlayerPosition = Context.Player.GetPosition();
+
+
+                if (Vector3D.Distance(SavePoint, PlayerPosition) > Plugin.Config.SavePointR * 1000)
+                {
+
+                    Chat chat = new Chat(Context);
+                    chat.Respond("You are not within " + Plugin.Config.SavePointR * 1000 + "m of the save point: " + SavePoint.ToString());
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static bool CheckLoadLocationRestriction(CommandContext Context, Main Plugin)
+        {
+            if (Plugin.Config.RestrictLoadingAroundPoint)
+            {
+                //Get save point
+                Vector3D LoadPoint = new Vector3D(Plugin.Config.LoadPointX, Plugin.Config.LoadPointY, Plugin.Config.LoadPointZ);
+
+                Vector3D PlayerPosition = Context.Player.GetPosition();
+
+
+                if (Vector3D.Distance(LoadPoint, PlayerPosition) > Plugin.Config.LoadPointR * 1000)
+                {
+
+                    Chat chat = new Chat(Context);
+                    chat.Respond("You are not within " + Plugin.Config.LoadPointR * 1000 + "m of the load point: " + LoadPoint.ToString());
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
 
         //Hagar Load
 
@@ -2670,7 +2773,6 @@ namespace QuantumHangar
                 Main.Debug("AutoHangar: Total players to check-" + ExportPlayerIdentities.Count());
                 int GridCounter = 0;
 
-                bool HangarGrid = true;
                 //This gets all the grids
                 foreach (MyIdentity player in ExportPlayerIdentities)
                 {
@@ -3097,39 +3199,190 @@ namespace QuantumHangar
         }
 
 
-        public static bool UnderPlanet(Vector3D Position)
+        public static void UnderPlanet(object sender, DoWorkEventArgs e)
         {
-            if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Position)))
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            int GridCounter = 0;
+
+            Settings Config = (Settings)e.Argument;
+            Dictionary<long, List<Result> > ToSaveGrids = new Dictionary<long, List<Result>>();
+
+            Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
             {
-                MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(Position);
 
-                Main.Debug("Planet Min Radius: " + planet.MinimumRadius);
-
-                double distance = Vector3D.Distance(Position, planet.PositionComp.GetPosition());
-
-                Main.Debug("Your distance from center: " + distance);
-
-
-                if (distance < planet.MinimumRadius * .7)
+                List<MyCubeGrid> gridList = new List<MyCubeGrid>();
+                var BiggestGrid = group.Nodes.First().NodeData;
+                Result result = new Result();
+                foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
                 {
-                    //Will save grid!
-                    Main.Debug("Will save grid");
-                    return true;
+
+                    MyCubeGrid grid = groupNodes.NodeData;
+
+                    if (grid.Physics == null)
+                        continue;
+
+                    if (grid.BlocksCount > BiggestGrid.BlocksCount)
+                    {
+                        BiggestGrid = grid;
+                    }
+
+                    gridList.Add(grid);
+                }
+
+
+                if(gridList.Count == 0)
+                {
+                    return;
+                }
+
+                result.grids = gridList;
+                result.biggestGrid = BiggestGrid;
+
+
+               
+
+
+                Vector3D Position = BiggestGrid.PositionComp.GetPosition();
+                if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Position)))
+                {
+                    MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(Position);
+
+                    //Main.Debug("Planet Min Radius: " + planet.MinimumRadius);
+
+                    double distance = Vector3D.Distance(Position, planet.PositionComp.GetPosition());
+
+                    //Main.Debug("Your distance from center: " + distance);
+
+                    if (distance < planet.MinimumRadius * .7)
+                    {
+                        //Will save grid!
+                        Main.Debug("Will save grid");
+
+                        if (ToSaveGrids.ContainsKey(BiggestGrid.BigOwners[0]))
+                        {
+                            //Dictionary already contains grid!
+                            ToSaveGrids[BiggestGrid.BigOwners[0]].Add(result);
+                        }
+                        else
+                        {
+                            List<Result> AllGrids = new List<Result>();
+                            AllGrids.Add(result);
+                            ToSaveGrids.Add(BiggestGrid.BigOwners[0], AllGrids);
+                        }
+
+
+                        return;
+                    }
+                    else
+                    {
+                        return;
+                    }
+
                 }
                 else
                 {
-                    Main.Debug("Wont save grid");
-                    return false;
+                    return;
                 }
 
-            }
-            else
+
+            });
+
+
+            //Attempt save!
+            foreach (var item in ToSaveGrids)
             {
-                return false;
+                ulong id = 0;
+                try
+                {
+                    id = MySession.Static.Players.TryGetSteamId(item.Key);
+                }
+                catch
+                {
+                    Main.Debug("Identitiy doesnt have a SteamID! Shipping!");
+                    continue;
+                }
+
+
+                if (id == 0)
+                {
+                    //Sanity check
+                    continue;
+                }
+
+
+                string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
+                PlayerInfo Data = new PlayerInfo();
+                //Get PlayerInfo from file
+                try
+                {
+                    Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(path, "PlayerInfo.json")));
+                }
+                catch
+                {
+                    //No hangar made!
+                }
+
+
+                foreach(Result R in item.Value)
+                {
+                    //Fix invalid characters
+                    string GridName = FileSaver.CheckInvalidCharacters(R.biggestGrid.DisplayName);
+                    if (Data.Grids.Any(x => x.GridName == GridName))
+                    {
+                        //There is already a grid with that name!
+                        bool NameCheckDone = false;
+                        int a = 0;
+                        while (!NameCheckDone)
+                        {
+                            a++;
+                            if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
+                            {
+                                NameCheckDone = true;
+                                break;
+                            }
+
+                        }
+                        //Main.Debug("Saving grid name: " + GridName);
+                        GridName = GridName + "[" + a + "]";
+                        R.grids[0].DisplayName = GridName;
+                        R.biggestGrid.DisplayName = GridName;
+                    }
+
+                    R.biggestGrid.DisplayName = GridName;
+                    if (GridMethods.BackupSignleGridStatic(Config.FolderDirectory, id, R.grids, null, true))
+                    {
+                        //Load player file and update!
+                        //Fill out grid info and store in file
+                        HangarChecks.GetBPDetails(R, Config, out GridStamp Grid);
+
+                        Grid.GridName = GridName;
+                        Data.Grids.Add(Grid);
+
+
+                        foreach (MyCubeGrid grid in R.grids)
+                        {
+                            grid.Close();
+                        }
+
+                        GridCounter += 1;
+                        Main.Debug(R.biggestGrid.DisplayName + " was sent to Hangar due to inside planet!");
+                    }
+                    else
+                        Main.Debug(R.biggestGrid.DisplayName + " FAILED to Hangar due to inside planet!");
+                }
+
+                //Save file
+                FileSaver.Save(Path.Combine(path, "PlayerInfo.json"), Data);
+
             }
 
 
+            stopwatch.Stop();
+            TimeSpan ts = stopwatch.Elapsed;
 
+            Main.Debug("PlanetHangar: Finished Hangaring [" + GridCounter + "] grids! Action took: " + ts.ToString());
         }
 
     }
@@ -3204,7 +3457,7 @@ namespace QuantumHangar
         {
             try
             {
-
+                
                 long IdentityID = MySession.Static.Players.TryGetIdentityId(Account.SteamID);
 
                 if (IdentityID == 0)

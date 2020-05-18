@@ -32,6 +32,40 @@ namespace QuantumHangar
         private bool _GridMarketEnabled = false;
         public bool GridMarketEnabled { get => _GridMarketEnabled; set => SetValue(ref _GridMarketEnabled, value); }
 
+
+        //Saving & Loading around a point:
+        private bool _RestrictSavingAroundPoint = false;
+        public bool RestrictSavingAroundPoint { get => _RestrictSavingAroundPoint; set => SetValue(ref _RestrictSavingAroundPoint, value); }
+
+        private double _SavePointX = 0;
+        public double SavePointX { get => _SavePointX; set => SetValue(ref _SavePointX, value); }
+
+        private double _SavePointY = 0;
+        public double SavePointY { get => _SavePointY; set => SetValue(ref _SavePointY, value); }
+
+        private double _SavePointZ = 0;
+        public double SavePointZ { get => _SavePointZ; set => SetValue(ref _SavePointZ, value); }
+
+        private double _SavePointR = 5;
+        public double SavePointR { get => _SavePointR; set => SetValue(ref _SavePointR, value); }
+
+
+        private bool _RestrictLoadingAroundPoint = false;
+        public bool RestrictLoadingAroundPoint { get => _RestrictLoadingAroundPoint; set => SetValue(ref _RestrictLoadingAroundPoint, value); }
+
+        private double _LoadPointX = 0;
+        public double LoadPointX { get => _LoadPointX; set => SetValue(ref _LoadPointX, value); }
+
+        private double _LoadPointY = 0;
+        public double LoadPointY { get => _LoadPointY; set => SetValue(ref _LoadPointY, value); }
+
+        private double _LoadPointZ = 0;
+        public double LoadPointZ { get => _LoadPointZ; set => SetValue(ref _LoadPointZ, value); }
+
+        private double _LoadPointR = 5;
+        public double LoadPointR { get => _LoadPointR; set => SetValue(ref _LoadPointR, value); }
+
+
         private bool _EnableBlackListBlocks = false;
         public bool EnableBlackListBlocks { get => _EnableBlackListBlocks; set => SetValue(ref _EnableBlackListBlocks, value); }
 

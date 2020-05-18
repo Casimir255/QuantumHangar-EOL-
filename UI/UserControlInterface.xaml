@@ -24,23 +24,19 @@
 
         <TextBlock Grid.Column="0" Grid.Row ="0" VerticalAlignment="Center" Text="Quantum Hangar" FontWeight="Bold" FontSize="16" Margin="3"/>
 
+        <TabControl x:Name="TabController" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SelectionChanged="TabController_SelectionChanged">
+            <TabItem x:Name="Info" Header="Info">
+                <Grid Name="HangarInfo" ScrollViewer.CanContentScroll="True">
 
-        <ScrollViewer Grid.Column="0" Grid.Row ="1" VerticalScrollBarVisibility="Auto">
-            <Grid Name="Commands" ScrollViewer.CanContentScroll="True">
-
-                <TabControl x:Name="TabController" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SelectionChanged="TabController_SelectionChanged">
-                    <TabItem x:Name="Info" Header="Info">
-                        <Grid Name="HangarInfo" ScrollViewer.CanContentScroll="True">
-
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Description:" Margin="3" Grid.ColumnSpan="1" FontWeight="Bold"/>
-                            <TextBlock Grid.Column="1" Grid.ColumnSpan="3" Grid.Row ="1" Grid.RowSpan="3" Margin="3" TextWrapping="Wrap">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Description:" Margin="3" Grid.ColumnSpan="1" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Grid.ColumnSpan="3" Grid.Row ="1" Grid.RowSpan="3" Margin="3" TextWrapping="Wrap">
                                     This plugin saves and loads grids and subgrids from a specified directory.
                     
                     
@@ -76,12 +72,21 @@
                                     <Hyperlink>https://github.com/BobDaRoss/QuantumHangarIssues/issues</Hyperlink>
                                     
                                 </Bold>
-                            </TextBlock>
+                    </TextBlock>
 
-                        </Grid>
-                    </TabItem>
-                    <TabItem x:Name="HConfig" Header="Hangar Configs">
-                        <Grid Name="HangarConfigs" ScrollViewer.CanContentScroll="True">
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="HConfig" Header="Hangar Configs">
+
+                <StackPanel>
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <Bold>
+                                Basic Hangar Configs
+                            </Bold>
+                        </GroupBox.Header>
+
+                        <Grid>
 
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="130"/>
@@ -93,339 +98,135 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <GroupBox Grid.ColumnSpan="3" Grid.Column="0">
-                                <GroupBox.Header>
-                                    <Bold>
-                                        Basic Hangar Configs
-                                    </Bold>
-                                </GroupBox.Header>
-                                
-                                <Grid>
-
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <CheckBox x:Name="Enabled" Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding PluginEnabled}"/>
-                                    <TextBlock Grid.Column="0" Grid.Row ="5" Text="Wait time between commands in minutes:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <TextBlock Grid.Column="0" Grid.Row ="6" Text="Enemy player minimum distance check in meters:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
+                            <CheckBox x:Name="Enabled" Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding PluginEnabled}"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="5" Text="Wait time between commands in minutes:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="6" Text="Enemy player minimum distance check in meters:" Margin="3" Grid.ColumnSpan="2"/>
 
 
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="7" Text="Normal (No scripter level) player hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <TextBlock Grid.Column="0" Grid.Row ="8" Text="Scripter level (and above) player hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="7" Text="Normal (No scripter level) player hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="8" Text="Scripter level (and above) player hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="Hangar Directory Folder:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <TextBox Grid.Column="2" Grid.Row="4" Width="240" HorizontalAlignment="Left" Margin="2" Text="{Binding FolderDirectory}"/>
-                                    <TextBox Grid.Column="2" Grid.Row="5" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding WaitTime}"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="4" Text="Hangar Directory Folder:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBox Grid.Column="2" Grid.Row="4" Width="240" HorizontalAlignment="Left" Margin="2" Text="{Binding FolderDirectory}"/>
+                            <TextBox Grid.Column="2" Grid.Row="5" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding WaitTime}"/>
 
-                                    <TextBox Grid.Column="2" Grid.Row="6" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding DistanceCheck}"/>
-                                    <TextBox Grid.Column="2" Grid.Row="7" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding NormalHangarAmount}"/>
-                                    <TextBox Grid.Column="2" Grid.Row="8" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding ScripterHangarAmount}"/>
-                                    
-                                    <TextBlock Grid.Column="0" Grid.Row ="9" Text="Auto-Hangar grids:" Margin="3" Grid.ColumnSpan="2" ToolTip="Will ignore hangar limits"/>
-                                    <CheckBox Grid.Row="9" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding AutoHangarGrids}"/>
-                                    <TextBlock Grid.Column="1" Grid.Row ="9" Text="After (X) Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Column="2" Grid.Row="9" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmount}" IsEnabled="{Binding AutoHangarGrids}"/>
-                                    <CheckBox Grid.Row="9" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0" IsChecked="{Binding DeleteRespawnPods}" IsEnabled="{Binding AutoHangarGrids}" ToolTip="This will instead delete respawn pods instead of sending them to the Hangar">
-                                        Delete Respawn-Pods?
-                                    </CheckBox>
+                            <TextBox Grid.Column="2" Grid.Row="6" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding DistanceCheck}"/>
+                            <TextBox Grid.Column="2" Grid.Row="7" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding NormalHangarAmount}"/>
+                            <TextBox Grid.Column="2" Grid.Row="8" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding ScripterHangarAmount}"/>
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="10" Margin="3" Grid.ColumnSpan="2" ToolTip="Only single grids in your hangar. (no connectors etc)">Allow saving of subgrids (Connectors and Gear): <LineBreak/> pistons/rotors are included by default!</TextBlock>
-                                    <CheckBox Grid.Row="10" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding EnableSubGrids}"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="9" Text="Auto-Hangar grids:" Margin="3" Grid.ColumnSpan="2" ToolTip="Will ignore hangar limits"/>
+                            <CheckBox Grid.Row="9" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding AutoHangarGrids}"/>
+                            <TextBlock Grid.Column="1" Grid.Row ="9" Text="After (X) Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Grid.Row="9" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmount}" IsEnabled="{Binding AutoHangarGrids}"/>
+                            <CheckBox Grid.Row="9" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0" IsChecked="{Binding DeleteRespawnPods}" IsEnabled="{Binding AutoHangarGrids}" ToolTip="This will instead delete respawn pods instead of sending them to the Hangar">
+                                Delete Respawn-Pods?
+                            </CheckBox>
 
-
-                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="11" Text="TransferGrid on load (Cross-Server without Sync)"  Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="This is useful if you are not using cross server sync plugins. Note there are exploits in doing this"/>
-                                    <CheckBox Grid.Row="11" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding OnLoadTransfer}"> (Will transfer Authorship/Ownership)</CheckBox>
-                                </Grid>
-                            </GroupBox>
-
-                            
-                          
-                            <GroupBox Grid.ColumnSpan="3" Grid.Row="1">
-                                <GroupBox.Header>
-                                    <Bold>
-                                        Block Blacklist
-                                    </Bold>
-                                </GroupBox.Header>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+                            <TextBlock Grid.Column="0" Grid.Row ="10" Margin="3" Grid.ColumnSpan="2" ToolTip="Only single grids in your hangar. (no connectors etc)">Allow saving of subgrids (Connectors and Gear): <LineBreak/> pistons/rotors are included by default!</TextBlock>
+                            <CheckBox Grid.Row="10" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding EnableSubGrids}"/>
 
 
+                            <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="11" Text="TransferGrid on load (Cross-Server without Sync)"  Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="This is useful if you are not using cross server sync plugins. Note there are exploits in doing this"/>
+                            <CheckBox Grid.Row="11" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding OnLoadTransfer}">(Will transfer Authorship/Ownership)</CheckBox>
+                        </Grid>
+                    </GroupBox>
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Enable Blacklist:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <CheckBox x:Name="BlacklistEnabled" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding EnableBlackListBlocks}">(On/Off)</CheckBox>
-                                    <RadioButton x:Name="ServerBLimits" IsEnabled="{Binding EnableBlackListBlocks}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="BlackList" IsChecked="{Binding SBlockLimits}">Server Blocklimits</RadioButton>
-                                    <RadioButton x:Name="CustomBLimits" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="BlackList" IsChecked="{Binding SBlockLimits, Converter={StaticResource TextToBoolConverter}}" HorizontalAlignment="Left" Margin="120,0,0,0">Block Limiter Plugin</RadioButton>
+                    <GroupBox Grid.ColumnSpan="3" Grid.Row="1">
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Saving 	&amp; Loading</Span>
+                                        <Span>(Options to restrict saving 	&amp; loading to specific points. Player needs to be )</Span>
+                            </TextBlock>
 
-                                </Grid>
-                            </GroupBox>
+                        </GroupBox.Header>
 
-                            <GroupBox Grid.ColumnSpan="3" Grid.Row="2">
-                                <GroupBox.Header>
-                                    <Bold>
-                                        Save to Hangar Cost
-                                    </Bold>
-                                </GroupBox.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="25"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="80"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                                <Grid>
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Restrict Saving:" Margin="3" Grid.ColumnSpan="2"/>
+                            <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding RestrictSavingAroundPoint}"/>
 
-                                    <Grid.Resources>
-                                        
-                                    </Grid.Resources>
-                                    
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal" Grid.Column="2" Grid.Row ="0" IsEnabled="{Binding RestrictSavingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="X:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding SavePointX}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="3" Grid.Row ="0" IsEnabled="{Binding RestrictSavingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="Y:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding SavePointY}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="4" Grid.Row ="0" IsEnabled="{Binding RestrictSavingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="Z:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding SavePointZ}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="5" Grid.Row ="0" IsEnabled="{Binding RestrictSavingAroundPoint}" ToolTip="Radius about point in (Km)">
+                                <TextBlock Text="R:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding SavePointR}"/>
+                            </StackPanel>
 
 
-                                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require Currency:" Margin="3" Grid.ColumnSpan="2"/>
-                                    <CheckBox x:Name="RequireCredits" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding RequireCurrency}">(On/Off)</CheckBox>
 
-                                    <RadioButton x:Name="BlockCount" IsEnabled="{Binding RequireCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0" Checked="RadioButton_Checked">By BlockCount</RadioButton>
-                                    <RadioButton x:Name="PerGrid" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0" Checked="RadioButton_Checked">Price Per Grid</RadioButton>
-                                    <RadioButton x:Name="FixedPrice" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0" Checked="RadioButton_Checked">Fixed Price</RadioButton>
-                                    <TextBox x:Name="StaticGBox" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomStaticGridCurrency}" />
-                                    <TextBlock x:Name="StaticGText" Grid.Column="1" Grid.Row ="1" Text="Static Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
-                                    <TextBox x:Name="LargeGBox"  IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomLargeGridCurrency}" />
-                                    <TextBlock x:Name="LargeGText" Grid.Column="1" Grid.Row ="2" Text="Large Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
-                                    <TextBox x:Name="SmallGBox" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomSmallGridCurrency}" />
-                                    <TextBlock  x:Name="SmallGText" Grid.Column="1" Grid.Row ="3" Text="Small Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
 
-                                </Grid>
-                            </GroupBox>
-                            
-                            
+                            <TextBlock Grid.Column="0" Grid.Row ="1" Text="Restrict Loading:" Margin="3" Grid.ColumnSpan="2"/>
+                            <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding RestrictLoadingAroundPoint}"/>
 
+                            <StackPanel Orientation="Horizontal" Grid.Column="2" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="X:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPointX}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="3" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="Y:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPointY}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="4" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="in meters">
+                                <TextBlock Text="Z:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPoint}"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Grid.Column="5" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="Radius about point in (Km)">
+                                <TextBlock Text="R:" Margin="3" VerticalAlignment="Center"/>
+                                <TextBox Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPointR}"/>
+                            </StackPanel>
 
                         </Grid>
 
-                    </TabItem>
-                    <TabItem x:Name="ExtendedConfigs" Header="Extended Configs">
-                        <StackPanel Orientation="Vertical">
+                    </GroupBox>
 
 
-                            <GroupBox>
-                                <GroupBox.Header>
-                                    <TextBlock>
-                                        <Span FontWeight="Bold">Hangar Single-Slot limits</Span>
-                                        <Span>(These are specific limits for each hangar slot on save)</Span>
-                                    </TextBlock>
+                    <GroupBox Grid.ColumnSpan="3" Grid.Row="1">
+                        <GroupBox.Header>
+                            <Bold>
+                                Block Blacklist
+                            </Bold>
+                        </GroupBox.Header>
 
-                                </GroupBox.Header>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140"/>
-                                        <ColumnDefinition Width="280"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Max Blocks:" Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxBlocks}"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxPCU}"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="Allow Static Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AllowStaticGrids}">(On/Off)</CheckBox>
-                                    <TextBlock Grid.Column="1" Grid.Row ="2" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="2" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxStaticGrids}" IsEnabled="{Binding AllowStaticGrids}"/>
-
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="Allow Large Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AllowLargeGrids}">(On/Off)</CheckBox>
-                                    <TextBlock Grid.Column="1" Grid.Row ="3" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="3" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxLargeGrids}" IsEnabled="{Binding AllowLargeGrids}"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="Allow Small Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AllowSmallGrids}">(On/Off)</CheckBox>
-                                    <TextBlock Grid.Column="1" Grid.Row ="4" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
-                                    <TextBox Grid.Column="3" Grid.Row="4" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxSmallGrids}" IsEnabled="{Binding AllowSmallGrids}"/>
-                                </Grid>
-                                
-                                
-                            </GroupBox>
-
-                            <GroupBox>
-                                <GroupBox.Header>
-                                    <TextBlock>
-                                        <Span FontWeight="Bold">Hangar Total limits</Span>
-                                        <Span>(These are <Italic>GLOBAL</Italic> limits for your hangar storage)</Span>
-                                    </TextBlock>
-
-                                </GroupBox.Header>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="155"/>
-                                        <ColumnDefinition Width="280"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Max Blocks:" Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxBlocks}" />
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxPCU}"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="2" Grid.ColumnSpan="2" Text="Max Amount of Static grids:"  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="2" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxStaticGrids}"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Grid.ColumnSpan="2" Text="Max Amount of Large grids: "  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="3" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxLargeGrids}" />
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="4" Grid.ColumnSpan="2" Text="Max Amount of Small grids:"  Margin="3"/>
-                                    <TextBox Grid.Column="1" Grid.Row="4" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxSmallGrids}" />
-
-                                </Grid>
-
-
-                            </GroupBox>
-
-                            <GroupBox IsEnabled="{Binding AutoHangarGrids}">
-                                <GroupBox.Header>
-                                    <TextBlock>
-                                        <Span FontWeight="Bold">AutoHangar Configs</Span>
-                                        <Span>Configs for AutoHangar</Span>
-                                    </TextBlock>
-
-                                </GroupBox.Header>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="0" Text="AutoHangar grids that fall into Planet:" Margin="3"/>
-                                    <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding HangarGridsFallenInPlanet}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
-
-                                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="1" Text="Keep Player's largest grid in game:" Margin="3"/>
-                                    <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding KeepPlayersLargestGrid}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
-
-                                    
-                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="AutoHangar Static Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AutoHangarStaticGrids}">(On/Off)</CheckBox>
-
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="AutoHangar Large Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoHangarLargeGrids}">(On/Off)</CheckBox>
-
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="4" Text="AutoHangar Small Grids:" Margin="3"/>
-                                    <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AutoHangarSmallGrids}">(On/Off)</CheckBox>
-                                    
-                                   
-
-                                </Grid>
-                            </GroupBox>
-
-                            <GroupBox>
-                                <GroupBox.Header>
-                                    <TextBlock>
-                                        <Span FontWeight="Bold">Experimental Configs</Span>
-                                        <Span>(Experimental WIP Configs)</Span>
-                                    </TextBlock>
-
-                                </GroupBox.Header>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Allow saving &amp; loading in gravity:" Grid.ColumnSpan="2" Margin="3"/>
-                                    <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding AllowInGravity}">(On/Off)</CheckBox>
-                                    
-                                    <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding AutoOrientateToSurface}">(On/Off)</CheckBox>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="1" Text="Auto-Orientate to surface:" Grid.ColumnSpan="2" Margin="3"/>
-
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="2" Text="Create Temp-Safezone around grid:" Grid.ColumnSpan="2" Margin="3"/>
-
-                                    <TextBlock Grid.Column="0" Grid.Row ="3" Text="Disconnect Enemy Connectors &amp; Landing gear: " Grid.ColumnSpan="2" Margin="3"/>
-                                    <CheckBox Grid.Column="2" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoDisconnectGearConnectors}">(On/Off)</CheckBox>
-
-
-                                </Grid>
-
-
-                            </GroupBox>
-                        </StackPanel>
-                        
-
-                    </TabItem>
-                    
-                    <TabItem x:Name="MConfig" Header="Hangar Market">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="130"/>
@@ -435,193 +236,459 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-
-
-
-
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Grid Market Configs:" Margin="3" Grid.ColumnSpan="2" FontWeight="Bold"/>
-                            <CheckBox x:Name="MarketEnabled" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding GridMarketEnabled}"/>
-                            <TextBlock Grid.Column="0" Grid.Row ="1" Text="Enable Grid Market (Requires Mod &amp; Restart):" Margin="3" Grid.ColumnSpan="2"/>
-                            <TabControl Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SelectionChanged="TabController_SelectionChanged" IsEnabled="{Binding GridMarketEnabled}">
-                                <TabItem Header="Market Configs">
-                                    <StackPanel Orientation="Vertical">
-                                        <GroupBox>
 
-                                            <GroupBox.Header>
-                                                <TextBlock>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Enable Blacklist:" Margin="3" Grid.ColumnSpan="2"/>
+                            <CheckBox x:Name="BlacklistEnabled" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding EnableBlackListBlocks}">(On/Off)</CheckBox>
+                            <RadioButton x:Name="ServerBLimits" IsEnabled="{Binding EnableBlackListBlocks}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="BlackList" IsChecked="{Binding SBlockLimits}">Server Blocklimits</RadioButton>
+                            <RadioButton x:Name="CustomBLimits" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="BlackList" IsChecked="{Binding SBlockLimits, Converter={StaticResource TextToBoolConverter}}" HorizontalAlignment="Left" Margin="120,0,0,0">Block Limiter Plugin</RadioButton>
+
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Grid.ColumnSpan="3" Grid.Row="2">
+                        <GroupBox.Header>
+                            <Bold>
+                                Save to Hangar Cost
+                            </Bold>
+                        </GroupBox.Header>
+
+                        <Grid>
+                            <Grid.Resources>
+
+                            </Grid.Resources>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require Currency:" Margin="3" Grid.ColumnSpan="2"/>
+                            <CheckBox x:Name="RequireCredits" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding RequireCurrency}">(On/Off)</CheckBox>
+
+                            <RadioButton x:Name="BlockCount" IsEnabled="{Binding RequireCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0" Checked="RadioButton_Checked">By BlockCount</RadioButton>
+                            <RadioButton x:Name="PerGrid" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0" Checked="RadioButton_Checked">Price Per Grid</RadioButton>
+                            <RadioButton x:Name="FixedPrice" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0" Checked="RadioButton_Checked">Fixed Price</RadioButton>
+                            <TextBox x:Name="StaticGBox" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomStaticGridCurrency}" />
+                            <TextBlock x:Name="StaticGText" Grid.Column="1" Grid.Row ="1" Text="Static Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
+                            <TextBox x:Name="LargeGBox"  IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomLargeGridCurrency}" />
+                            <TextBlock x:Name="LargeGText" Grid.Column="1" Grid.Row ="2" Text="Large Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
+                            <TextBox x:Name="SmallGBox" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomSmallGridCurrency}" />
+                            <TextBlock  x:Name="SmallGText" Grid.Column="1" Grid.Row ="3" Text="Small Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
+
+                        </Grid>
+                    </GroupBox>
+
+                </StackPanel>
+
+            </TabItem>
+            <TabItem x:Name="ExtendedConfigs" Header="Extended Configs">
+                <StackPanel Orientation="Vertical">
+
+
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Hangar Single-Slot limits</Span>
+                                        <Span>(These are specific limits for each hangar slot on save)</Span>
+                            </TextBlock>
+
+                        </GroupBox.Header>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="280"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Max Blocks:" Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxBlocks}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxPCU}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="2" Text="Allow Static Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AllowStaticGrids}">(On/Off)</CheckBox>
+                            <TextBlock Grid.Column="1" Grid.Row ="2" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
+                            <TextBox Grid.Column="3" Grid.Row="2" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxStaticGrids}" IsEnabled="{Binding AllowStaticGrids}"/>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="Allow Large Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AllowLargeGrids}">(On/Off)</CheckBox>
+                            <TextBlock Grid.Column="1" Grid.Row ="3" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
+                            <TextBox Grid.Column="3" Grid.Row="3" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxLargeGrids}" IsEnabled="{Binding AllowLargeGrids}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="4" Text="Allow Small Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AllowSmallGrids}">(On/Off)</CheckBox>
+                            <TextBlock Grid.Column="1" Grid.Row ="4" Text="Max Amount (If SubGrids Enabled): " HorizontalAlignment="Right" Margin="3"/>
+                            <TextBox Grid.Column="3" Grid.Row="4" Width="80" HorizontalAlignment="Left" Margin="2" Text="{Binding SingleMaxSmallGrids}" IsEnabled="{Binding AllowSmallGrids}"/>
+                        </Grid>
+
+
+                    </GroupBox>
+
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Hangar Total limits</Span>
+                                        <Span>(These are <Italic>GLOBAL</Italic> limits for your hangar storage)</Span>
+                            </TextBlock>
+
+                        </GroupBox.Header>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="155"/>
+                                <ColumnDefinition Width="280"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Max Blocks:" Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxBlocks}" />
+
+                            <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxPCU}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="2" Grid.ColumnSpan="2" Text="Max Amount of Static grids:"  Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="2" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxStaticGrids}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="3" Grid.ColumnSpan="2" Text="Max Amount of Large grids: "  Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="3" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxLargeGrids}" />
+
+                            <TextBlock Grid.Column="0" Grid.Row ="4" Grid.ColumnSpan="2" Text="Max Amount of Small grids:"  Margin="3"/>
+                            <TextBox Grid.Column="1" Grid.Row="4" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxSmallGrids}" />
+
+                        </Grid>
+
+
+                    </GroupBox>
+
+                    <GroupBox IsEnabled="{Binding AutoHangarGrids}">
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">AutoHangar Configs</Span>
+                                        <Span>Configs for AutoHangar</Span>
+                            </TextBlock>
+
+                        </GroupBox.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="0" Text="AutoHangar grids that fall into Planet (30% below):" Margin="3" ToolTip="Scans every 5min"/>
+                            <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding HangarGridsFallenInPlanet}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
+
+                            <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="1" Text="Keep Player's largest grid in game:" Margin="3"/>
+                            <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding KeepPlayersLargestGrid}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="2" Text="AutoHangar Static Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" IsChecked="{Binding AutoHangarStaticGrids}">(On/Off)</CheckBox>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="AutoHangar Large Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoHangarLargeGrids}">(On/Off)</CheckBox>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="4" Text="AutoHangar Small Grids:" Margin="3"/>
+                            <CheckBox Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" IsChecked="{Binding AutoHangarSmallGrids}">(On/Off)</CheckBox>
+
+
+
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Experimental Configs</Span>
+                                        <Span>(Experimental WIP Configs)</Span>
+                            </TextBlock>
+
+                        </GroupBox.Header>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Allow saving &amp; loading in gravity:" Grid.ColumnSpan="2" Margin="3"/>
+                            <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding AllowInGravity}">(On/Off)</CheckBox>
+
+                            <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding AutoOrientateToSurface}">(On/Off)</CheckBox>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="1" Text="Auto-Orientate to surface:" Grid.ColumnSpan="2" Margin="3"/>
+
+
+                            <TextBlock Grid.Column="0" Grid.Row ="2" Text="Create Temp-Safezone around grid:" Grid.ColumnSpan="2" Margin="3"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="Disconnect Enemy Landing gear (Fixed): " Grid.ColumnSpan="2" Margin="3"/>
+                            <CheckBox Grid.Column="2" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoDisconnectGearConnectors}">(On/Off)</CheckBox>
+
+
+
+
+                        </Grid>
+
+
+                    </GroupBox>
+
+
+                </StackPanel>
+            </TabItem>
+
+            <TabItem x:Name="MConfig" Header="Hangar Market">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+
+
+
+
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="0" Grid.Row ="0" Text="Grid Market Configs:" Margin="3" Grid.ColumnSpan="2" FontWeight="Bold"/>
+                    <CheckBox x:Name="MarketEnabled" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding GridMarketEnabled}"/>
+                    <TextBlock Grid.Column="0" Grid.Row ="1" Text="Enable Grid Market (Requires Mod &amp; Restart):" Margin="3" Grid.ColumnSpan="2"/>
+                    <TabControl Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SelectionChanged="TabController_SelectionChanged" IsEnabled="{Binding GridMarketEnabled}">
+                        <TabItem Header="Market Configs">
+                            <StackPanel Orientation="Vertical">
+                                <GroupBox>
+
+                                    <GroupBox.Header>
+                                        <TextBlock>
                                         <Span FontWeight="Bold">Basic Grid Market Configs</Span>
-                                                </TextBlock>
+                                        </TextBlock>
 
-                                            </GroupBox.Header>
+                                    </GroupBox.Header>
 
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="150"/>
-                                                    <ColumnDefinition Width="160"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-
-
-                                                </Grid.RowDefinitions>
-
-                                              
-
-                                                <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require fee to remove a grid that is on market?" Margin="3" Grid.ColumnSpan="2" ToolTip="Prevents spamming the market/loading a grid for sale"/>
-                                                <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding RequireRestockFee}"/>
-
-                                                <DockPanel Grid.Column="3" Grid.Row ="0" VerticalAlignment="Center">
-                                                    <TextBlock Grid.Column="2" Grid.Row ="3" Text="Cost:" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" DockPanel.Dock="Left"/>
-                                                    <TextBox Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Right" Margin="2" IsEnabled="{Binding RequireRestockFee}" Text="{Binding RestockAmount}" TextChanged="TextBox_TextChanged"/>
-                                                </DockPanel>
-                                                
-                                                <TextBlock Grid.Column="0" Grid.Row ="5" Text="Enable Cross-Server Econ (Will Sync player balances):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                                <CheckBox Grid.Row="5" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding CrossServerEcon}"/>
-
-                                            </Grid>
-
-
-                                        </GroupBox>
-
-
-                                        <GroupBox>
-                                            <GroupBox.Header>
-                                                <TextBlock>
-                                                    <Span FontWeight="Bold">Estimaded Market Values</Span>
-                                                    <Span> (Based of block count:  Price=Blocks*Value) </Span>
-                                                </TextBlock>
-                                            </GroupBox.Header>
-
-
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="150"/>
-                                                    <ColumnDefinition Width="130"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-                                                
-                                                <TextBlock Grid.Column="0" Grid.Row ="0" Text="Static Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                                <TextBox Grid.Column="2" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding StaticGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
-
-                                                
-                                                <TextBlock Grid.Column="0" Grid.Row ="1" Text="Large Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                                <TextBox Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding LargeGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
-
-                                                
-                                                <TextBlock Grid.Column="0" Grid.Row ="2" Text="Small Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                                <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding SmallGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
-
-                                            </Grid>
-                                        </GroupBox>
-
-                                        <GroupBox>
-                                            <GroupBox.Header>
-                                                <TextBlock>
-                                                    <Span FontWeight="Bold">AutoSell Configs</Span>
-                                                    <Span> (Based of block count:  Price=Blocks*Value) </Span>
-                                                </TextBlock>
-                                            </GroupBox.Header>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="150"/>
-                                                    <ColumnDefinition Width="130"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-
-
-                                                </Grid.RowDefinitions>
-
-                                                <TextBlock Grid.Column="0" Grid.Row ="1" Text="Autosell Hangar Grids after player logoff time:" Margin="3" Grid.ColumnSpan="2"/>
-                                                <CheckBox x:Name="AutoSellHangarGrids" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding AutosellHangarGrids}"/>
-
-                                                <TextBlock Grid.Column="0" Grid.Row ="2" Text="Autosell after last login (Days):" Margin="3" Grid.ColumnSpan="2"/>
-                                                <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="3" IsEnabled="{Binding AutosellHangarGrids}" Text="{Binding SellAFKDayAmount}"/>
-
-                                                <TextBlock Grid.Column="0" Grid.Row ="3" Text="Percent of Estimated Price to sell grids (0-1):" Margin="3" Grid.ColumnSpan="2"/>
-
-
-                                                <DockPanel Grid.Column="3" Grid.Row ="3" VerticalAlignment="Center" IsEnabled="{Binding AutosellHangarGrids}">
-                                                    <TextBox Text="{Binding ElementName=AutoSellDiscountPricePercent, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" TextAlignment="Right" Width="40" />
-                                                    <Slider Maximum="1" Minimum="0" TickPlacement="BottomRight"  TickFrequency=".05" IsSnapToTickEnabled="True" Name="AutoSellDiscountPricePercent" Value="{Binding AutoSellDiscountPricePercent}"/>
-                                                </DockPanel>
-                                                
-                                            </Grid>
-                                        </GroupBox>
-                                    </StackPanel>
-                                </TabItem>
-                                <TabItem Header="Server Offers">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="100"/>
                                             <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="160"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
 
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+
                                         </Grid.RowDefinitions>
 
-                                        <Button Margin="2,2,2,2" Click="Button_Click_1" ToolTip="Scans the PublicOffers Dir for grids">Refresh list</Button>
 
-                                        <Button Margin="2,2,2,2" Click="Button_Click_2" Grid.Column="1" ToolTip="Scans the PublicOffers Dir for grids">Update Market</Button>
-                                        <Button  Margin="2,2,2,2" Click="Button_Click_3" Grid.Column="2" ToolTip="Opens the Directory for the ServerOffers Folder">Browse Folder</Button>
 
-                                        <DataGrid x:Name="Imported" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"  VerticalAlignment="Top" ItemsSource="{Binding PublicOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" LostFocus="Imported_LostFocus">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />
-                                                <DataGridTextColumn Header="Price" Binding="{Binding Path=Price,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="Seller" Binding="{Binding Path=Seller,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="SellerFactionTag" Binding="{Binding Path=SellerFaction,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="Description" Binding="{Binding Path=Description,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="MaxQuantity" Binding="{Binding Path=TotalAmount,Mode=TwoWay}"/>
-                                                <DataGridTextColumn Header="MaxPerPlayer" Binding="{Binding Path=TotalPerPlayer,Mode=TwoWay}" />
-                                                <DataGridCheckBoxColumn Header="Forsale" Binding="{Binding Path=Forsale,Mode=TwoWay}" />
-                                                <DataGridTextColumn Header="Total Buys" Binding="{Binding Path=NumberOfBuys,Mode=TwoWay}" IsReadOnly="True" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        
+                                        <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require fee to remove a grid that is on market?" Margin="3" Grid.ColumnSpan="2" ToolTip="Prevents spamming the market/loading a grid for sale"/>
+                                        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding RequireRestockFee}"/>
+
+                                        <DockPanel Grid.Column="3" Grid.Row ="0" VerticalAlignment="Center">
+                                            <TextBlock Grid.Column="2" Grid.Row ="3" Text="Cost:" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" DockPanel.Dock="Left"/>
+                                            <TextBox Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Right" Margin="2" IsEnabled="{Binding RequireRestockFee}" Text="{Binding RestockAmount}" TextChanged="TextBox_TextChanged"/>
+                                        </DockPanel>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="5" Text="Enable Cross-Server Econ (Will Sync player balances):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
+                                        <CheckBox Grid.Row="5" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding CrossServerEcon}"/>
+
                                     </Grid>
 
-                                </TabItem>
-                            </TabControl>
 
-                            
-                            
-                            
+                                </GroupBox>
 
 
-                        </Grid>
-                    </TabItem>
-                    <TabItem x:Name="AConfig" Header="Debug Configs">
+                                <GroupBox>
+                                    <GroupBox.Header>
+                                        <TextBlock>
+                                                    <Span FontWeight="Bold">Estimaded Market Values</Span>
+                                                    <Span> (Based of block count:  Price=Blocks*Value) </Span>
+                                        </TextBlock>
+                                    </GroupBox.Header>
+
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="0" Text="Static Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
+                                        <TextBox Grid.Column="2" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding StaticGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="1" Text="Large Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
+                                        <TextBox Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding LargeGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="2" Text="Small Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
+                                        <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding SmallGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+
+                                    </Grid>
+                                </GroupBox>
+
+                                <GroupBox>
+                                    <GroupBox.Header>
+                                        <TextBlock>
+                                                    <Span FontWeight="Bold">AutoSell Configs</Span>
+                                                    <Span> (Based of block count:  Price=Blocks*Value) </Span>
+                                        </TextBlock>
+                                    </GroupBox.Header>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="1" Text="Autosell Hangar Grids after player logoff time:" Margin="3" Grid.ColumnSpan="2"/>
+                                        <CheckBox x:Name="AutoSellHangarGrids" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding AutosellHangarGrids}"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="2" Text="Autosell after last login (Days):" Margin="3" Grid.ColumnSpan="2"/>
+                                        <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="3" IsEnabled="{Binding AutosellHangarGrids}" Text="{Binding SellAFKDayAmount}"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="3" Text="Percent of Estimated Price to sell grids (0-1):" Margin="3" Grid.ColumnSpan="2"/>
+
+
+                                        <DockPanel Grid.Column="3" Grid.Row ="3" VerticalAlignment="Center" IsEnabled="{Binding AutosellHangarGrids}">
+                                            <TextBox Text="{Binding ElementName=AutoSellDiscountPricePercent, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" TextAlignment="Right" Width="40" />
+                                            <Slider Maximum="1" Minimum="0" TickPlacement="BottomRight"  TickFrequency=".05" IsSnapToTickEnabled="True" Name="AutoSellDiscountPricePercent" Value="{Binding AutoSellDiscountPricePercent}"/>
+                                        </DockPanel>
+
+                                    </Grid>
+                                </GroupBox>
+                            </StackPanel>
+                        </TabItem>
+                        <TabItem Header="Server Offers">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Button Margin="2,2,2,2" Click="Button_Click_1" ToolTip="Scans the PublicOffers Dir for grids">Refresh list</Button>
+
+                                <Button Margin="2,2,2,2" Click="Button_Click_2" Grid.Column="1" ToolTip="Scans the PublicOffers Dir for grids">Update Market</Button>
+                                <Button  Margin="2,2,2,2" Click="Button_Click_3" Grid.Column="2" ToolTip="Opens the Directory for the ServerOffers Folder">Browse Folder</Button>
+
+                                <DataGrid x:Name="Imported" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"  VerticalAlignment="Top" ItemsSource="{Binding PublicOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" LostFocus="Imported_LostFocus">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Price" Binding="{Binding Path=Price,Mode=TwoWay}"/>
+                                        <DataGridTextColumn Header="Seller" Binding="{Binding Path=Seller,Mode=TwoWay}"/>
+                                        <DataGridTextColumn Header="SellerFactionTag" Binding="{Binding Path=SellerFaction,Mode=TwoWay}"/>
+                                        <DataGridTextColumn Header="Description" Binding="{Binding Path=Description,Mode=TwoWay}"/>
+                                        <DataGridTextColumn Header="MaxQuantity" Binding="{Binding Path=TotalAmount,Mode=TwoWay}"/>
+                                        <DataGridTextColumn Header="MaxPerPlayer" Binding="{Binding Path=TotalPerPlayer,Mode=TwoWay}" />
+                                        <DataGridCheckBoxColumn Header="Forsale" Binding="{Binding Path=Forsale,Mode=TwoWay}" />
+                                        <DataGridTextColumn Header="Total Buys" Binding="{Binding Path=NumberOfBuys,Mode=TwoWay}" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                            </Grid>
+
+                        </TabItem>
+                    </TabControl>
+
+
+
+
+
+
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="AConfig" Header="Debug Configs">
+
+                <StackPanel>
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Debug Configs</Span>
+                                        <Span>(These are configs useful for debugging Hangar)</Span>
+                            </TextBlock>
+
+                        </GroupBox.Header>
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="130"/>
@@ -633,35 +700,33 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="3" Grid.Row ="1" Grid.RowSpan="1" Margin="3" TextWrapping="Wrap">
-                                This tab is for debugging tools. Remember if you have problems or want <LineBreak/>
-                                new features... feel free to message me on discord! BobDaRoss#3793
-                            </TextBlock>
-
-                            <TextBlock Grid.Column="0" Grid.Row ="0" Text="Advanced Hangar Configs:" Margin="3" Grid.ColumnSpan="2" FontWeight="Bold"/>
                             <TextBlock Grid.Column="0" Grid.Row ="2" Text="Enable indepth debug log:" Margin="3" Grid.ColumnSpan="2"/>
-
                             <CheckBox Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding AdvancedDebug}"/>
-
-
-
-                            
-
                             <TextBlock Grid.Column="0" Grid.Row ="3" Text="Cross-server market port:" Margin="3" Grid.ColumnSpan="2"/>
                             <TextBox Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding MarketPort}"/>
+
                         </Grid>
-                    </TabItem>
+                    </GroupBox>
 
-                </TabControl>
+                    <GroupBox>
+
+                    </GroupBox>
+
+                </StackPanel>
+
+
+
+            </TabItem>
+
+        </TabControl>
 
 
 
 
-            </Grid>
 
-        </ScrollViewer>
+
 
     </Grid>
 </UserControl>

@@ -27,6 +27,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using QuantumHangar.Utilities;
 using Torch.Managers.PatchManager;
+using Sandbox.Game.GameSystems.BankingAndCurrency;
 
 namespace QuantumHangar
 {
@@ -60,12 +61,15 @@ namespace QuantumHangar
         private bool ServerRunning;
         public static MethodInfo CheckFuture;
 
+        public MethodInfo DiscoveredFaction;
+
 
         public static Dictionary<ulong, long> PlayerAccounts = new Dictionary<ulong, long>();
         public static Dictionary<ulong, long> BalanceAdjustment = new Dictionary<ulong, long>();
 
         //Used to compare times
-        public DateTime Stamp;
+        public DateTime AutoHangarStamp;
+        public DateTime AutoVoxelStamp;
 
 
         public enum ErrorType
@@ -236,6 +240,7 @@ namespace QuantumHangar
                     Plugins.Plugins.TryGetValue(BlockLimiterGUID, out ITorchPlugin BlockLimiterT);
 
                     
+
                     if (BlockLimiterT != null)
                     {
                         Main.Debug("Plugin: " + BlockLimiterT.Name + " " + BlockLimiterT.Version + " is installed!");
@@ -267,7 +272,7 @@ namespace QuantumHangar
                     MP.PlayerJoined += MP_PlayerJoined;
                     MP.PlayerLeft += MP_PlayerLeft;
 
-                    Stamp = DateTime.Now;
+                    AutoHangarStamp = DateTime.Now;
                     break;
 
 
@@ -285,7 +290,7 @@ namespace QuantumHangar
         {
             //Main.Debug("Player Left! : " + obj.State.ToString());
 
-            if (!Config.GridMarketEnabled)
+            if (!Config.GridMarketEnabled || !Config.CrossServerEcon)
                 return;
 
             try
@@ -312,7 +317,7 @@ namespace QuantumHangar
 
         private void MP_PlayerJoined(IPlayer obj)
         {
-            if (!Config.GridMarketEnabled)
+            if (!Config.GridMarketEnabled || !Config.CrossServerEcon)
                 return;
             //Debug("Player Joined! Attempting to create IMyPlayer!");
             //MyMultiplayer.Static.SendChatMessage
@@ -384,36 +389,43 @@ namespace QuantumHangar
 
         public override void Update()
         {
-         
             //Optional how often to check
-            if(Stamp.AddHours(3) < DateTime.Now)
+            if(AutoHangarStamp.AddHours(3) < DateTime.Now)
             {
                 //Run checks
-                if (IsHostServer)
-                {
                     if (Config.AutoHangarGrids)
                     {
+                    
                         Debug("Attempting Autohangar!");
-                        //Stamp.AddHours(.5);
+                        //AutoHangarStamp.AddHours(.5);
                         BackgroundWorker worker = new BackgroundWorker();
                         worker.DoWork += new DoWorkEventHandler(HangarScans.AutoHangar);
                         worker.RunWorkerAsync(Config);
-
                     }
+                    
 
-                    if (Config.AutosellHangarGrids)
+                    if (Config.AutosellHangarGrids && IsHostServer)
                     {
                         var p = Task.Run(() => HangarScans.AutoSell(MarketServers, Config.FolderDirectory, Config.SellAFKDayAmount));
                     }
-                }
 
-
-                Stamp = DateTime.Now;
+                AutoHangarStamp = DateTime.Now;
             }
 
+            if(AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
+            {
+                Debug("Getting grids in voxels!!");
+                BackgroundWorker worker = new BackgroundWorker();
+                worker.DoWork += new DoWorkEventHandler(HangarScans.UnderPlanet);
+                worker.RunWorkerAsync(Config);
 
-
+                AutoVoxelStamp = DateTime.Now;
+            }
         }
+
+
+
+        
 
 
         public void PurchaseGrid(GridsForSale grid)
