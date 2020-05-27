@@ -147,7 +147,7 @@
                         <GroupBox.Header>
                             <TextBlock>
                                         <Span FontWeight="Bold">Saving 	&amp; Loading</Span>
-                                        <Span>(Options to restrict saving 	&amp; loading to specific points. Player needs to be )</Span>
+                                        <Span>(Options to restrict saving &amp; loading to specific regions</Span>
                             </TextBlock>
 
                         </GroupBox.Header>
@@ -207,7 +207,7 @@
 
                             <StackPanel Orientation="Horizontal" Grid.Column="4" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="in meters">
                                 <TextBlock Text="Z:" Margin="3" VerticalAlignment="Center"/>
-                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPoint}"/>
+                                <TextBox Width="90" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadPointZ}"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Grid.Column="5" Grid.Row ="1" IsEnabled="{Binding RestrictLoadingAroundPoint}" ToolTip="Radius about point in (Km)">

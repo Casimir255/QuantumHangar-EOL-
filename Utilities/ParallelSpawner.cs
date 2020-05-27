@@ -61,15 +61,15 @@ namespace QuantumHangar
     {
         private readonly MyObjectBuilder_ShipBlueprintDefinition[] _ShipBlueprints;
         private readonly Vector3D _PlayerPosition;
-        private readonly CommandContext _Context;
+        private readonly Chat chat;
 
-        public AlignToGravity(MyObjectBuilder_ShipBlueprintDefinition[] ShipBlueprints, Vector3D PlayerPosition, CommandContext Context)
+        public AlignToGravity(MyObjectBuilder_ShipBlueprintDefinition[] ShipBlueprints, Vector3D PlayerPosition, Chat Context)
         {
             _ShipBlueprints = ShipBlueprints;
             _PlayerPosition = PlayerPosition;
 
             //Command context is for giving chat messages on grid spawning. You can remove this
-            _Context = Context;
+            chat = Context;
         }
 
         private bool CalculateGridPosition()
@@ -98,7 +98,7 @@ namespace QuantumHangar
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
                 return false;
             }
-            Main.Debug("Total Grids to be pasted: " + array.Count());
+            Hangar.Debug("Total Grids to be pasted: " + array.Count());
 
             if (cockpits.Count > 0)
             {
@@ -107,7 +107,7 @@ namespace QuantumHangar
                 {
                     if (Block.IsMainCockpit)
                     {
-                        Main.Debug("Main cockpit found! Attempting to Align!");
+                        Hangar.Debug("Main cockpit found! Attempting to Align!");
                         direction = new Vector3D(Block.Orientation.x, Block.Orientation.y, Block.Orientation.z);
                         break;
                     }
@@ -115,7 +115,7 @@ namespace QuantumHangar
             }
             else
             {
-                Main.Debug("No Cockpits. Continuing based off of grid pivot point!");
+                Hangar.Debug("No Cockpits. Continuing based off of grid pivot point!");
             }
 
 
@@ -136,7 +136,7 @@ namespace QuantumHangar
             Vector3D vector3D;
             if (vector != Vector3.Zero)
             {
-                Main.Debug("Attempting to correct grid orientation!");
+                Hangar.Debug("Attempting to correct grid orientation!");
                 vector.Normalize();
                 vector3D = -vector;
                 position += vector * gravityOffset;
@@ -227,10 +227,10 @@ namespace QuantumHangar
             if (pos == null)
             {
 
-                Main.Debug("No free Space found!");
+                Hangar.Debug("No free Space found!");
 
-                if (_Context != null)
-                    Chat.Respond("No free space available!", _Context);
+
+                chat.Respond("No free space available!");
 
                 return false;
             }
@@ -241,8 +241,7 @@ namespace QuantumHangar
             if (!UpdateGridsPosition(AllGrids, newPosition))
             {
 
-                if (_Context != null)
-                    Chat.Respond("The File to be imported does not seem to be compatible with the server!", _Context);
+                chat.Respond("The File to be imported does not seem to be compatible with the server!");
 
                 return false;
             }
@@ -375,23 +374,36 @@ namespace QuantumHangar
     public class Chat
     {
         private CommandContext _context;
+        private bool _mod;
 
         //Simple chat class so i can control the colors easily
-        public Chat(CommandContext context)
+        public Chat(CommandContext context, bool Mod = false)
         {
             _context = context;
+            _mod = Mod;
         }
 
         public void Respond(string response)
         {
-            _context.Respond(response, Color.Yellow, "Hangar");
+            if (_context == null)
+                return;
+
+
+            if (_mod)
+            {
+                //Should fix admin commands
+                _context.Respond(response);
+            }
+            else
+            {
+                _context.Respond(response, Color.Yellow, "Hangar");
+            }
         }
 
         
 
         public static void Respond(string response, CommandContext context)
         {
-            
             context.Respond(response, Color.Yellow, "Hangar");
         }
     }

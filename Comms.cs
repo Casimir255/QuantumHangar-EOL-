@@ -11,24 +11,31 @@ using SimpleTCP;
 using System.IO;
 using Newtonsoft.Json;
 using VRage.Game.ModAPI;
+using QuantumHangar.Utilities;
 
 namespace QuantumHangar
 {
     public class Comms
     {
 
-        public const ushort NETWORK_ID = 2934;
         private static bool HandlersInitilized = false;
+        private static ushort NetworkID = 2934;
         //private static Main _main;
 
-        public Main Main;
+        public GridMarket _Market;
+
+
+        public Comms(GridMarket Market)
+        {
+            _Market = Market;
+        }
 
         public void RegisterHandlers()
         {
             if (!HandlersInitilized)
             {
-                QuantumHangar.Main.Debug("Registering Event Handlers");
-                MyAPIGateway.Multiplayer.RegisterMessageHandler(2934, MessageHandler);
+                QuantumHangar.Hangar.Debug("Registering Event Handlers");
+                MyAPIGateway.Multiplayer.RegisterMessageHandler(NetworkID, MessageHandler);
 
                 HandlersInitilized = true;
             }
@@ -38,11 +45,11 @@ namespace QuantumHangar
         {
             try
             {
-                MyAPIGateway.Multiplayer.UnregisterMessageHandler(2935, MessageHandler);
+                MyAPIGateway.Multiplayer.UnregisterMessageHandler(NetworkID, MessageHandler);
             }
             catch (Exception a)
             {
-                QuantumHangar.Main.Debug("Cannot remove event Handlers! Are they already removed?", a, QuantumHangar.Main.ErrorType.Fatal);
+                QuantumHangar.Hangar.Debug("Cannot remove event Handlers! Are they already removed?", a, QuantumHangar.Hangar.ErrorType.Fatal);
             }
         }
         private void MessageHandler(byte[] bytes)
@@ -72,7 +79,7 @@ namespace QuantumHangar
                     message.GridDefinition.Add(RecievedMessage.GridDefinitions);
                     message.Type = CrossServer.MessageType.PurchasedGrid;
 
-                    Main.MarketServers.Update(message);
+                    _Market.MarketServers.Update(message);
                     //Main.PurchaseGrid(RecievedMessage.GridDefinitions, Main);
                 }
                 else
@@ -87,7 +94,7 @@ namespace QuantumHangar
             }
             catch (Exception ex)
             {
-                QuantumHangar.Main.Debug($"Unable to decrypt data from client!", ex, QuantumHangar.Main.ErrorType.Warn);
+                QuantumHangar.Hangar.Debug($"Unable to decrypt data from client!", ex, QuantumHangar.Hangar.ErrorType.Warn);
 
             }
         }
@@ -96,7 +103,7 @@ namespace QuantumHangar
         {
 
             byte[] barr = MyAPIGateway.Utilities.SerializeToBinary(message);
-            MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, barr);
+            MyAPIGateway.Multiplayer.SendMessageToOthers(NetworkID, barr);
         }
 
 
@@ -106,8 +113,8 @@ namespace QuantumHangar
             //This lets us keep admin offers per server. (Kinda cool)
             Message Newmessage = new Message();
             List<MarketList> AllItems = new List<MarketList>();
-            AllItems.AddRange(Main.GridList);
-            AllItems.AddRange(Main.PublicOfferseGridList);
+            AllItems.AddRange(GridMarket.GridList);
+            AllItems.AddRange(GridMarket.PublicOfferseGridList);
 
             Newmessage.MarketBoxItmes = AllItems;
             Newmessage.GridDefinitions = null;
@@ -121,7 +128,7 @@ namespace QuantumHangar
         public static void AddSingleItem(MarketList item)
         {
 
-            //Debug("Sending List to Client!");
+            Hangar.Debug("Sending List to Client!");
             Message Newmessage = new Message();
             Newmessage.MarketBoxItmes.Add(item);
             Newmessage.GridDefinitions = null;
@@ -152,9 +159,15 @@ namespace QuantumHangar
         public static SimpleTcpServer Server;
         public static SimpleTcpClient Client;
         public static bool RecievedInitialRequest = false;
-        public static short Port = 8910;
-        public Main Main;
+        private int _Port;
+        
+        private GridMarket _Market;
 
+        public CrossServer(int MarketPort, GridMarket Market)
+        {
+            _Port = MarketPort;
+            _Market = Market;
+        }
         public enum MessageType
         {
             //For the grids
@@ -176,10 +189,11 @@ namespace QuantumHangar
             //Need to attempt server 
             try
             {
-                Server = new SimpleTcpServer().Start(Port);
-                Main.Debug("Initilized Server on port: " + Port);
 
-                Main.IsHostServer = true;
+                Server = new SimpleTcpServer().Start(_Port);
+                Hangar.Debug("Initilized Server on port: " + _Port);
+
+                _Market.IsHostServer = true;
                 Server.DataReceived += Server_DataReceived;
 
                 //Server.DelimiterDataReceived += (sender, msg) => {
@@ -194,15 +208,15 @@ namespace QuantumHangar
             catch (System.InvalidOperationException)
             {
                 //Server already created, create client
-                Client = new SimpleTcpClient().Connect("127.0.0.1", Port);
-                Main.Debug("Initilized Client on port: " + Port);
+                Client = new SimpleTcpClient().Connect("127.0.0.1", _Port);
+                Hangar.Debug("Initilized Client on port: " + _Port);
 
-                Main.IsHostServer = false;
+                _Market.IsHostServer = false;
                 Client.DelimiterDataReceived += Client_DelimiterDataReceived;
             }
             catch (Exception a)
             {
-                Main.Debug("Hangar CrossServer Network Error!", a, Main.ErrorType.Fatal);
+                Hangar.Debug("Hangar CrossServer Network Error!", a, Hangar.ErrorType.Fatal);
                 //Some weird shit
                 return false;
             }
@@ -213,7 +227,7 @@ namespace QuantumHangar
         {
             //if we recieve data to server, this means we need to update clients, and save file to disk
             CrossServerMessage RecievedData = JsonConvert.DeserializeObject<CrossServerMessage>(e.MessageString);
-            Main.Debug("Client Data Recieved! " + RecievedData.Type.ToString());
+            Hangar.Debug("Client Data Recieved! " + RecievedData.Type.ToString());
 
 
 
@@ -223,7 +237,7 @@ namespace QuantumHangar
 
                 //Now that we added our items... we need to save file
                 //Main.GridDefinition.Add(RecievedData.GridDefinition[0]);
-                Main.GridList.Add(RecievedData.List[0]);
+                GridMarket.GridList.Add(RecievedData.List[0]);
 
 
                 //Send update to clients on this game server!
@@ -231,18 +245,18 @@ namespace QuantumHangar
 
                 //Save data to file (This is server!)
                 MarketData Data = new MarketData();
-                Data.List = Main.GridList;
-                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                Data.List = GridMarket.GridList;
+                FileSaver.Save(Path.Combine(Hangar.Dir, "Market.json"), Data);
             }
             else if (RecievedData.Type == MessageType.RemoveItem)
             {
                 Server.BroadcastLine(e.MessageString);
 
                 //Just goahead and check to see if the list contains etc.
-                if (Main.GridList.Any(x => x.Name == RecievedData.List[0].Name))
+                if (GridMarket.GridList.Any(x => x.Name == RecievedData.List[0].Name))
                 {
-                    Main.Debug("Removing: " + RecievedData.List[0].Name + " from market!");
-                    Main.GridList.RemoveAll(x => x.Name == RecievedData.List[0].Name);
+                    Hangar.Debug("Removing: " + RecievedData.List[0].Name + " from market!");
+                    GridMarket.GridList.RemoveAll(x => x.Name == RecievedData.List[0].Name);
                     //Main.GridDefinition.RemoveAll(x => x.name == RecievedData.List[0].Name);
 
                     //Send update to clients on this game server!
@@ -251,8 +265,8 @@ namespace QuantumHangar
 
                 //Save data to file (This is server!)
                 MarketData Data = new MarketData();
-                Data.List = Main.GridList;
-                FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                Data.List = GridMarket.GridList;
+                FileSaver.Save(Path.Combine(Hangar.Dir, "Market.json"), Data);
             }
             else if (RecievedData.Type == MessageType.PlayerAccountUpdated)
             {
@@ -264,40 +278,40 @@ namespace QuantumHangar
                 {
                     EconUtils.TryUpdatePlayerBalance(account);
 
-                    if (!Main.PlayerAccounts.ContainsKey(account.SteamID))
+                    if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                     {
                         if (!account.AccountAdjustment)
                         {
-                            Main.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
+                            GridMarket.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
                         }
                     }
                     else
                     {
                         if (!account.AccountAdjustment)
                         {
-                            Main.PlayerAccounts[account.SteamID] = account.AccountBalance;
+                            GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance;
                         }
                         else
                         {
                             //Add this to the general list
-                            Main.PlayerAccounts[account.SteamID] = account.AccountBalance + Main.PlayerAccounts[account.SteamID];
+                            GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance + GridMarket.PlayerAccounts[account.SteamID];
                         }
 
                     }
                 }
 
                 Accounts accounts = new Accounts();
-                accounts.PlayerAccounts = Main.PlayerAccounts;
+                accounts.PlayerAccounts = GridMarket.PlayerAccounts;
 
                 try
                 {
-                    FileSaver.Save(Path.Combine(Main.Dir, "PlayerAccounts.json"), accounts);
+                    FileSaver.Save(Path.Combine(Hangar.Dir, "PlayerAccounts.json"), accounts);
                     //File.WriteAllText(Path.Combine(Main.Dir, "PlayerAccounts.json"), JsonConvert.SerializeObject(accounts));
                  
                 }
                 catch (Exception a)
                 {
-                    Main.Debug("IO Exception!", a, Main.ErrorType.Warn);
+                    Hangar.Debug("IO Exception!", a, Hangar.ErrorType.Warn);
                 }
 
                
@@ -346,7 +360,7 @@ namespace QuantumHangar
 
                 CrossServerMessage AllData = new CrossServerMessage();
                 //AllData.GridDefinition = Main.GridDefinition;
-                AllData.List = Main.GridList;
+                AllData.List = GridMarket.GridList;
                 //AllData.BalanceUpdate = Main.PlayerAccounts;
                 AllData.Type = MessageType.RequestAll;
 
@@ -376,14 +390,14 @@ namespace QuantumHangar
             {
                 //e.MessageString.TrimEnd(e.MessageString[e.MessageString.Length-1]);
                 CrossServerMessage RecievedData = JsonConvert.DeserializeObject<CrossServerMessage>(e.MessageString);
-                Main.Debug("Server Data Recieved! " + RecievedData.Type.ToString());
+                Hangar.Debug("Server Data Recieved! " + RecievedData.Type.ToString());
 
                 if (RecievedData.Type == MessageType.AddItem)
                 {
-                    if (!Main.GridList.Contains(RecievedData.List[0]))
+                    if (!GridMarket.GridList.Contains(RecievedData.List[0]))
                     {
                         //If its not already in the list, add it.
-                        Main.GridList.Add(RecievedData.List[0]);
+                        GridMarket.GridList.Add(RecievedData.List[0]);
                         //Main.GridDefinition.Add(RecievedData.GridDefinition[0]);
 
                         //Send update to clients on this game server!
@@ -393,10 +407,10 @@ namespace QuantumHangar
                 else if (RecievedData.Type == MessageType.RemoveItem)
                 {
 
-                    if (Main.GridList.Any(x => x.Name == RecievedData.List[0].Name))
+                    if (GridMarket.GridList.Any(x => x.Name == RecievedData.List[0].Name))
                     {
-                        Main.Debug("Removing: " + RecievedData.List[0].Name + " from market!");
-                        Main.GridList.RemoveAll(x => x.Name == RecievedData.List[0].Name);
+                        Hangar.Debug("Removing: " + RecievedData.List[0].Name + " from market!");
+                        GridMarket.GridList.RemoveAll(x => x.Name == RecievedData.List[0].Name);
                         //Main.GridDefinition.RemoveAll(x => x.name == RecievedData.List[0].Name);
 
                         //Send update to clients on this game server!
@@ -409,23 +423,23 @@ namespace QuantumHangar
                     {
                         EconUtils.TryUpdatePlayerBalance(account);
 
-                        if (!Main.PlayerAccounts.ContainsKey(account.SteamID))
+                        if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                         {
                             if (!account.AccountAdjustment)
                             {
-                                Main.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
+                                GridMarket.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
                             }
                         }
                         else
                         {
                             if (!account.AccountAdjustment)
                             {
-                                Main.PlayerAccounts[account.SteamID] = account.AccountBalance;
+                                GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance;
                             }
                             else
                             {
                                 //Add this to the general list
-                                Main.PlayerAccounts[account.SteamID] = account.AccountBalance + Main.PlayerAccounts[account.SteamID];
+                                GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance + GridMarket.PlayerAccounts[account.SteamID];
                             }
 
                         }
@@ -445,18 +459,18 @@ namespace QuantumHangar
                 {
                     //Update everything! (New Server started!)
                     //Main.GridDefinition = RecievedData.GridDefinition;
-                    Main.GridList = RecievedData.List;
+                    GridMarket.GridList = RecievedData.List;
                     //Main.PlayerAccountUpdate = RecievedData.BalanceUpdate;
                     RecievedInitialRequest = true;
                 }
                 else if (RecievedData.Type == MessageType.PurchasedGrid)
                 {
-                    var t = Task.Run(() => Main.PurchaseGrid(RecievedData.GridDefinition[0]));
+                    var t = Task.Run(() => _Market.PurchaseGrid(RecievedData.GridDefinition[0]));
                 }
 
                 MarketData Data = new MarketData();
                 //Data.GridDefinition = Main.GridDefinition;
-                Data.List = Main.GridList;
+                Data.List = GridMarket.GridList;
 
                 //Save
                 //FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
@@ -465,7 +479,7 @@ namespace QuantumHangar
             }
             catch (Exception c)
             {
-                Main.Debug("Client DeserializeObject Error! ", c, Main.ErrorType.Fatal);
+                Hangar.Debug("Client DeserializeObject Error! ", c, Hangar.ErrorType.Fatal);
             }
             //throw new NotImplementedException();
 
@@ -475,19 +489,19 @@ namespace QuantumHangar
         //Force update
         public bool Update(CrossServerMessage Message)
         {
-            if (Main.IsHostServer)
+            if (_Market.IsHostServer)
             {
 
                 string MarketServerData = JsonConvert.SerializeObject(Message);
                 //Write to file and broadcast to all clients!
-                Main.Debug("Sending new market data to clients! " + Message.Type.ToString());
+                Hangar.Debug("Sending new market data to clients! " + Message.Type.ToString());
                 if (Message.Type == MessageType.AddItem)
                 {
                     //Main.Debug("Point1");
                     Server.BroadcastLine(MarketServerData);
                     //Main.Debug("Point2");
                     //Update server.
-                    Main.GridList.Add(Message.List[0]);
+                    GridMarket.GridList.Add(Message.List[0]);
                     //Main.GridDefinition.Add(Message.GridDefinition[0]);
 
 
@@ -497,15 +511,15 @@ namespace QuantumHangar
 
                     //Save data to file (This is server!)
                     MarketData Data = new MarketData();
-                    Data.List = Main.GridList;
-                    FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                    Data.List = GridMarket.GridList;
+                    FileSaver.Save(Path.Combine(Hangar.Dir, "Market.json"), Data);
                 }
                 else if (Message.Type == MessageType.RemoveItem)
                 {
                     Server.BroadcastLine(MarketServerData);
 
                     //Update server.
-                    Main.GridList.Remove(Message.List[0]);
+                    GridMarket.GridList.Remove(Message.List[0]);
                     //Main.GridDefinition.RemoveAll(Message.GridDefinition[0]);
                     //Main.GridDefinition.RemoveAll(x => x.name == Message.List[0].Name);
 
@@ -515,8 +529,8 @@ namespace QuantumHangar
 
                     //Save data to file (This is server!)
                     MarketData Data = new MarketData();
-                    Data.List = Main.GridList;
-                    FileSaver.Save(Path.Combine(Main.Dir, "Market.json"), Data);
+                    Data.List = GridMarket.GridList;
+                    FileSaver.Save(Path.Combine(Hangar.Dir, "Market.json"), Data);
                 }
                 else if (Message.Type == MessageType.PlayerAccountUpdated)
                 {
@@ -529,32 +543,32 @@ namespace QuantumHangar
                     {
                         EconUtils.TryUpdatePlayerBalance(account);
 
-                        if (!Main.PlayerAccounts.ContainsKey(account.SteamID))
+                        if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                         {
                             if (!account.AccountAdjustment)
                             {
-                                Main.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
+                                GridMarket.PlayerAccounts.Add(account.SteamID, account.AccountBalance);
                             }
                         }
                         else
                         {
                             if (!account.AccountAdjustment)
                             {
-                                Main.PlayerAccounts[account.SteamID] = account.AccountBalance;
+                                GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance;
                             }
                             else
                             {
                                 //Add this to the general list
-                                Main.PlayerAccounts[account.SteamID] = account.AccountBalance + Main.PlayerAccounts[account.SteamID];
+                                GridMarket.PlayerAccounts[account.SteamID] = account.AccountBalance + GridMarket.PlayerAccounts[account.SteamID];
                             }
 
                         }
                     }
 
                     Accounts accounts = new Accounts();
-                    accounts.PlayerAccounts = Main.PlayerAccounts;
+                    accounts.PlayerAccounts = GridMarket.PlayerAccounts;
 
-                    FileSaver.Save(Path.Combine(Main.Dir, "PlayerAccounts.json"), accounts);
+                    FileSaver.Save(Path.Combine(Hangar.Dir, "PlayerAccounts.json"), accounts);
 
                 }
                 else if (Message.Type == MessageType.PlayerOnline)
@@ -571,7 +585,7 @@ namespace QuantumHangar
                 }
                 else if (Message.Type == MessageType.PurchasedGrid)
                 {
-                    var t = Task.Run(() => Main.PurchaseGrid(Message.GridDefinition[0]));
+                    var t = Task.Run(() => _Market.PurchaseGrid(Message.GridDefinition[0]));
                 }
                 //File.WriteAllText(Path.Combine(Main.Dir, "Market.json"), JsonConvert.SerializeObject(Data));
 
@@ -601,7 +615,7 @@ namespace QuantumHangar
                     //This means THIS server needs to be the new server
 
                     //Or this is an old client needing to be re-connected to server. This means we need to redo/Reconnect everything!
-                    Main.Debug("Server closed! Trying to Update!", e, Main.ErrorType.Warn);
+                    Hangar.Debug("Server closed! Trying to Update!", e, Hangar.ErrorType.Warn);
                     //Remove client DataRecieved Event!
                     Client.DelimiterDataReceived -= Client_DelimiterDataReceived;
 
@@ -615,7 +629,7 @@ namespace QuantumHangar
                 }
                 catch (Exception g)
                 {
-                    Main.Debug("CrossServer Market Network Failed Fatally!", g, Main.ErrorType.Fatal);
+                    Hangar.Debug("CrossServer Market Network Failed Fatally!", g, Hangar.ErrorType.Fatal);
 
                 }
             }
@@ -629,7 +643,7 @@ namespace QuantumHangar
             //Dispose of events. This is called at server close
 
 
-            if (Main.IsHostServer)
+            if (_Market.IsHostServer)
             {
                 Server.DataReceived -= Server_DataReceived;
             }

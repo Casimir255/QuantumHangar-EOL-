@@ -10,13 +10,14 @@ using Torch.Managers.PatchManager;
 
 namespace QuantumHangar.Utilities
 {
-    public static class Patcher
+    public class Patcher
     {
-        private static Main Plugin { get; set; }
+        private static Hangar Plugin { get; set; }
+        private static GridTracker Tracker { get; set; }
 
 
 
-        public static void Apply(PatchContext ctx, Main plugin)
+        public void Apply(PatchContext ctx, Hangar plugin)
         {
             if (plugin.Config.PluginEnabled)
             {
@@ -29,24 +30,24 @@ namespace QuantumHangar.Utilities
                 }
                 ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
                 Plugin = plugin;
-
+                Tracker = plugin.Tracker;
 
             }
         }
 
         private static MethodInfo Method(string name)
         {
-            return typeof(Patcher).GetMethod(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            return typeof(Patcher).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         private static void AfterSave(bool __result)
         {
             if (__result)
             {
-                Main.Debug("Running Server Saves! : " + __result);
+                Hangar.Debug("Running Server Saves! : " + __result);
                 EconPlayerSaver.SaveOnlinePlayerAccounts(Plugin);
 
-
+                Tracker.ServerSave();
                 //Main.Debug(Plugin.Config.FolderDirectory);
             }
         }
@@ -55,12 +56,12 @@ namespace QuantumHangar.Utilities
 
     class EconPlayerSaver
     {
-        public static void SaveOnlinePlayerAccounts(Main Plugin)
+        public static void SaveOnlinePlayerAccounts(Hangar Plugin)
         {
 
             if (Plugin == null)
             {
-                Main.Debug("Major Error! Plugin refrence is null!");
+                Hangar.Debug("Major Error! Plugin refrence is null!");
                 return;
             }
 
@@ -85,12 +86,12 @@ namespace QuantumHangar.Utilities
                 EconUtils.TryGetPlayerBalance(ID, out long balance);
                 PAccounts.Add(new PlayerAccount(player.DisplayName, ID, balance));
             }
-            Main.Debug("Saving all online player Accounts!");
+            Hangar.Debug("Saving all online player Accounts!");
             //Attempt to broadcast to server
             CrossServerMessage message = new CrossServerMessage();
             message.Type = CrossServer.MessageType.PlayerAccountUpdated;
             message.BalanceUpdate = PAccounts;
-            Plugin.MarketServers.Update(message);
+            Plugin.Market.MarketServers.Update(message);
         }
     }
 }

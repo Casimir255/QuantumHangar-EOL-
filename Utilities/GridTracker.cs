@@ -1,5 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using NLog;
+using NLog.Fluent;
+using Sandbox.Game.World;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,7 +41,182 @@ namespace QuantumHangar.Utilities
      */
 
 
-    class GridTracker
+    public class GridTracker
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private string StoragePath { get; set; }
+
+        private string HangarFolderDir;
+
+        private static GridTrackerObject Grids { get; set; }
+
+        public void ServerStarted(string HangarDirectory)
+        {
+            HangarFolderDir = HangarDirectory;
+
+            Log.Warn("Starting AutoGridBackup System!");
+            Log.Warn(MySession.Static.CurrentPath);
+
+            Directory.CreateDirectory(Path.Combine(MySession.Static.CurrentPath, "Storage"));
+            StoragePath = Path.Combine(MySession.Static.CurrentPath, "Storage", "QuantumHangarGridTracker.json");
+
+            LoadFile(out GridTrackerObject Data);
+            Grids = Data;
+
+            InitilizeReadSystem();
+        }
+
+        private void InitilizeReadSystem()
+        {
+            //True = SavedToFile
+            //False = LoadedIntoServer
+            foreach (var item in Grids.TrackedGrids)
+            {
+                GridMethods methods = new GridMethods(item.Key, HangarFolderDir);
+                methods.LoadInfoFile(out PlayerInfo Data);
+
+
+                foreach (var StampKey in item.Value)
+                {
+
+                    if (StampKey.Key)
+                    {
+                        //If true, that mean the grid was saved to hangar before server saved. 
+                        //Means that there is a duplicate grid in the server
+
+
+                        //To fix this, we will remove this grid from the players file to revert back to the version that is still ingame
+                        int i = Data.Grids.FindIndex(x => x.GridID == StampKey.Value.GridID);
+                        //Now that weve got the index,
+                        Log.Warn("Grid needs to be removed: " + Data.Grids[i].GridName);
+                        string GridPath = Path.Combine(methods.FolderPath, Data.Grids[i].GridName + ".sbc");
+
+
+                        File.Delete(GridPath);
+                        Data.Grids.RemoveAt(i);
+
+                    }
+                    else
+                    {
+                        //If false, this means the grid was loaded into the world before server saved.
+                        //Means the grid is gone on the user side
+
+                        //To fix this, we wont delete grids in peoples hangars until server saves.
+                        //This will allow us to simply add this stamp to the players info file (sbc is still there since it didnt get deleted when server saved)
+                        Data.Grids.Add(StampKey.Value);
+
+
+                    }
+
+                }
+
+                //Save the new files
+                methods.SaveInfoFile(Data);
+            }
+        }
+
+        public void ServerSave()
+        {
+            foreach (var item in Grids.TrackedGrids)
+            {
+                GridMethods methods = new GridMethods(item.Key, HangarFolderDir);
+                foreach (var StampKey in item.Value)
+                {
+                    if (!StampKey.Key)
+                    {
+                        //This means that we successfully saved the server with the grid loaded into the server
+                        //Need to delete the file now
+
+                        string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".sbc");
+                        File.Delete(GridPath);
+                    }
+
+                }
+            }
+
+            Log.Warn("Deleted Hangar Files via GridTracker!");
+
+            Grids.TrackedGrids.Clear();
+            SaveFile(Grids);
+        }
+
+        public void HangarUpdate(ulong SteamID, bool Transition, GridStamp Stamp)
+        {
+            //Need to check if this item already exists
+
+
+
+
+
+            KeyValuePair<bool, GridStamp> KPair = new KeyValuePair<bool, GridStamp>(Transition, Stamp);
+            if (Grids.TrackedGrids.ContainsKey(SteamID))
+            {
+                Log.Warn("Attempting to Updated GridTracker A");
+                Grids.TrackedGrids[SteamID].RemoveAll(x => x.Value.GridName == KPair.Value.GridName);
+
+
+                Grids.TrackedGrids[SteamID].Add(KPair);
+            }
+            else
+            {
+                Log.Warn("Attempting to Updated GridTracker B");
+                List<KeyValuePair<bool, GridStamp>> List = new List<KeyValuePair<bool, GridStamp>>();
+                List.Add(KPair);
+                Grids.TrackedGrids.Add(SteamID, List);
+            }
+
+
+
+            SaveFile(Grids);
+
+        }
+
+        private void SaveFile(GridTrackerObject Data)
+        {
+            Log.Warn(StoragePath);
+            FileSaver.Save(StoragePath, Data);
+        }
+
+        private bool LoadFile(out GridTrackerObject Data)
+        {
+            GridTrackerObject Info = new GridTrackerObject();
+
+
+            if (!File.Exists(StoragePath))
+            {
+                Data = Info;
+                return true;
+            }
+
+
+            try
+            {
+                Info = JsonConvert.DeserializeObject<GridTrackerObject>(File.ReadAllText(StoragePath));
+            }
+            catch (Exception e)
+            {
+                Log.Warn(e, "For some reason the file is broken");
+                Data = Info;
+                return false;
+            }
+
+
+            Data = Info;
+            return true;
+        }
+
+
+    }
+
+
+    class GridTrackerObject
+    {
+        public Dictionary<ulong, List<KeyValuePair<bool, GridStamp>>> TrackedGrids = new Dictionary<ulong, List<KeyValuePair<bool, GridStamp>>>();
+
+
+
+
+
+
     }
 }

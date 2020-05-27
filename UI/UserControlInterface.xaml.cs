@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.Utilities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace QuantumHangar.UI
     {
         private static readonly Logger Log = LogManager.GetLogger("QuantumHangarUI");
         //private bool GridLoaded = false;
-        private Main Plugin { get; }
+        private Hangar Plugin { get; }
 
 
 
@@ -38,7 +39,7 @@ namespace QuantumHangar.UI
             InitializeComponent();
         }
 
-        public UserControlInterface(Main plugin) : this()
+        public UserControlInterface(Hangar plugin) : this()
         {
             Plugin = plugin;
             DataContext = plugin.Config;
@@ -50,7 +51,7 @@ namespace QuantumHangar.UI
 
         private void PublicOffers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            Main.Debug(e.Action.ToString());
+            Hangar.Debug(e.Action.ToString());
             //Plugin.Config.RefreshModel();
             //throw new NotImplementedException();
         }
@@ -87,12 +88,12 @@ namespace QuantumHangar.UI
 
             try
             {
-                subdirectoryEntries = Directory.GetFiles(Main.ServerOffersDir, "*.sbc");
+                subdirectoryEntries = Directory.GetFiles(GridMarket.ServerOffersDir, "*.sbc");
             }
             catch (Exception b)
             {
                 //Prevent from continuing
-                Main.Debug("Unable to get ServerOffersFolder!", b, Main.ErrorType.Fatal);
+                Hangar.Debug("Unable to get ServerOffersFolder!", b, Hangar.ErrorType.Fatal);
                 return;
             }
 
@@ -119,7 +120,7 @@ namespace QuantumHangar.UI
 
                     string FileName = FolderGrids[i];
 
-                    Main.Debug("Adding item: " + FileName);
+                    Hangar.Debug("Adding item: " + FileName);
 
                     PublicOffers offer = new PublicOffers();
                     offer.Name = FileName;
@@ -145,17 +146,17 @@ namespace QuantumHangar.UI
         {
 
             //Update all public offer market items!
-            if(!Main.IsRunning)
+            if(!Hangar.IsRunning)
             {
                 return;
             }
 
             //Need to remove existing ones
 
-            string PublicOfferPath = Main.ServerOffersDir;
+            string PublicOfferPath = GridMarket.ServerOffersDir;
 
             //Clear list
-            Main.PublicOfferseGridList.Clear();
+            GridMarket.PublicOfferseGridList.Clear();
 
 
             foreach (PublicOffers offer in Plugin.Config.PublicOffers)
@@ -164,12 +165,8 @@ namespace QuantumHangar.UI
                 {
                     
 
-
-
-
-
                     string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
-                    Main.Debug("Blueprint Path: "+ GridFilePath);
+                    Hangar.Debug("Blueprint Path: "+ GridFilePath);
 
                     MyObjectBuilderSerializer.DeserializeXML(GridFilePath, out MyObjectBuilder_Definitions myObjectBuilder_Definitions);
                     MyObjectBuilder_ShipBlueprintDefinition[] shipBlueprint = null;
@@ -179,7 +176,7 @@ namespace QuantumHangar.UI
                     }
                     catch
                     {
-                        Main.Debug("Error on BP: "+ offer.Name + "! Most likely you put in the SBC5 file! Dont do that!");
+                        Hangar.Debug("Error on BP: "+ offer.Name + "! Most likely you put in the SBC5 file! Dont do that!");
                         continue;
                     }
                     MyObjectBuilder_CubeGrid grid = shipBlueprint[0].CubeGrids[0];
@@ -207,9 +204,9 @@ namespace QuantumHangar.UI
 
 
                     //Need to setTotalBuys
-                    Main.PublicOfferseGridList.Add(NewList);
+                    GridMarket.PublicOfferseGridList.Add(NewList);
 
-                   Main.Debug("Adding new public offer: " + offer.Name);
+                   Hangar.Debug("Adding new public offer: " + offer.Name);
                 }
             }
 
@@ -218,10 +215,10 @@ namespace QuantumHangar.UI
             Comms.SendListToModOnInitilize();
 
             MarketData Data = new MarketData();
-            Data.List = Main.PublicOfferseGridList;
+            Data.List = GridMarket.PublicOfferseGridList;
 
             //Write to file
-            FileSaver.Save(Main.ServerMarketFileDir, Data);
+            FileSaver.Save(GridMarket.ServerMarketFileDir, Data);
             //File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
             //This will force the market to update the market items
         }
@@ -261,7 +258,7 @@ namespace QuantumHangar.UI
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
 
-            Process.Start(Main.ServerOffersDir);
+            Process.Start(GridMarket.ServerOffersDir);
 
         }
     }

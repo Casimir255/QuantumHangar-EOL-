@@ -45,14 +45,16 @@
   <ItemGroup>
     <Compile Include="ChatCommands.cs" />
     <Compile Include="Comms.cs" />
-    <Compile Include="Main.cs" />
+    <Compile Include="Hangar.cs" />
     <Compile Include="Properties\Debug.cs" />
+    <Compile Include="Utilities\AutoHangar.cs" />
     <Compile Include="Utilities\GridMarket.cs" />
     <Compile Include="Utilities\GridTracker.cs" />
+    <Compile Include="Utilities\HangarChecks.cs" />
     <Compile Include="Utilities\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Patcher.cs" />
-    <Compile Include="Utilities\SerializeData.cs" />
+    <Compile Include="Utilities\SerializableData.cs" />
     <Compile Include="Utilities\Settings.cs" />
     <Compile Include="UI\UserControlInterface.xaml.cs">
       <DependentUpon>UserControlInterface.xaml</DependentUpon>

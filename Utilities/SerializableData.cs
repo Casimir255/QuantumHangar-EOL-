@@ -62,9 +62,10 @@ namespace QuantumHangar
 
                 File.WriteAllText(dir, JsonConvert.SerializeObject(data));
 
+
             }catch(Exception e)
             {
-                Main.Debug("Unable to save file @" + dir, e, Main.ErrorType.Trace);
+                Hangar.Debug("Unable to save file @" + dir, e, Hangar.ErrorType.Trace);
             }
 
 
@@ -161,7 +162,7 @@ namespace QuantumHangar
 
 
 
-
+        [ProtoIgnore] public bool ServerOffer = false;
         //We do not send this to the block. We just keep this in the market item
         [ProtoIgnore] public Dictionary<ulong, int> PlayerPurchases = new Dictionary<ulong, int>();
 
@@ -240,6 +241,7 @@ namespace QuantumHangar
         public List<GridStamp> Grids = new List<GridStamp>();
         public TimeStamp Timer;
         public List<GridStamp> GridBackups = new List<GridStamp>();
+
     }
 
     public class GridStamp
@@ -271,6 +273,14 @@ namespace QuantumHangar
 
         //Grid Stored Materials
         public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
+
+    }
+
+    public class Result
+    {
+        public List<MyCubeGrid> grids = new List<MyCubeGrid>();
+        public MyCubeGrid biggestGrid;
+        public bool GetGrids;
 
     }
 }
