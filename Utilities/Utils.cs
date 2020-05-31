@@ -40,6 +40,8 @@ using Sandbox.Game.Entities.Interfaces;
 using SpaceEngineers.Game.Entities.Blocks;
 using QuantumHangar.Utilities;
 using QuantumHangar;
+using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace QuantumHangar
 {
@@ -1057,7 +1059,7 @@ namespace QuantumHangar
 
 
 
-    public class EconUtils
+    public class Utilis
     {
         /*This will handle the cross server Econ/Econ tools
          * 
@@ -1131,6 +1133,39 @@ namespace QuantumHangar
             }
 
 
+        }
+
+
+
+        public static readonly string m_ScanPattern = "GPS:([^:]{0,32}):([\\d\\.-]*):([\\d\\.-]*):([\\d\\.-]*):";
+        public static Vector3D GetGps(string text)
+        {
+            int num = 0;
+            foreach (Match item in Regex.Matches(text, m_ScanPattern))
+            {
+                string value = item.Groups[1].Value;
+                double value2;
+                double value3;
+                double value4;
+                try
+                {
+                    value2 = double.Parse(item.Groups[2].Value, CultureInfo.InvariantCulture);
+                    value2 = Math.Round(value2, 2);
+                    value3 = double.Parse(item.Groups[3].Value, CultureInfo.InvariantCulture);
+                    value3 = Math.Round(value3, 2);
+                    value4 = double.Parse(item.Groups[4].Value, CultureInfo.InvariantCulture);
+                    value4 = Math.Round(value4, 2);
+                }
+                catch (SystemException)
+                {
+                    continue;
+                }
+
+                return new Vector3D(value2, value3, value4);
+
+            }
+
+            return Vector3D.Zero;
         }
     }
 }

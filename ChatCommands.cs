@@ -142,7 +142,7 @@ namespace QuantumHangar
                 //KeyValuePair<ulong, long> account = new KeyValuePair<ulong, long>(steamid, amount);
 
 
-                EconUtils.TryUpdatePlayerBalance(new PlayerAccount(name, steamid, amount));
+                Utilis.TryUpdatePlayerBalance(new PlayerAccount(name, steamid, amount));
 
 
                 //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);
@@ -189,7 +189,7 @@ namespace QuantumHangar
                 */
 
                 Context.Respond("SteamID: " + steamid);
-                EconUtils.TryGetPlayerBalance(steamid, out long checkmoney);
+                Utilis.TryGetPlayerBalance(steamid, out long checkmoney);
 
 
                 //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);

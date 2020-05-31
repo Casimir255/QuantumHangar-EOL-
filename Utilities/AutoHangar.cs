@@ -89,10 +89,15 @@ namespace QuantumHangar.Utilities
 
                     DateTime LastLogin;
                     LastLogin = player.LastLoginTime;
-                    //Main.Debug(LastLogin.ToString() + " || " + DateTime.Now.ToString());
+
+                    ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
                     if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
                     {
-                        ExportPlayerIdentities.Add(player);
+                        //AutoHangarBlacklist
+                        if(!Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                        {
+                            ExportPlayerIdentities.Add(player);
+                        }
                     }
                 }
 

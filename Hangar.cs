@@ -28,6 +28,7 @@ using System.Reflection;
 using QuantumHangar.Utilities;
 using Torch.Managers.PatchManager;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
+using VRageMath;
 
 namespace QuantumHangar
 {
@@ -98,6 +99,15 @@ namespace QuantumHangar
 
 
 
+            if (Config.GridMarketEnabled)
+            {
+                Market = new GridMarket(StoragePath);
+                Market.InitilizeGridMarket();
+            }
+            else
+            {
+                Debug("Starting plugin WITHOUT the Hangar Market!", null, ErrorType.Warn);
+            }
 
 
             try
@@ -136,22 +146,7 @@ namespace QuantumHangar
 
                     BlockLimiterConnection(Plugins);
                     Tracker.ServerStarted(Config.FolderDirectory);
-
-
-
-
-
-
-                    if (Config.GridMarketEnabled)
-                    {
-                        Market = new GridMarket(StoragePath);
-                        Market.InitilizeGridMarket(ChatManager, MP);
-                    }
-                    else
-                    {
-                        Debug("Starting plugin WITHOUT the Hangar Market!", null, ErrorType.Warn);
-                    }
-
+                    Market.InitilizeComms(ChatManager, MP);
 
                     AutoHangarStamp = DateTime.Now;
                     break;
@@ -159,8 +154,6 @@ namespace QuantumHangar
 
                 case TorchSessionState.Unloading:
                     PluginDispose();
-
-
                     break;
 
 

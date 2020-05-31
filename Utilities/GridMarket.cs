@@ -30,8 +30,8 @@ namespace QuantumHangar.Utilities
         public static List<MarketList> GridList { get; set; }
         public static List<MarketList> PublicOfferseGridList { get; set; }
 
-        public static string ServerMarketFileDir;
-        public static string ServerOffersDir;
+        public string ServerMarketFileDir;
+        public string ServerOffersDir;
 
 
         public static Dictionary<ulong, long> PlayerAccounts { get; set; }
@@ -61,20 +61,12 @@ namespace QuantumHangar.Utilities
             BalanceAdjustment = new Dictionary<ulong, long>();
 
 
-            InitilizeComms();
+            //InitilizeComms();
         }
 
-        public void InitilizeGridMarket(ChatManagerServer ChatServer, MultiplayerManagerBase Multiplayer)
+        public void InitilizeGridMarket()
         {
             //Initilize new market servers
-            _ChatManager = ChatServer;
-            _MP = Multiplayer;
-
-            //initilize PlayerWatcher
-            MP.PlayerJoined += MP_PlayerJoined;
-            MP.PlayerLeft += MP_PlayerLeft;
-
-
             MarketServers = new CrossServer(Config.MarketPort, this);
             //Attempt to create market servers!
             if (MarketServers.CreateServers() == false)
@@ -153,12 +145,17 @@ namespace QuantumHangar.Utilities
             }
         }
 
-
-
-        private void InitilizeComms()
+        public void InitilizeComms(ChatManagerServer ChatServer, MultiplayerManagerBase Multiplayer)
         {
             Comms = new Comms(this);
             Comms.RegisterHandlers();
+
+            _ChatManager = ChatServer;
+            _MP = Multiplayer;
+
+            //initilize PlayerWatcher
+            MP.PlayerJoined += MP_PlayerJoined;
+            MP.PlayerLeft += MP_PlayerLeft;
         }
 
         public void Dispose()
@@ -192,7 +189,7 @@ namespace QuantumHangar.Utilities
             {
                 Debug("PlayerState: " + obj.State.ToString());
                 Hangar.Debug("Attempting to send account data!");
-                EconUtils.TryGetPlayerBalance(obj.SteamId, out long balance);
+                Utilis.TryGetPlayerBalance(obj.SteamId, out long balance);
 
 
                 CrossServerMessage message = new CrossServerMessage();
@@ -263,7 +260,7 @@ namespace QuantumHangar.Utilities
                     }
 
 
-                    bool Updated = EconUtils.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
+                    bool Updated = Utilis.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
                     Hangar.Debug("Account updated: " + Updated);
                     return;
                 }
@@ -286,7 +283,7 @@ namespace QuantumHangar.Utilities
 
 
         //Forces refresh of all admin offered grids and syncs them to the blocks in the server
-        public static void UpdatePublicOffers(Settings Config)
+        public void UpdatePublicOffers()
         {
 
             //Update all public offer market items!
@@ -436,7 +433,7 @@ namespace QuantumHangar.Utilities
 
 
             //Adjust player prices (We need to check if buyer has enough moneyies hehe)
-            bool RetrieveSuccessful = EconUtils.TryGetPlayerBalance(grid.BuyerSteamid, out long BuyerBallance);
+            bool RetrieveSuccessful = Utilis.TryGetPlayerBalance(grid.BuyerSteamid, out long BuyerBallance);
             if (!RetrieveSuccessful || BuyerBallance < Item.Price)
             {
                 _ChatManager.SendMessageAsOther("GridMarket", "Unable to purchase grid! Not enough credits!", VRageMath.Color.Yellow, grid.BuyerSteamid);
@@ -588,7 +585,7 @@ namespace QuantumHangar.Utilities
                 {
                     Config.PublicOffers[Index].Forsale = false;
                     //Update offers and refresh
-                    GridMarket.UpdatePublicOffers(Config);
+                    UpdatePublicOffers();
                 }
 
             }

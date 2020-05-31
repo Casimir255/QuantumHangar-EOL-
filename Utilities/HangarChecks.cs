@@ -117,7 +117,7 @@ namespace QuantumHangar.Utilities
         {
 
             if (!InitilizeCharacter()
-                || !CheckSaveLocationRestriction()
+                || !CheckZoneRestrictions(true)
                 || !CheckGravity()
                 || !CheckEnemyDistance()
                 || !CheckEnemyDistance()
@@ -163,7 +163,7 @@ namespace QuantumHangar.Utilities
 
 
             //Check for price
-            if (!RequireCurrency(result))
+            if (!RequireSaveCurrency(result))
             {
                 return;
             }
@@ -185,7 +185,7 @@ namespace QuantumHangar.Utilities
 
 
             if (!InitilizeCharacter()
-                || !CheckLoadLocationRestriction()
+                || !CheckZoneRestrictions(false)
                 || !CheckEnemyDistance()
                 || !CheckGravity()
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
@@ -830,7 +830,7 @@ namespace QuantumHangar.Utilities
 
 
         //Hangar Save
-        private bool RequireCurrency(Result result)
+        private bool RequireSaveCurrency(Result result)
         {
             //MyObjectBuilder_Definitions(MyParticlesManager)
             Chat chat = new Chat(Context);
@@ -911,7 +911,7 @@ namespace QuantumHangar.Utilities
                         break;
                 }
 
-                EconUtils.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
+                Utilis.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
 
 
                 if (Balance >= SaveCost)
@@ -953,6 +953,130 @@ namespace QuantumHangar.Utilities
                     return false;
                 }
             }
+        }
+
+
+        private bool RequireLoadCurrency(GridStamp Grid)
+        {
+            //MyObjectBuilder_Definitions(MyParticlesManager)
+            Chat chat = new Chat(Context);
+            IMyPlayer Player = Context.Player;
+            if (!Plugin.Config.RequireCurrency)
+            {
+
+                return true;
+            }
+            else
+            {
+                long SaveCost = 0;
+                switch (Plugin.Config.HangarSaveCostType)
+                {
+                    case CostType.BlockCount:
+
+
+                        
+
+   
+                                    //If grid is station
+                                    //SaveCost += Convert.ToInt64(Grid.st * Plugin.Config.CustomStaticGridCurrency);
+
+                                    //If grid is large grid
+                                   // SaveCost += Convert.ToInt64(grid.BlocksCount * Plugin.Config.CustomLargeGridCurrency);
+                                
+
+                                //if its a small grid
+                               // SaveCost += Convert.ToInt64(grid.BlocksCount * Plugin.Config.CustomSmallGridCurrency);
+                            
+
+
+                        
+
+                        //Multiply by 
+
+
+                        break;
+
+
+                    case CostType.Fixed:
+
+                        SaveCost = Convert.ToInt64(Plugin.Config.CustomStaticGridCurrency);
+
+                        break;
+
+
+                    case CostType.PerGrid:
+                        /*
+                        foreach (MyCubeGrid grid in result.grids)
+                        {
+                            if (grid.GridSizeEnum == MyCubeSize.Large)
+                            {
+                                if (grid.IsStatic)
+                                {
+                                    //If grid is station
+                                    SaveCost += Convert.ToInt64(Plugin.Config.CustomStaticGridCurrency);
+                                }
+                                else
+                                {
+                                    //If grid is large grid
+                                    SaveCost += Convert.ToInt64(Plugin.Config.CustomLargeGridCurrency);
+                                }
+                            }
+                            else
+                            {
+                                //if its a small grid
+                                SaveCost += Convert.ToInt64(Plugin.Config.CustomSmallGridCurrency);
+                            }
+                        }
+                        */
+                        break;
+                }
+
+                Utilis.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
+
+                /*
+                if (Balance >= SaveCost)
+                {
+                    //Check command status!
+                    string command = result.biggestGrid.DisplayName;
+                    var confirmationCooldownMap = Plugin.ConfirmationsMap;
+                    if (confirmationCooldownMap.TryGetValue(Player.IdentityId, out CurrentCooldown confirmationCooldown))
+                    {
+                        if (!confirmationCooldown.CheckCommandStatus(command))
+                        {
+                            //Confirmed command! Update player balance!
+                            confirmationCooldownMap.Remove(Player.IdentityId);
+                            chat.Respond("Confirmed! Saving grid!");
+
+                            Player.RequestChangeBalance(-1 * SaveCost);
+                            return true;
+                        }
+                        else
+                        {
+                            chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                            confirmationCooldown.StartCooldown(command);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                        confirmationCooldown = new CurrentCooldown();
+                        confirmationCooldown.StartCooldown(command);
+                        confirmationCooldownMap.Add(Player.IdentityId, confirmationCooldown);
+                        return false;
+                    }
+                }
+                else
+                {
+                    long Remaing = SaveCost - Balance;
+                    chat.Respond("You need an additional " + Remaing + " SC to perform this action!");
+                    return false;
+                }
+
+                */
+            }
+
+            return true;
         }
 
         private bool CheckHanagarLimits(PlayerInfo Data)
@@ -1606,7 +1730,20 @@ namespace QuantumHangar.Utilities
             {
                 if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Context.Player.GetPosition())))
                 {
-                    Chat.Respond("Saving & Loading in gravity has been disabled!", Context);
+                    chat.Respond("Saving & Loading in gravity has been disabled!");
+                    return false;
+                }
+            }
+            else
+            {
+                if(Plugin.Config.MaxGravityAmount == 0)
+                {
+                    return true;
+                }
+
+                if(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Context.Player.GetPosition()).Length() > Plugin.Config.MaxGravityAmount)
+                {
+                    chat.Respond("You are not permitted to Save/load in this gravity amount. Max amount: "+ Plugin.Config.MaxGravityAmount+"g");
                     return false;
                 }
             }
@@ -1614,51 +1751,107 @@ namespace QuantumHangar.Utilities
             return true;
         }
 
-
-        private bool CheckSaveLocationRestriction()
+        private bool CheckZoneRestrictions(bool Save)
         {
-            if (Plugin.Config.RestrictSavingAroundPoint)
+            if (Plugin.Config.ZoneRestrictions.Count != 0)
             {
-                //Get save point
-                Vector3D SavePoint = new Vector3D(Plugin.Config.SavePointX, Plugin.Config.SavePointY, Plugin.Config.SavePointZ);
-
                 Vector3D PlayerPosition = Context.Player.GetPosition();
 
-
-                if (Vector3D.Distance(SavePoint, PlayerPosition) > Plugin.Config.SavePointR * 1000)
-                {
-
-                    Chat chat = new Chat(Context);
-                    chat.Respond("You are not within " + Plugin.Config.SavePointR * 1000 + "m of the save point: " + SavePoint.ToString());
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private bool CheckLoadLocationRestriction()
-        {
-            if (Plugin.Config.RestrictLoadingAroundPoint)
-            {
                 //Get save point
-                Vector3D LoadPoint = new Vector3D(Plugin.Config.LoadPointX, Plugin.Config.LoadPointY, Plugin.Config.LoadPointZ);
+                int ClosestPoint = -1;
+                double Distance = -1;
 
-                Vector3D PlayerPosition = Context.Player.GetPosition();
-
-
-                if (Vector3D.Distance(LoadPoint, PlayerPosition) > Plugin.Config.LoadPointR * 1000)
+                for(int i = 0; i < Plugin.Config.ZoneRestrictions.Count(); i++)
                 {
 
-                    Chat chat = new Chat(Context);
-                    chat.Respond("You are not within " + Plugin.Config.LoadPointR * 1000 + "m of the load point: " + LoadPoint.ToString());
+                    Vector3D ZoneCenter = new Vector3D(Plugin.Config.ZoneRestrictions[i].X, Plugin.Config.ZoneRestrictions[i].Y, Plugin.Config.ZoneRestrictions[i].Z);
+
+                    double PlayerDistance = Vector3D.Distance(ZoneCenter, PlayerPosition);
+
+                    if (PlayerDistance <= Plugin.Config.ZoneRestrictions[i].Radius)
+                    {
+                        //if player is within range
+
+                        if(Save && !Plugin.Config.ZoneRestrictions[i].AllowSaving)
+                        {
+                            chat.Respond("You are not permitted to save grids in this zone");
+                            return false;
+                        }
+
+                        if(!Save && !Plugin.Config.ZoneRestrictions[i].AllowLoading)
+                        {
+                            chat.Respond("You are not permitted to load grids in this zone");
+                            return false;
+                        }
+                        return true;
+                    }
+
+
+
+                    if (Save && Plugin.Config.ZoneRestrictions[i].AllowSaving) {
+                        if (ClosestPoint == -1 || PlayerDistance <= Distance)
+                        {
+                            ClosestPoint = i;
+                            Distance = PlayerDistance;
+                        }
+                    }
+
+
+                    if(!Save && Plugin.Config.ZoneRestrictions[i].AllowLoading)
+                    {
+                        if (ClosestPoint == -1 || PlayerDistance <= Distance)
+                        {
+                            ClosestPoint = i;
+                            Distance = PlayerDistance;
+                        }
+                    }
+
+
+
+                }
+                Vector3D ClosestZone = new Vector3D();
+                try
+                {
+                    ClosestZone = new Vector3D(Plugin.Config.ZoneRestrictions[ClosestPoint].X, Plugin.Config.ZoneRestrictions[ClosestPoint].Y, Plugin.Config.ZoneRestrictions[ClosestPoint].Z);
+                }catch(Exception e){
+
+                    chat.Respond("No areas found!");
+                    //Log.Warn(e, "No suitable zones found! (Possible Error)");
                     return false;
                 }
+
+                if (Save)
+                {
+                    StringBuilder b = new StringBuilder();
+                    //Chat chat = new Chat(Context);
+                    b.Append(string.Format("Nearest save area is [{0}]", Plugin.Config.ZoneRestrictions[ClosestPoint].Name));
+                    b.AppendLine(string.Format("Distance away: {0}m", Distance));
+                    b.AppendLine(string.Format("@ {0}", ClosestZone.ToString()));
+                    chat.Respond(b.ToString());
+                    return false;
+                }
+                else
+                {
+                    StringBuilder b = new StringBuilder();
+                    //Chat chat = new Chat(Context);
+                    b.Append(string.Format("Nearest load area is [{0}]", Plugin.Config.ZoneRestrictions[ClosestPoint].Name));
+                    b.AppendLine(string.Format("Distance away: {0}m", Distance));
+                    b.AppendLine(string.Format("@ {0}", ClosestZone.ToString()));
+                    chat.Respond(b.ToString());
+                    return false;
+                }
+
+                
+
+
+
+
+
+
             }
 
             return true;
         }
-
 
 
         //Hagar Load

@@ -230,6 +230,31 @@ namespace QuantumHangar
 
     }
 
+    public class ZoneRestrictions
+    {
+        public string Name { get; set; }
+
+        public bool AllowSaving { get; set; }
+        public bool AllowLoading { get; set; }
+
+
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
+
+        public double Radius { get; set; }
+
+
+    }
+
+
+    public class HangarBlacklist
+    {
+        public string Name { get; set; }
+        public ulong SteamID { get; set; }
+    }
+
+
     public class TimeStamp
     {
         public long PlayerID;

@@ -32,43 +32,11 @@ namespace QuantumHangar
         private bool _GridMarketEnabled = false;
         public bool GridMarketEnabled { get => _GridMarketEnabled; set => SetValue(ref _GridMarketEnabled, value); }
 
-
-        //Saving & Loading around a point:
-        private bool _RestrictSavingAroundPoint = false;
-        public bool RestrictSavingAroundPoint { get => _RestrictSavingAroundPoint; set => SetValue(ref _RestrictSavingAroundPoint, value); }
-
-        private double _SavePointX = 0;
-        public double SavePointX { get => _SavePointX; set => SetValue(ref _SavePointX, value); }
-
-        private double _SavePointY = 0;
-        public double SavePointY { get => _SavePointY; set => SetValue(ref _SavePointY, value); }
-
-        private double _SavePointZ = 0;
-        public double SavePointZ { get => _SavePointZ; set => SetValue(ref _SavePointZ, value); }
-
-        private double _SavePointR = 5;
-        public double SavePointR { get => _SavePointR; set => SetValue(ref _SavePointR, value); }
-
-
-        private bool _RestrictLoadingAroundPoint = false;
-        public bool RestrictLoadingAroundPoint { get => _RestrictLoadingAroundPoint; set => SetValue(ref _RestrictLoadingAroundPoint, value); }
-
-        private double _LoadPointX = 0;
-        public double LoadPointX { get => _LoadPointX; set => SetValue(ref _LoadPointX, value); }
-
-        private double _LoadPointY = 0;
-        public double LoadPointY { get => _LoadPointY; set => SetValue(ref _LoadPointY, value); }
-
-        private double _LoadPointZ = 0;
-        public double LoadPointZ { get => _LoadPointZ; set => SetValue(ref _LoadPointZ, value); }
-
-        private double _LoadPointR = 5;
-        public double LoadPointR { get => _LoadPointR; set => SetValue(ref _LoadPointR, value); }
-
-
         private bool _EnableBlackListBlocks = false;
         public bool EnableBlackListBlocks { get => _EnableBlackListBlocks; set => SetValue(ref _EnableBlackListBlocks, value); }
 
+
+        //SaveGrid Currency
         private bool _RequireCurrency = false;
         public bool RequireCurrency { get => _RequireCurrency; set => SetValue(ref _RequireCurrency, value); }
 
@@ -79,16 +47,30 @@ namespace QuantumHangar
         public double CustomLargeGridCurrency { get => _CustomLargeGridCurrency; set => SetValue(ref _CustomLargeGridCurrency, value); }
         public double CustomStaticGridCurrency { get => _CustomStaticGridCurrency; set => SetValue(ref _CustomStaticGridCurrency, value); }
         public double CustomSmallGridCurrency { get => _CustomSmallGridCurrency; set => SetValue(ref _CustomSmallGridCurrency, value); }
-
-
-
         private CostType _HangarSaveCostType = CostType.PerGrid;
-        private bool _BlackListRadioButton = false;
+        public CostType HangarSaveCostType { get => _HangarSaveCostType; set => SetValue(ref _HangarSaveCostType, value); }
 
-        //Server BlockLimits (true)   Custom (false)
+
+
+        //LoadGrid Currency
+        private bool _RequireLoadCurrency = false;
+        public bool RequireLoadCurrency { get => _RequireLoadCurrency; set => SetValue(ref _RequireLoadCurrency, value); }
+        private double _LoadLargeGridCurrency = 1;
+        private double _LoadStaticGridCurrency = 1;
+        private double _LoadSmallGridCurrency = 1;
+        public double LoadLargeGridCurrency { get => _LoadLargeGridCurrency; set => SetValue(ref _LoadLargeGridCurrency, value); }
+        public double LoadStaticGridCurrency { get => _LoadStaticGridCurrency; set => SetValue(ref _LoadStaticGridCurrency, value); }
+        public double LoadSmallGridCurrency { get => _LoadSmallGridCurrency; set => SetValue(ref _LoadSmallGridCurrency, value); }
+        private CostType _HangarLoadCostType = CostType.PerGrid;
+        public CostType HangarLoadCostType { get => _HangarLoadCostType; set => SetValue(ref _HangarLoadCostType, value); }
+
+
+
+
+        private bool _BlackListRadioButton = false;
         public bool SBlockLimits { get => _BlackListRadioButton; set => SetValue(ref _BlackListRadioButton, value); }
 
-        public CostType HangarSaveCostType { get => _HangarSaveCostType; set => SetValue(ref _HangarSaveCostType, value); }
+       
 
 
 
@@ -136,6 +118,13 @@ namespace QuantumHangar
         private ObservableCollection<PublicOffers> _PublicOffers = new ObservableCollection<PublicOffers>();
         public ObservableCollection<PublicOffers> PublicOffers { get => _PublicOffers; set => SetValue(ref _PublicOffers, value); }
 
+        //Saving & Loading around a point:
+        private ObservableCollection<ZoneRestrictions> _ZoneRestrictions = new ObservableCollection<ZoneRestrictions>();
+        public ObservableCollection<ZoneRestrictions> ZoneRestrictions { get => _ZoneRestrictions; set => SetValue(ref _ZoneRestrictions, value); }
+
+
+        private ObservableCollection<HangarBlacklist> _AutoHangarPlayerBlacklist = new ObservableCollection<HangarBlacklist>();
+        public ObservableCollection<HangarBlacklist> AutoHangarPlayerBlacklist { get => _AutoHangarPlayerBlacklist; set => SetValue(ref _AutoHangarPlayerBlacklist, value); }
 
 
         private bool _CrossServerEcon = false;
@@ -176,6 +165,9 @@ namespace QuantumHangar
         public bool OnLoadTransfer { get => _OnLoadTransfer; set => SetValue(ref _OnLoadTransfer, value); }
 
         //ExtendedConfigs
+
+
+
 
         //Single slot
         private int _SingleMaxBlocks = 0;
@@ -222,6 +214,9 @@ namespace QuantumHangar
 
         private bool _AllowInGravity = true;
         public bool AllowInGravity { get => _AllowInGravity; set => SetValue(ref _AllowInGravity, value); }
+
+        private double _MaxGravityAmount = 0;
+        public double MaxGravityAmount { get => _MaxGravityAmount; set => SetValue(ref _MaxGravityAmount, value); }
 
 
         private bool _HostServer = false;

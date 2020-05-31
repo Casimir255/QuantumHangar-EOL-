@@ -1,13 +1,16 @@
 ﻿using Newtonsoft.Json;
 using NLog;
 using QuantumHangar.Utilities;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -63,17 +66,7 @@ namespace QuantumHangar.UI
 
 
 
-        private void RefreshItems(object sender, RoutedEventArgs e)
-        {
-            
 
-
-        }
-
-        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
-        {
-   
-        }
 
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -88,7 +81,7 @@ namespace QuantumHangar.UI
 
             try
             {
-                subdirectoryEntries = Directory.GetFiles(GridMarket.ServerOffersDir, "*.sbc");
+                subdirectoryEntries = Directory.GetFiles(Plugin.Market.ServerOffersDir, "*.sbc");
             }
             catch (Exception b)
             {
@@ -153,7 +146,7 @@ namespace QuantumHangar.UI
 
             //Need to remove existing ones
 
-            string PublicOfferPath = GridMarket.ServerOffersDir;
+            string PublicOfferPath = Plugin.Market.ServerOffersDir;
 
             //Clear list
             GridMarket.PublicOfferseGridList.Clear();
@@ -218,7 +211,7 @@ namespace QuantumHangar.UI
             Data.List = GridMarket.PublicOfferseGridList;
 
             //Write to file
-            FileSaver.Save(GridMarket.ServerMarketFileDir, Data);
+            FileSaver.Save(Plugin.Market.ServerMarketFileDir, Data);
             //File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
             //This will force the market to update the market items
         }
@@ -255,11 +248,178 @@ namespace QuantumHangar.UI
             }
         }
 
+
+        private void RadioButtonLoad_Checked(object sender, RoutedEventArgs e)
+        {
+            var button = sender as RadioButton;
+
+            if (button.Name == "FixedPriceLoad")
+            {
+                StaticLGBox.Visibility = Visibility.Visible;
+                StaticLGText.Visibility = Visibility.Visible;
+                StaticLGText.Text = "Fixed Price Amount:";
+
+                LargeLGBox.Visibility = Visibility.Hidden;
+                LargeLGText.Visibility = Visibility.Hidden;
+
+                SmallLGBox.Visibility = Visibility.Hidden;
+                SmallLGText.Visibility = Visibility.Hidden;
+
+
+            }
+            else if (button.Name == "BlockCountLoad")
+            {
+                StaticGBox.Visibility = Visibility.Visible;
+                StaticGText.Visibility = Visibility.Visible;
+                StaticGText.Text = "Price PerBlock Amount:";
+
+                LargeGBox.Visibility = Visibility.Hidden;
+                LargeGText.Visibility = Visibility.Hidden;
+
+                SmallGBox.Visibility = Visibility.Hidden;
+                SmallGText.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                StaticLGBox.Visibility = Visibility.Visible;
+                StaticLGText.Visibility = Visibility.Visible;
+                StaticLGText.Text = "Static Grid Currency:";
+
+                LargeLGBox.Visibility = Visibility.Visible;
+                LargeLGText.Visibility = Visibility.Visible;
+
+                SmallLGBox.Visibility = Visibility.Visible;
+                SmallLGText.Visibility = Visibility.Visible;
+            }
+        }
+
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
 
-            Process.Start(GridMarket.ServerOffersDir);
+            Process.Start(Plugin.Market.ServerOffersDir);
+        }
 
+
+
+        private void AddNewGpsButton(object sender, RoutedEventArgs e)
+        {
+            foreach (Match item in Regex.Matches(GpsTextBox.Text, Utilis.m_ScanPattern))
+            {
+                ZoneRestrictions r = new ZoneRestrictions();
+
+                string value = item.Groups[1].Value;
+                double value2;
+                double value3;
+                double value4;
+                try
+                {
+                    value2 = double.Parse(item.Groups[2].Value, CultureInfo.InvariantCulture);
+                    value2 = Math.Round(value2, 2);
+                    value3 = double.Parse(item.Groups[3].Value, CultureInfo.InvariantCulture);
+                    value3 = Math.Round(value3, 2);
+                    value4 = double.Parse(item.Groups[4].Value, CultureInfo.InvariantCulture);
+                    value4 = Math.Round(value4, 2);
+                }
+                catch (SystemException)
+                {
+                    continue;
+                }
+
+                r.Name = value;
+
+                r.X = value2;
+                r.Y = value3;
+                r.Z = value4;
+
+                Log.Warn(r.X);
+
+                r.Radius = 100;
+                r.AllowLoading = true;
+                r.AllowSaving = true;
+
+                Plugin.Config.ZoneRestrictions.Add(r);
+
+                GpsTextBox.Text = "";
+
+                Plugin.Config.RefreshModel();
+
+                return;
+            }
+        }
+
+        private void DeleteZone(object sender, RoutedEventArgs e)
+        {
+            ZoneRestrictions selectedItem = (ZoneRestrictions)ZoneRestrictions.SelectedItem;
+            if (selectedItem != null)
+            {
+                Plugin.Config.ZoneRestrictions.Remove(selectedItem);
+                Plugin.Config.RefreshModel();
+
+            }
+        }
+
+        private void ZoneGridLostFocust(object sender, RoutedEventArgs e)
+        {
+            Plugin.Config.RefreshModel();
+        }
+
+
+
+
+
+
+        private void AddNewBlacklistPlayer(object sender, RoutedEventArgs e)
+        {
+            //Update all public offer market items!
+            if (!Hangar.IsRunning)
+            {
+                HangarBlacklist b = new HangarBlacklist();
+                b.Name = AutoHangarNameBox.Text;
+
+                Plugin.Config.AutoHangarPlayerBlacklist.Add(b);
+            }
+            else
+            {
+                //Server is running. We can attempt to get steamID
+                HangarBlacklist b = new HangarBlacklist();
+                b.Name = AutoHangarNameBox.Text;
+
+                /*
+                foreach(MyIdentity player in MySession.Static.Players.GetAllIdentities())
+                {
+                    Log.Info(player.DisplayName);
+                }
+                */
+
+                try
+                {
+                    MyIdentity player = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName.Equals(AutoHangarNameBox.Text));
+                    b.SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
+                    
+                }
+                catch
+                {
+                    Log.Warn("Unable to find given character. Enter SteamID in manually");
+                }
+                Plugin.Config.AutoHangarPlayerBlacklist.Add(b);
+            }
+            AutoHangarNameBox.Text = "";
+            Plugin.Config.RefreshModel();
+        }
+
+        private void DeletePlayer(object sender, RoutedEventArgs e)
+        {
+            HangarBlacklist selectedItem = (HangarBlacklist)AutoHangarBlacklist.SelectedItem;
+            if (selectedItem != null)
+            {
+                Plugin.Config.AutoHangarPlayerBlacklist.Remove(selectedItem);
+                Plugin.Config.RefreshModel();
+            }
+        }
+
+        private void PlayerBlacklistLostFocus(object sender, RoutedEventArgs e)
+        {
+            Plugin.Config.RefreshModel();
         }
     }
 
