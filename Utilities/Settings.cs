@@ -61,10 +61,18 @@ namespace QuantumHangar
         public double LoadLargeGridCurrency { get => _LoadLargeGridCurrency; set => SetValue(ref _LoadLargeGridCurrency, value); }
         public double LoadStaticGridCurrency { get => _LoadStaticGridCurrency; set => SetValue(ref _LoadStaticGridCurrency, value); }
         public double LoadSmallGridCurrency { get => _LoadSmallGridCurrency; set => SetValue(ref _LoadSmallGridCurrency, value); }
+
         private CostType _HangarLoadCostType = CostType.PerGrid;
         public CostType HangarLoadCostType { get => _HangarLoadCostType; set => SetValue(ref _HangarLoadCostType, value); }
 
 
+        private LoadType _LoadType = LoadType.ForceLoadMearPlayer;
+        public LoadType LoadType { get => _LoadType; set => SetValue(ref _LoadType, value); }
+        private double _LoadRadius = 100;
+        public double LoadRadius { get => _LoadRadius; set => SetValue(ref _LoadRadius, value); }
+
+        private bool _RequireLoadRadius = true;
+        public bool RequireLoadRadius { get => _RequireLoadRadius; set => SetValue(ref _RequireLoadRadius, value); }
 
 
         private bool _BlackListRadioButton = false;

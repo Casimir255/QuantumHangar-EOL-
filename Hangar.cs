@@ -50,7 +50,7 @@ namespace QuantumHangar
         private static bool EnableDebug = true;
         public static bool IsRunning = false;
 
-        
+
         private bool ServerRunning;
         public static MethodInfo CheckFuture;
 
@@ -74,7 +74,7 @@ namespace QuantumHangar
         public UserControl _control;
         public UserControl GetControl() => _control ?? (_control = new UserControlInterface(this));
         public static ChatManagerServer ChatManager;
-        
+
 
         public override void Init(ITorchBase torch)
         {
@@ -112,7 +112,7 @@ namespace QuantumHangar
 
             try
             {
-               
+
             }
             catch (Exception e)
             {
@@ -146,7 +146,11 @@ namespace QuantumHangar
 
                     BlockLimiterConnection(Plugins);
                     Tracker.ServerStarted(Config.FolderDirectory);
-                    Market.InitilizeComms(ChatManager, MP);
+
+                    if (Config.GridMarketEnabled)
+                    {
+                        Market.InitilizeComms(ChatManager, MP);
+                    }
 
                     AutoHangarStamp = DateTime.Now;
                     break;
@@ -165,30 +169,30 @@ namespace QuantumHangar
         public override void Update()
         {
             //Optional how often to check
-            if(AutoHangarStamp.AddHours(3) < DateTime.Now)
+            if (AutoHangarStamp.AddHours(2) < DateTime.Now)
             {
                 //Run checks
-                    if (Config.AutoHangarGrids)
-                    {
-                    
+                AutoHangar Auto = new AutoHangar(Config, Market, Tracker);
+                if (Config.AutoHangarGrids)
+                {
+                    Auto.RunAutoHangar();
+                }
 
-                    }
-                    
 
-                    if (Config.AutosellHangarGrids && Market.IsHostServer)
-                    {
-                        
-                    }
+                if (Config.AutosellHangarGrids && Market.IsHostServer)
+                {
+                    Auto.RunAutoSell();
+                }
 
                 AutoHangarStamp = DateTime.Now;
             }
 
-            if(AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
+            if (AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
             {
                 Debug("Getting grids in voxels!!");
+                AutoHangar Auto = new AutoHangar(Config, Market, Tracker);
 
-
-
+                Auto.RunAutoSell();
                 AutoVoxelStamp = DateTime.Now;
             }
         }
@@ -227,7 +231,10 @@ namespace QuantumHangar
         public void PluginDispose()
         {
             //Un register events
-            Market.Dispose();
+            if (Config.GridMarketEnabled && Market != null)
+            {
+                Market.Dispose();
+            }
         }
 
 

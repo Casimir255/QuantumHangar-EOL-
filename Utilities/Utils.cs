@@ -42,6 +42,7 @@ using QuantumHangar.Utilities;
 using QuantumHangar;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using Sandbox.Game.Screens.Helpers;
 
 namespace QuantumHangar
 {
@@ -150,7 +151,7 @@ namespace QuantumHangar
             return MyObjectBuilderSerializer.SerializeXML(path, false, builderDefinition);
         }
 
-        public bool LoadGrid(string GridName, MyCharacter Player, bool keepOriginalLocation, bool force = false)
+        public bool LoadGrid(string GridName, MyCharacter Player, bool keepOriginalLocation, Chat chat, bool force = false)
         {
             string path = Path.Combine(FolderPath, GridName+ ".sbc");
 
@@ -207,14 +208,18 @@ namespace QuantumHangar
 
 
 
+                
+ 
 
 
-                if (!Config.AutoOrientateToSurface)
+
+
+                if (keepOriginalLocation || !Config.AutoOrientateToSurface)
                 {
                     foreach (var shipBlueprint in shipBlueprints)
                     {
 
-                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true))
+                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat))
                         {
 
                             Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
@@ -244,36 +249,76 @@ namespace QuantumHangar
         }
 
         private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
-            Vector3D playerPosition, bool keepOriginalLocation, CommandContext context = null, bool force = false)
+            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, bool force = false)
         {
-            Chat chat = new Chat(context);
+            
             var grids = shipBlueprint.CubeGrids;
-
 
             if (grids == null || grids.Length == 0)
             {
 
                 Hangar.Debug("No grids in blueprint!");
-
-                if (context != null)
-                    chat.Respond("No grids in blueprint!");
+                chat.Respond("No grids in blueprint!");
 
                 return false;
             }
 
 
+            bool LoadNearPosition = false;
+            //For loading in the same location
 
-            if (!keepOriginalLocation)
+            ParallelSpawner Spawner = new ParallelSpawner(grids);
+            var position = grids[0].PositionAndOrientation.Value;
+            if (keepOriginalLocation)
             {
+                var sphere = FindBoundingSphere(grids);
+
+                
+
+                sphere.Center = position.Position;
+
+                List<MyEntity> entities = new List<MyEntity>();
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
+
+                foreach (var entity in entities)
+                {
+                    if (entity is MyCubeGrid)
+                    {
+                            chat.Respond("There are potentially other grids in the way. Loading near the original point.");
+
+                        LoadNearPosition = true;
+                    }
+                }
+
+                if (!LoadNearPosition)
+                {
+                    /* Remapping to prevent any key problems upon paste. */
+                    MyEntities.RemapObjectBuilderCollection(grids);
+
+                    Spawner.Start();
+
+                    return true;
+                }
+            }
+
+
+
+            /*
+             *  Everything else is loading for near player
+             * 
+             * 
+             * 
+             */
+
+            
+
                 /* Where do we want to paste the grids? Lets find out. */
-                var pos = FindPastePosition(grids, playerPosition);
+                var pos = FindPastePosition(grids, position.Position);
                 if (pos == null)
                 {
 
                     Hangar.Debug("No free Space found!");
-
-                    if (context != null)
-                        chat.Respond("No free space available!");
+                    chat.Respond("No free space available!");
 
                     return false;
                 }
@@ -283,55 +328,14 @@ namespace QuantumHangar
                 /* Update GridsPosition if that doesnt work get out of here. */
                 if (!UpdateGridsPosition(grids, newPosition))
                 {
-
-                    if (context != null)
                         chat.Respond("The File to be imported does not seem to be compatible with the server!");
 
                     return false;
                 }
-            }
 
-            //The following is for loading in same position
-            /*
-            else if (!force)
-            {
-                var sphere = FindBoundingSphere(grids);
-
-                var position = grids[0].PositionAndOrientation.Value;
-
-                sphere.Center = position.Position;
-
-                List<MyEntity> entities = new List<MyEntity>();
-                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
-
-                foreach (var entity in entities)
-                {
-
-                    if (entity is MyCubeGrid)
-                    {
-
-                        if (context != null)
-                            chat.Respond("There are potentially other grids in the way. If you are certain is free you can set 'force' to true!");
-
-                        return false;
-                    }
-                }
-
-
-
-
-
-            }
-            */
-            /* Remapping to prevent any key problems upon paste. */
+                
             MyEntities.RemapObjectBuilderCollection(grids);
-
-
-            ParallelSpawner spawner = new ParallelSpawner(grids);
-
-            spawner.Start();
-
-
+            Spawner.Start();
             return true;
         }
 
@@ -1167,6 +1171,23 @@ namespace QuantumHangar
 
             return Vector3D.Zero;
         }
+
+        public static void SendGps(Vector3D Position, string name, long EntityID, double Miniutes = 5)
+        {
+            MyGps myGps = new MyGps();
+            myGps.ShowOnHud = true;
+            myGps.Coords = Position;
+            myGps.Name = name;
+            myGps.Description = "This is where you must be to load your grid.";
+            myGps.AlwaysVisible = true;
+
+            MyGps gps = myGps;
+            gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + Miniutes);
+            gps.GPSColor = Color.Yellow;
+            MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+        }
+
+
     }
 }
 

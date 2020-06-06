@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"  
              xmlns:converters="clr-namespace:QuantumHangar.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="550" d:DesignWidth="550">
+             d:DesignHeight="550" d:DesignWidth="575">
 
     <UserControl.Resources>
         <converters:EnumBooleanConverter x:Key="enumBooleanConverter" />
@@ -106,6 +106,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
@@ -134,6 +135,42 @@
 
                             <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="11" Text="TransferGrid on load (Cross-Server without Sync)"  Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="This is useful if you are not using cross server sync plugins. Note there are exploits in doing this"/>
                             <CheckBox Grid.Row="11" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding OnLoadTransfer}">(Will transfer Authorship/Ownership)</CheckBox>
+                        </Grid>
+                    </GroupBox>
+
+
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Load From Save point</Span>
+                                        <Span>(Options to prevent loading a grid anywhere)</Span>
+                            </TextBlock>
+                        </GroupBox.Header>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                           
+
+
+                            <RadioButton Grid.Row="0" Grid.Column="0" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadMearPlayer}">Force Near Player</RadioButton>
+                            <RadioButton  Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Optional}">Player's Choice</RadioButton>
+                            <RadioButton Grid.Row="0" Grid.Column="2" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadNearOriginalPosition}">Forced Original Position</RadioButton>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="3" VerticalAlignment="Center">Require Radius Check:</TextBlock>
+                            <CheckBox Grid.Row="1" Grid.Column="0" Margin="3" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding RequireLoadRadius}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Margin="3" VerticalAlignment="Center" HorizontalAlignment="Right">Radius (m):</TextBlock>
+                            <TextBox Grid.Row="1" Grid.Column="2" Margin="3" Text="{Binding LoadRadius}" IsEnabled="{Binding RequireLoadRadius}"/>
+
                         </Grid>
                     </GroupBox>
 

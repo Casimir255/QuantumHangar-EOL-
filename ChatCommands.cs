@@ -45,10 +45,10 @@ namespace QuantumHangar
 
         [Command("load", "Loads given grid from hangar")]
         [Permission(MyPromoteLevel.None)]
-        public void Load(string GridNameOrNumber)
+        public void Load(string GridNameOrNumber, bool LoadAtSavePosition = false)
         {
             HangarChecks Checks = new HangarChecks(Context, Plugin);
-            Checks.LoadGrid(GridNameOrNumber);
+            Checks.LoadGrid(GridNameOrNumber, LoadAtSavePosition);
 
         }
 
@@ -85,11 +85,6 @@ namespace QuantumHangar
             HangarChecks Checks = new HangarChecks(Context, Plugin);
             Checks.RemoveOffer(GridNameOrNumber);
         }
-
-
-
-
-
 
 
         [Command("storagecomp", "Provides information about the ModStorageComponents")]
@@ -282,7 +277,6 @@ namespace QuantumHangar
         public void AdminLoad(string NameOrID, string GridNameOrNumber)
         {
 
-
             HangarChecks Checks = new HangarChecks(Context, Plugin, true);
             Checks.AdminLoadGrid(NameOrID, GridNameOrNumber);
 
@@ -295,11 +289,8 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void RunAuto()
         {
-          //  Hangar.Debug("Attempting Autohangar!");
-          //  //AutoHangarStamp.AddHours(.5);
-           // BackgroundWorker worker = new BackgroundWorker();
-           // worker.DoWork += new DoWorkEventHandler(HangarScans.AutoHangar);
-          //  worker.RunWorkerAsync(Plugin.Config);
+            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Market, Plugin.Tracker);
+            autoHangar.RunAutoHangar();
         }
 
 
@@ -518,16 +509,15 @@ namespace QuantumHangar
             //var p = Task.Run(() => HangarScans.HangarReset(Plugin.Config.FolderDirectory, FixMarket));
         }
 
-        [Command("autohangarinsideplanet", "Scans all grids to see if they are inside voxel")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void checkgravity()
-        {
-            Hangar.Debug("Scanning Grid in voxels!");
-            //AutoHangarStamp.AddHours(.5);
-           // BackgroundWorker worker = new BackgroundWorker();
-            //worker.DoWork += new DoWorkEventHandler(HangarScans.UnderPlanet);
-           // worker.RunWorkerAsync(Plugin.Config);
 
+
+
+        [Command("SaveAll", "Saves Everygrid in the server to players hangars")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void SaveAll()
+        {
+            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Market, Plugin.Tracker);
+            autoHangar.SaveAll();
         }
 
     }

@@ -269,15 +269,15 @@ namespace QuantumHangar.UI
             }
             else if (button.Name == "BlockCountLoad")
             {
-                StaticGBox.Visibility = Visibility.Visible;
-                StaticGText.Visibility = Visibility.Visible;
-                StaticGText.Text = "Price PerBlock Amount:";
+                StaticLGBox.Visibility = Visibility.Visible;
+                StaticLGText.Visibility = Visibility.Visible;
+                StaticLGText.Text = "Price PerBlock Amount:";
 
-                LargeGBox.Visibility = Visibility.Hidden;
-                LargeGText.Visibility = Visibility.Hidden;
+                LargeLGBox.Visibility = Visibility.Hidden;
+                LargeLGText.Visibility = Visibility.Hidden;
 
-                SmallGBox.Visibility = Visibility.Hidden;
-                SmallGText.Visibility = Visibility.Hidden;
+                SmallLGBox.Visibility = Visibility.Hidden;
+                SmallLGText.Visibility = Visibility.Hidden;
             }
             else
             {

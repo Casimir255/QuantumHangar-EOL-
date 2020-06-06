@@ -22,6 +22,14 @@ namespace QuantumHangar
     };
 
 
+    public enum LoadType
+    {
+        ForceLoadMearPlayer,
+        Optional,
+        ForceLoadNearOriginalPosition
+
+    }
+
     public enum MessageType
     {
         RequestAllItems,
@@ -290,6 +298,7 @@ namespace QuantumHangar
         public float GridBuiltPercent = 0;
         public long JumpDistance = 0;
         public int NumberOfGrids = 0;
+        public Vector3D GridSavePosition = new Vector3D(0,0,0);
 
 
         //Server blocklimits Block
