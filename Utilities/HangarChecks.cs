@@ -125,6 +125,11 @@ namespace QuantumHangar.Utilities
 
         }
 
+        /*
+         *  These are the main chat commands
+         * 
+         * 
+         */
 
         public void SaveGrid()
         {
@@ -168,11 +173,8 @@ namespace QuantumHangar.Utilities
 
 
             //Check for existing grids in hangar!
-            if (!CheckForExistingGrids(Data, result))
-            {
-                chat.Respond("A grid with that name is already in your hangar! Please rename!");
-                return;
-            }
+            CheckForExistingGrids(Data, ref result);
+
 
 
             //Check for price
@@ -185,8 +187,6 @@ namespace QuantumHangar.Utilities
             {
                 return;
             }
-
-
         }
 
         public void LoadGrid(string GridNameOrNumber, bool ForceLoadAtSavePosition)
@@ -240,6 +240,9 @@ namespace QuantumHangar.Utilities
             {
 
                 GridStamp Grid = Data.Grids[result - 1];
+
+                if (!CrossServerCheck(Grid))
+                    return;
 
                 //Check PCU!
                 if (!CheckGridLimits(myIdentity, Grid))
@@ -657,10 +660,6 @@ namespace QuantumHangar.Utilities
                 return;
 
 
-
-
-
-
             MyCharacter character = null;
             Result result = new Result();
             //MyCubeGrid grid;
@@ -720,21 +719,18 @@ namespace QuantumHangar.Utilities
             }
 
 
-            if (!CheckForExistingGrids(Data, result))
-            {
-                chat.Respond("A grid with that name is already in this persons hangar! Please rename!");
-                return;
-            }
+            CheckForExistingGrids(Data, ref result);
 
 
-            if (Methods.SaveGrids(result.grids))
+
+            if (Methods.SaveGrids(result.grids, result.GridName))
             {
                 chat.Respond("Save Complete!");
 
                 //Fill out grid info and store in file
                 GetBPDetails(result, Plugin.Config, out GridStamp Grid);
                 Data.Grids.Add(Grid);
-                Tracker.HangarUpdate(PlayerSteamID, true, Grid);
+                Tracker.HangarUpdate(id, true, Grid);
 
 
                 //Overwrite file
@@ -810,7 +806,7 @@ namespace QuantumHangar.Utilities
                 GridStamp Grid = Data.Grids[result - 1];
 
                 //string path = Path.Combine(IDPath, Grid.GridName + ".sbc");
-
+                PlayerSteamID = SteamID;
                 if (!LoadGridFile(Grid.GridName, Data, Grid))
                 {
                     return;
@@ -825,6 +821,7 @@ namespace QuantumHangar.Utilities
             {
                 if (grid.GridName == gridNameOrEntityId)
                 {
+                    PlayerSteamID = SteamID;
                     if (!LoadGridFile(grid.GridName, Data, grid))
                     {
                         return;
@@ -844,9 +841,24 @@ namespace QuantumHangar.Utilities
 
 
 
+        public bool CrossServerCheck(GridStamp Grid)
+        {
+            if (Grid.ServerPort == MySandboxGame.ConfigDedicated.ServerPort)
+                return true;
 
+            if (Grid.ServerPort == 0)
+                return true;
 
-        //Hangar Save
+            chat.Respond("This grid hasnt been saved on the previous server! Please wait!");
+            return false;
+        }
+
+        /*
+         *  Main utility commands
+         * 
+         * 
+         */
+
         private bool RequireSaveCurrency(Result result)
         {
             //MyObjectBuilder_Definitions(MyParticlesManager)
@@ -928,7 +940,7 @@ namespace QuantumHangar.Utilities
                         break;
                 }
 
-                Utilis.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
+                Utils.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
 
 
                 if (Balance >= SaveCost)
@@ -1011,7 +1023,7 @@ namespace QuantumHangar.Utilities
                         break;
                 }
 
-                Utilis.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
+                Utils.TryGetPlayerBalance(Player.SteamUserId, out long Balance);
 
 
                 if (Balance >= LoadCost)
@@ -1092,7 +1104,7 @@ namespace QuantumHangar.Utilities
                             //Send GPS of Position to player
                             chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                             string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "m]";
-                            Utilis.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
+                            Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
                             return false;
                         }
                         else
@@ -1129,7 +1141,7 @@ namespace QuantumHangar.Utilities
                                 //Send GPS of Position to player
                                 chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                                 string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "]";
-                                Utilis.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
+                                Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
                                 return false;
                             }
                             else
@@ -1406,36 +1418,6 @@ namespace QuantumHangar.Utilities
 
         }
 
-        public bool CheckInGravity()
-        {
-            IMyPlayer Player = Context.Player;
-            var fc = MyAPIGateway.Session.Factions.GetObjectBuilder();
-            var faction = fc.Factions.FirstOrDefault(f => f.Members.Any(a => a.PlayerId == Player.IdentityId));
-
-            /*
-            //Check enemy location! If under 30km return!
-            foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
-            {
-                if (faction == null || !faction.Members.Any(m => m.PlayerId == OnlinePlayer.Identity.IdentityId))
-                {
-                    if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
-                    {
-                        //Some kinda stupid faction bug
-                        continue;
-                    }
-
-                    if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
-                    {
-                        Context.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!");
-                        return false;
-                    }
-                }
-            }
-            */
-
-            return true;
-
-        }
 
         private Result GetGrids(MyCharacter character, string GridName = null)
         {
@@ -1554,7 +1536,7 @@ namespace QuantumHangar.Utilities
             return Return;
         }
 
-        private bool CheckForExistingGrids(PlayerInfo Data, Result result)
+        private bool CheckForExistingGrids(PlayerInfo Data, ref Result result)
         {
             if (Data == null)
             {
@@ -1562,19 +1544,22 @@ namespace QuantumHangar.Utilities
                 return true;
             }
 
-            if (Data.Grids.Any(x => x.GridName == result.grids[0].DisplayName))
-            {
-                return false;
-            }
+
+            Utils.FormatGridName(Data, result);
+
+ 
+
+
+
             return true;
         }
 
         private bool BeginSave(Result result, PlayerInfo Data)
         {
 
-            if (Methods.SaveGrids(result.grids))
+            if (Methods.SaveGrids(result.grids, result.GridName))
             {
-                Chat.Respond("Save Complete!", Context);
+                
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
                 stamp.PlayerID = myIdentity.IdentityId;
@@ -1592,18 +1577,18 @@ namespace QuantumHangar.Utilities
 
 
 
+
+                Grid.ServerPort = MySandboxGame.ConfigDedicated.ServerPort;
                 Data.Grids.Add(Grid);
                 Data.Timer = stamp;
+
+
 
                 Tracker.HangarUpdate(PlayerSteamID, true, Grid);
 
                 //Overwrite file
                 FileSaver.Save(Path.Combine(PlayerHangarPath, "PlayerInfo.json"), Data);
-
-                //File.WriteAllText(Path.Combine(path, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
-
-
-
+                chat.Respond("Save Complete!");
                 return true;
             }
             else
@@ -1613,6 +1598,9 @@ namespace QuantumHangar.Utilities
             }
 
         }
+
+
+        
 
         public static bool GetBPDetails(Result result, Settings Config, out GridStamp Grid)
         {
@@ -1700,8 +1688,8 @@ namespace QuantumHangar.Utilities
 
 
             //Get default
-            Grid.GridName = FileSaver.CheckInvalidCharacters(result.biggestGrid.DisplayName);
-            Grid.GridID = result.grids[0].EntityId;
+            Grid.GridName = result.GridName;
+            Grid.GridID = result.biggestGrid.EntityId;
             Grid.MarketValue = EstimatedValue;
             Grid.GridSavePosition = result.biggestGrid.PositionComp.GetPosition();
 
@@ -1817,8 +1805,10 @@ namespace QuantumHangar.Utilities
                     return true;
                 }
 
-                if (MyGravityProviderSystem.CalculateNaturalGravityInPoint(Context.Player.GetPosition()).Length() > Plugin.Config.MaxGravityAmount)
+                float Gravity = MyGravityProviderSystem.CalculateNaturalGravityInPoint(Context.Player.GetPosition()).Length() / 9.81f;
+                if (Gravity > Plugin.Config.MaxGravityAmount)
                 {
+                    //Log.Warn("Players gravity amount: " + Gravity);
                     chat.Respond("You are not permitted to Save/load in this gravity amount. Max amount: " + Plugin.Config.MaxGravityAmount + "g");
                     return false;
                 }
@@ -1899,24 +1889,22 @@ namespace QuantumHangar.Utilities
                     return false;
                 }
 
+
+
+
                 if (Save)
                 {
-                    StringBuilder b = new StringBuilder();
-                    //Chat chat = new Chat(Context);
-                    b.Append(string.Format("Nearest save area is [{0}]", Plugin.Config.ZoneRestrictions[ClosestPoint].Name));
-                    b.AppendLine(string.Format("Distance away: {0}m", Distance));
-                    b.AppendLine(string.Format("@ {0}", ClosestZone.ToString()));
-                    chat.Respond(b.ToString());
+
+                    Utils.SendGps(ClosestZone, Plugin.Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Plugin.Config.ZoneRestrictions[ClosestPoint].Radius + "m)", Context.Player.IdentityId);
+                    chat.Respond("Nearest save area has been added to your HUD");
                     return false;
                 }
                 else
                 {
-                    StringBuilder b = new StringBuilder();
+                    
+                    Utils.SendGps(ClosestZone, Plugin.Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Plugin.Config.ZoneRestrictions[ClosestPoint].Radius + "m)", Context.Player.IdentityId);
                     //Chat chat = new Chat(Context);
-                    b.Append(string.Format("Nearest load area is [{0}]", Plugin.Config.ZoneRestrictions[ClosestPoint].Name));
-                    b.AppendLine(string.Format("Distance away: {0}m", Distance));
-                    b.AppendLine(string.Format("@ {0}", ClosestZone.ToString()));
-                    chat.Respond(b.ToString());
+                    chat.Respond("Nearest load area has been added to your HUD");
                     return false;
                 }
 
@@ -2488,26 +2476,6 @@ namespace QuantumHangar.Utilities
             //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));
             return true;
         }
-
-
-
-
-
-
-
-
-
-
-        /*  Grid Methods
-         * 
-         * 
-         * 
-         * 
-         */
-
-
-
-
 
     }
 }

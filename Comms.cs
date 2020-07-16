@@ -276,7 +276,7 @@ namespace QuantumHangar
                 //Store values
                 foreach (PlayerAccount account in RecievedData.BalanceUpdate)
                 {
-                    Utilis.TryUpdatePlayerBalance(account);
+                    Utils.TryUpdatePlayerBalance(account);
 
                     if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                     {
@@ -421,7 +421,7 @@ namespace QuantumHangar
                 {
                     foreach (PlayerAccount account in RecievedData.BalanceUpdate)
                     {
-                        Utilis.TryUpdatePlayerBalance(account);
+                        Utils.TryUpdatePlayerBalance(account);
 
                         if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                         {
@@ -541,7 +541,7 @@ namespace QuantumHangar
 
                     foreach (PlayerAccount account in Message.BalanceUpdate)
                     {
-                        Utilis.TryUpdatePlayerBalance(account);
+                        Utils.TryUpdatePlayerBalance(account);
 
                         if (!GridMarket.PlayerAccounts.ContainsKey(account.SteamID))
                         {

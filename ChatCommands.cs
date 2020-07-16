@@ -87,139 +87,6 @@ namespace QuantumHangar
         }
 
 
-        [Command("storagecomp", "Provides information about the ModStorageComponents")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void ModStorageComponents()
-        {
-            var storageDefs = MyDefinitionManager.Static.GetEntityComponentDefinitions<MyModStorageComponentDefinition>();
-
-            Parallel.Invoke(() =>
-            {
-                foreach (MyModStorageComponentDefinition def in storageDefs)
-                {
-                    Hangar.Debug("Mod:" + def.Context.ModId);
-
-                    foreach (var guid in def.RegisteredStorageGuids)
-                    {
-                        Hangar.Debug("GUIDs:" + guid);
-                    }
-                }
-
-            });
-        }
-
-
-        [Command("setmoney", "Changes the balance of any player.")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void SetMoney(string name, int amount)
-        {
-            try
-            {
-
-                //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);
-
-                //MySession.Static.Players.TryGetPlayerById(Player, out MyPlayer NewPlayer);
-
-                //Context.Respond("New Player: " + NewPlayer.DisplayName);
-
-
-
-                MyIdentity player = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == name);
-                ulong steamid = MySession.Static.Players.TryGetSteamId(player.IdentityId);
-                /*
-
-                BankingAndCurrency.MyBankingSystem.RequestBalanceChange(player.IdentityId, amount);
-                //Sandbox.Game.GameSystems.BankingAndCurrency.MyBankingSystem account = new Sandbox.Game.GameSystems.BankingAndCurrency.MyBankingSystem();
-                Context.Respond(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                Log.Info(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                Main.Debug(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                */
-                //KeyValuePair<ulong, long> account = new KeyValuePair<ulong, long>(steamid, amount);
-
-
-                Utilis.TryUpdatePlayerBalance(new PlayerAccount(name, steamid, amount));
-
-
-                //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);
-                //MySession.Static.Players.TryGetPlayerById(Player, out MyPlayer NewPlayer);
-                Context.Respond("Player " + name + " balance has been updated!");
-
-            }
-            catch (Exception e)
-            {
-                Context.Respond("Error " + e);
-                Hangar.Debug("Err", e, Hangar.ErrorType.Trace);
-            }
-
-            //account.TryGetAccountInfo(Context.Player.IdentityId, out Sandbox.Game.GameSystems.BankingAndCurrency.MyAccountInfo myAccountInfo);
-
-            //myAccountInfo.Balance
-        }
-
-
-        [Command("checkmoney", "Changes the balance of any player.")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void checkmoney(string name)
-        {
-            try
-            {
-
-                //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);
-
-                //MySession.Static.Players.TryGetPlayerById(Player, out MyPlayer NewPlayer);
-
-                //Context.Respond("New Player: " + NewPlayer.DisplayName);
-
-
-
-                MyIdentity player = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == name);
-                ulong steamid = MySession.Static.Players.TryGetSteamId(player.IdentityId);
-                /*
-
-                BankingAndCurrency.MyBankingSystem.RequestBalanceChange(player.IdentityId, amount);
-                //Sandbox.Game.GameSystems.BankingAndCurrency.MyBankingSystem account = new Sandbox.Game.GameSystems.BankingAndCurrency.MyBankingSystem();
-                Context.Respond(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                Log.Info(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                Main.Debug(BankingAndCurrency.MyBankingSystem.GetBalance(player.IdentityId).ToString());
-                */
-
-                Context.Respond("SteamID: " + steamid);
-                Utilis.TryGetPlayerBalance(steamid, out long checkmoney);
-
-
-                //MyPlayer.PlayerId Player = new MyPlayer.PlayerId(Context.Player.SteamUserId);
-                //MySession.Static.Players.TryGetPlayerById(Player, out MyPlayer NewPlayer);
-                Context.Respond("Player " + name + " has a balance of: " + checkmoney + "sc");
-
-            }
-            catch (Exception e)
-            {
-                Context.Respond("Error " + e);
-                Hangar.Debug("Err", e, Hangar.ErrorType.Trace);
-            }
-
-            //account.TryGetAccountInfo(Context.Player.IdentityId, out Sandbox.Game.GameSystems.BankingAndCurrency.MyAccountInfo myAccountInfo);
-
-            //myAccountInfo.Balance
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         [Command("info", "Provides information about the ship in your hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -289,11 +156,9 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void RunAuto()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Market, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Tracker);
             autoHangar.RunAutoHangar();
         }
-
-
 
 
         [Command("list", "Lists all the grids in someones hangar.")]
@@ -302,8 +167,10 @@ namespace QuantumHangar
         {
             if (!Plugin.Config.PluginEnabled)
                 return;
+
             Chat chat = new Chat(Context, true);
             MyIdentity MPlayer;
+
             try
             {
                 MPlayer = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == NameOrID);
@@ -494,6 +361,7 @@ namespace QuantumHangar
             });
         }
 
+        /*
         [Command("removeoffer", "Removes active grid from market")]
         [Permission(MyPromoteLevel.SpaceMaster)]
         public void RemoveOffer(string GridNameOrOfferNumber)
@@ -509,14 +377,14 @@ namespace QuantumHangar
             //var p = Task.Run(() => HangarScans.HangarReset(Plugin.Config.FolderDirectory, FixMarket));
         }
 
-
+    */
 
 
         [Command("SaveAll", "Saves Everygrid in the server to players hangars")]
         [Permission(MyPromoteLevel.Admin)]
         public void SaveAll()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Market, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Tracker);
             autoHangar.SaveAll();
         }
 

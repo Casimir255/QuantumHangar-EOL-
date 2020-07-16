@@ -19,9 +19,6 @@ namespace QuantumHangar.Utilities
 
         public void Apply(PatchContext ctx, Hangar plugin)
         {
-            if (plugin.Config.PluginEnabled)
-            {
-
                 var SaveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
                 new Type[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
                 if (SaveMethod == null)
@@ -31,8 +28,6 @@ namespace QuantumHangar.Utilities
                 ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
                 Plugin = plugin;
                 Tracker = plugin.Tracker;
-
-            }
         }
 
         private static MethodInfo Method(string name)
@@ -44,11 +39,9 @@ namespace QuantumHangar.Utilities
         {
             if (__result)
             {
-                Hangar.Debug("Running Server Saves! : " + __result);
-                EconPlayerSaver.SaveOnlinePlayerAccounts(Plugin);
-
-                Tracker.ServerSave();
-                //Main.Debug(Plugin.Config.FolderDirectory);
+                    Hangar.Debug("Running Server Saves! : " + __result);
+                    EconPlayerSaver.SaveOnlinePlayerAccounts(Plugin);
+                    Tracker.ServerSave();
             }
         }
     }
@@ -83,7 +76,7 @@ namespace QuantumHangar.Utilities
                 if (ID == 0)
                     continue;
 
-                Utilis.TryGetPlayerBalance(ID, out long balance);
+                Utils.TryGetPlayerBalance(ID, out long balance);
                 PAccounts.Add(new PlayerAccount(player.DisplayName, ID, balance));
             }
             Hangar.Debug("Saving all online player Accounts!");

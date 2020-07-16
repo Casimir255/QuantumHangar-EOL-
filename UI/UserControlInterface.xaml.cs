@@ -303,7 +303,7 @@ namespace QuantumHangar.UI
 
         private void AddNewGpsButton(object sender, RoutedEventArgs e)
         {
-            foreach (Match item in Regex.Matches(GpsTextBox.Text, Utilis.m_ScanPattern))
+            foreach (Match item in Regex.Matches(GpsTextBox.Text, Utils.m_ScanPattern))
             {
                 ZoneRestrictions r = new ZoneRestrictions();
 

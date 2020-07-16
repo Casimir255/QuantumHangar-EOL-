@@ -189,7 +189,7 @@ namespace QuantumHangar.Utilities
             {
                 Debug("PlayerState: " + obj.State.ToString());
                 Hangar.Debug("Attempting to send account data!");
-                Utilis.TryGetPlayerBalance(obj.SteamId, out long balance);
+                Utils.TryGetPlayerBalance(obj.SteamId, out long balance);
 
 
                 CrossServerMessage message = new CrossServerMessage();
@@ -260,7 +260,7 @@ namespace QuantumHangar.Utilities
                     }
 
 
-                    bool Updated = Utilis.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
+                    bool Updated = Utils.TryUpdatePlayerBalance(new PlayerAccount(obj.Name, obj.SteamId, PlayerAccounts[obj.SteamId]));
                     Hangar.Debug("Account updated: " + Updated);
                     return;
                 }
@@ -433,7 +433,7 @@ namespace QuantumHangar.Utilities
 
 
             //Adjust player prices (We need to check if buyer has enough moneyies hehe)
-            bool RetrieveSuccessful = Utilis.TryGetPlayerBalance(grid.BuyerSteamid, out long BuyerBallance);
+            bool RetrieveSuccessful = Utils.TryGetPlayerBalance(grid.BuyerSteamid, out long BuyerBallance);
             if (!RetrieveSuccessful || BuyerBallance < Item.Price)
             {
                 _ChatManager.SendMessageAsOther("GridMarket", "Unable to purchase grid! Not enough credits!", VRageMath.Color.Yellow, grid.BuyerSteamid);

@@ -78,8 +78,6 @@ namespace QuantumHangar
                 chat = new Chat(Context, checks._Admin);
             }
 
-
-            
         }
 
         private bool SaveGridToFile(string path, string filename, List<MyObjectBuilder_CubeGrid> objectBuilders)
@@ -137,6 +135,7 @@ namespace QuantumHangar
 
             MyObjectBuilder_Definitions builderDefinition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_Definitions>();
             builderDefinition.ShipBlueprints = new MyObjectBuilder_ShipBlueprintDefinition[] { definition };
+            
 
             foreach (MyObjectBuilder_CubeGrid grid in definition.CubeGrids)
             {
@@ -146,7 +145,8 @@ namespace QuantumHangar
                 }
             }
 
-            //Main.Debug("SaveGridPath: " + path);
+
+            Log.Warn(path);
 
             return MyObjectBuilderSerializer.SerializeXML(path, false, builderDefinition);
         }
@@ -158,9 +158,7 @@ namespace QuantumHangar
             if (!File.Exists(path))
             {
                 chat.Respond("Grid doesnt exist! Admin should check logs for more information.");
-                //
-
-
+                Log.Fatal("Grid doesnt exsist @" + path);
                 return false;
             }
 
@@ -591,19 +589,8 @@ namespace QuantumHangar
             return true;
         }
 
-        public bool SaveGrids(List<MyCubeGrid> grids)
+        public bool SaveGrids(List<MyCubeGrid> grids, string GridName)
         {
-
-            MyCubeGrid biggestGrid = null;
-
-
-            foreach (MyCubeGrid grid in grids)
-            {
-                int count = grid.BlocksCount;
-
-                if (biggestGrid == null || biggestGrid.BlocksCount < count)
-                    biggestGrid = grid;
-            }
 
 
 
@@ -622,14 +609,14 @@ namespace QuantumHangar
 
             try
             {
-                string gridName = biggestGrid.DisplayName;
+
 
                 //Need To check grid name
-                gridName = FileSaver.CheckInvalidCharacters(gridName);
-                string GridSavePath = Path.Combine(FolderPath, gridName + ".sbc");
+
+                string GridSavePath = Path.Combine(FolderPath, GridName + ".sbc");
 
                 //Log.Info("SavedDir: " + pathForPlayer);
-                bool saved = SaveGridToFile(GridSavePath, gridName, objectBuilders);
+                bool saved = SaveGridToFile(GridSavePath, GridName, objectBuilders);
 
                 if (saved)
                 {
@@ -690,6 +677,9 @@ namespace QuantumHangar
             Data = Info;
             return true;
         }
+
+
+
 
 
     }
@@ -1063,7 +1053,7 @@ namespace QuantumHangar
 
 
 
-    public class Utilis
+    public class Utils
     {
         /*This will handle the cross server Econ/Econ tools
          * 
@@ -1185,6 +1175,33 @@ namespace QuantumHangar
             gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + Miniutes);
             gps.GPSColor = Color.Yellow;
             MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+        }
+
+        public static void FormatGridName(PlayerInfo Data, Result result)
+        {
+            string GridName = FileSaver.CheckInvalidCharacters(result.biggestGrid.DisplayName);
+            result.GridName = GridName;
+            if (Data.Grids.Any(x => x.GridName.Equals(GridName, StringComparison.OrdinalIgnoreCase)))
+            {
+                //There is already a grid with that name!
+                bool NameCheckDone = false;
+                int a = 0;
+                while (!NameCheckDone)
+                {
+                    a++;
+                    if (!Data.Grids.Any(x => x.GridName.Equals(GridName + " [" + a + "]", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        NameCheckDone = true;
+                        break;
+                    }
+
+                }
+                //Main.Debug("Saving grid name: " + GridName);
+                GridName = GridName + "[" + a + "]";
+                result.grids[0].DisplayName = GridName;
+                result.biggestGrid.DisplayName = GridName;
+                result.GridName = GridName;
+            }
         }
 
 

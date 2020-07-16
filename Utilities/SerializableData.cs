@@ -53,13 +53,11 @@ namespace QuantumHangar
                 illegal = r.Replace(illegal, "");
                 */
 
-
                 //FileInfo file = new FileInfo(dir);
 
                 var p = Task.Run(() => FileSaveTask(dir,data));
 
                 //File.WriteAllText(dir, JsonConvert.SerializeObject(data));
-
         }
 
         private static void FileSaveTask(string dir, object data)
@@ -282,6 +280,7 @@ namespace QuantumHangar
         public long GridID;
         public string GridName;
         public int GridPCU;
+        public int ServerPort = 0;
         public bool GridForSale = false;
         public double MarketValue = 0;
 
@@ -315,6 +314,7 @@ namespace QuantumHangar
         public List<MyCubeGrid> grids = new List<MyCubeGrid>();
         public MyCubeGrid biggestGrid;
         public bool GetGrids;
+        public string GridName;
 
     }
 }

@@ -76,6 +76,7 @@ namespace QuantumHangar.Utilities
                 methods.LoadInfoFile(out PlayerInfo Data);
 
 
+                List<int> GridsToBeRemoved = new List<int>();
                 foreach (var StampKey in item.Value)
                 {
 
@@ -86,14 +87,18 @@ namespace QuantumHangar.Utilities
 
 
                         //To fix this, we will remove this grid from the players file to revert back to the version that is still ingame
-                        int i = Data.Grids.FindIndex(x => x.GridID == StampKey.Value.GridID);
+                        int? i = Data.Grids.FindIndex(x => x.GridID == StampKey.Value.GridID);
+                        if (!i.HasValue || !Data.Grids.IsValidIndex(i.Value))
+                            continue;
+
                         //Now that weve got the index,
-                        Log.Warn("Grid needs to be removed: " + Data.Grids[i].GridName);
-                        string GridPath = Path.Combine(methods.FolderPath, Data.Grids[i].GridName + ".sbc");
+                        Log.Warn("Grid needs to be removed: " + Data.Grids[i.Value].GridName);
+                        string GridPath = Path.Combine(methods.FolderPath, Data.Grids[i.Value].GridName + ".sbc");
 
 
                         File.Delete(GridPath);
-                        Data.Grids.RemoveAt(i);
+                        GridsToBeRemoved.Add(i.Value);
+                        
 
                     }
                     else
@@ -104,10 +109,14 @@ namespace QuantumHangar.Utilities
                         //To fix this, we wont delete grids in peoples hangars until server saves.
                         //This will allow us to simply add this stamp to the players info file (sbc is still there since it didnt get deleted when server saved)
                         Data.Grids.Add(StampKey.Value);
-
-
                     }
 
+                }
+
+                //Remove grids
+                foreach (int indice in GridsToBeRemoved.OrderByDescending(v => v))
+                {
+                    Data.Grids.RemoveAt(indice);
                 }
 
                 //Save the new files
@@ -120,18 +129,34 @@ namespace QuantumHangar.Utilities
             foreach (var item in Grids.TrackedGrids)
             {
                 GridMethods methods = new GridMethods(item.Key, HangarFolderDir);
-                foreach (var StampKey in item.Value)
+                if(methods.LoadInfoFile(out PlayerInfo Data))
                 {
-                    if (!StampKey.Key)
+                    foreach (var StampKey in item.Value)
                     {
-                        //This means that we successfully saved the server with the grid loaded into the server
-                        //Need to delete the file now
+                        if (!StampKey.Key)
+                        {
+                            //This means that we successfully saved the server with the grid loaded into the server
+                            //Need to delete the file now
+                            Log.Warn("Server Successfully saved with " + StampKey.Value.GridName + " loaded in server! Deleting sbc!");
+                            string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".sbc");
+                            File.Delete(GridPath);
+                        }
+                        else
+                        {
+                            Log.Warn("Server succesfully saved with grid "+StampKey.Value.GridName+" in hangar! Clearing ID!");
+                            int? Grid = Data.Grids.FindIndex(x => x.GridID == StampKey.Value.GridID);
+                            if(Grid.HasValue && Data.Grids.IsValidIndex(Grid.Value))
+                            {
+                                //This grid no longer esists?
+                                Data.Grids[Grid.Value].ServerPort = 0;
+                            }
+                        }
 
-                        string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".sbc");
-                        File.Delete(GridPath);
                     }
 
+                    methods.SaveInfoFile(Data);
                 }
+
             }
 
             Log.Warn("Deleted Hangar Files via GridTracker!");
@@ -145,14 +170,11 @@ namespace QuantumHangar.Utilities
             //Need to check if this item already exists
 
 
-
-
-
             KeyValuePair<bool, GridStamp> KPair = new KeyValuePair<bool, GridStamp>(Transition, Stamp);
             if (Grids.TrackedGrids.ContainsKey(SteamID))
             {
                 Log.Warn("Attempting to Updated GridTracker A");
-                Grids.TrackedGrids[SteamID].RemoveAll(x => x.Value.GridName == KPair.Value.GridName);
+                Grids.TrackedGrids[SteamID].RemoveAll(x => x.Value.GridID == KPair.Value.GridID);
 
 
                 Grids.TrackedGrids[SteamID].Add(KPair);

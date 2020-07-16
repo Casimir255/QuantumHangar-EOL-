@@ -26,12 +26,17 @@ namespace QuantumHangar.Utilities
         private GridTracker Tracker;
 
 
-        public AutoHangar(Settings config, GridMarket Market, GridTracker gridTracker)
+        public AutoHangar(Settings config, GridTracker gridTracker, GridMarket Market = null)
         {
 
             Config = config;
-            Servers = Market.MarketServers;
+            
             Tracker = gridTracker;
+
+            if(Market != null)
+            {
+                Servers = Market.MarketServers;
+            }
 
         }
 
@@ -57,6 +62,9 @@ namespace QuantumHangar.Utilities
 
         public void RunAutoSell()
         {
+            if (Servers == null)
+                throw new Exception("Grid Market is null!");
+
             BackgroundWorker worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(AutoSellWorker);
             worker.RunWorkerAsync();
@@ -233,38 +241,18 @@ namespace QuantumHangar.Utilities
                         result.GetGrids = true;
 
                         //Check for existing grid names
-                        string GridName = FileSaver.CheckInvalidCharacters(BiggestGrid.DisplayName);
-                        if (Data.Grids.Any(x => x.GridName == GridName))
-                        {
-                            //There is already a grid with that name!
-                            bool NameCheckDone = false;
-                            int a = 0;
-                            while (!NameCheckDone)
-                            {
-                                a++;
-                                if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
-                                {
-                                    NameCheckDone = true;
-                                    break;
-                                }
-
-                            }
-                            //Main.Debug("Saving grid name: " + GridName);
-                            GridName = GridName + "[" + a + "]";
-                            result.grids[0].DisplayName = GridName;
-                            result.biggestGrid.DisplayName = GridName;
-                        }
+                        Utils.FormatGridName(Data, result);
 
 
 
-                        result.biggestGrid.DisplayName = GridName;
-                        if (methods.SaveGrids(result.grids))
+
+                        if (methods.SaveGrids(result.grids, result.GridName))
                         {
                             //Load player file and update!
                             //Fill out grid info and store in file
                             HangarChecks.GetBPDetails(result, Config, out GridStamp Grid);
 
-                            Grid.GridName = GridName;
+                            Grid.GridName = result.GridName;
                             Data.Grids.Add(Grid);
                             Tracker.HangarUpdate(id, true, Grid);
 
@@ -749,36 +737,15 @@ namespace QuantumHangar.Utilities
                 foreach (Result R in item.Value)
                 {
                     //Fix invalid characters
-                    string GridName = FileSaver.CheckInvalidCharacters(R.biggestGrid.DisplayName);
-                    if (Data.Grids.Any(x => x.GridName == GridName))
-                    {
-                        //There is already a grid with that name!
-                        bool NameCheckDone = false;
-                        int a = 0;
-                        while (!NameCheckDone)
-                        {
-                            a++;
-                            if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
-                            {
-                                NameCheckDone = true;
-                                break;
-                            }
+                    Utils.FormatGridName(Data, R);
 
-                        }
-                        //Main.Debug("Saving grid name: " + GridName);
-                        GridName = GridName + "[" + a + "]";
-                        R.grids[0].DisplayName = GridName;
-                        R.biggestGrid.DisplayName = GridName;
-                    }
-
-                    R.biggestGrid.DisplayName = GridName;
-                    if (methods.SaveGrids(R.grids))
+                    if (methods.SaveGrids(R.grids, R.GridName))
                     {
                         //Load player file and update!
                         //Fill out grid info and store in file
                         HangarChecks.GetBPDetails(R, Config, out GridStamp Grid);
 
-                        Grid.GridName = GridName;
+                        Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);
                         Tracker.HangarUpdate(id, true, Grid);
 
@@ -892,36 +859,16 @@ namespace QuantumHangar.Utilities
                 foreach (Result R in item.Value)
                 {
                     //Fix invalid characters
-                    string GridName = FileSaver.CheckInvalidCharacters(R.biggestGrid.DisplayName);
-                    if (Data.Grids.Any(x => x.GridName == GridName))
-                    {
-                        //There is already a grid with that name!
-                        bool NameCheckDone = false;
-                        int a = 0;
-                        while (!NameCheckDone)
-                        {
-                            a++;
-                            if (!Data.Grids.Any(x => x.GridName == GridName + "[" + a + "]"))
-                            {
-                                NameCheckDone = true;
-                                break;
-                            }
+                    Utils.FormatGridName(Data, R);
 
-                        }
-                        //Main.Debug("Saving grid name: " + GridName);
-                        GridName = GridName + "[" + a + "]";
-                        R.grids[0].DisplayName = GridName;
-                        R.biggestGrid.DisplayName = GridName;
-                    }
 
-                    R.biggestGrid.DisplayName = GridName;
-                    if (methods.SaveGrids(R.grids))
+                    if (methods.SaveGrids(R.grids, R.GridName))
                     {
                         //Load player file and update!
                         //Fill out grid info and store in file
                         HangarChecks.GetBPDetails(R, Config, out GridStamp Grid);
 
-                        Grid.GridName = GridName;
+                        Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);
                         Tracker.HangarUpdate(id, true, Grid);
 

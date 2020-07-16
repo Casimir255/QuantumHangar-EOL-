@@ -60,6 +60,8 @@ namespace QuantumHangar
         public DateTime AutoHangarStamp;
         public DateTime AutoVoxelStamp;
 
+        private int TickCounter = 0;
+     
 
 
         public enum ErrorType
@@ -78,6 +80,8 @@ namespace QuantumHangar
 
         public override void Init(ITorchBase torch)
         {
+
+            
             base.Init(torch);
             //Grab Settings
             string path = Path.Combine(StoragePath, "QuantumHangar.cfg");
@@ -169,32 +173,40 @@ namespace QuantumHangar
         public override void Update()
         {
             //Optional how often to check
-            if (AutoHangarStamp.AddHours(2) < DateTime.Now)
+            if (TickCounter > 1000)
             {
-                //Run checks
-                AutoHangar Auto = new AutoHangar(Config, Market, Tracker);
-                if (Config.AutoHangarGrids)
+                if (AutoHangarStamp.AddMinutes(30) < DateTime.Now)
                 {
-                    Auto.RunAutoHangar();
+                    //Run checks
+
+                    if (Config.AutoHangarGrids)
+                    {
+                        AutoHangar Auto = new AutoHangar(Config, Tracker);
+                        Auto.RunAutoHangar();
+                    }
+
+
+                    if (Config.AutosellHangarGrids && Market.IsHostServer)
+                    {
+                        AutoHangar Auto = new AutoHangar(Config, Tracker, Market);
+                        Auto.RunAutoSell();
+                    }
+
+                    AutoHangarStamp = DateTime.Now;
                 }
 
-
-                if (Config.AutosellHangarGrids && Market.IsHostServer)
+                if (AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
                 {
-                    Auto.RunAutoSell();
+                    Debug("Getting grids in voxels!!");
+                    AutoHangar Auto = new AutoHangar(Config, Tracker);
+
+                    Auto.RunAutoHangarUnderPlanet();
+                    AutoVoxelStamp = DateTime.Now;
                 }
 
-                AutoHangarStamp = DateTime.Now;
+                TickCounter = 0;
             }
-
-            if (AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
-            {
-                Debug("Getting grids in voxels!!");
-                AutoHangar Auto = new AutoHangar(Config, Market, Tracker);
-
-                Auto.RunAutoSell();
-                AutoVoxelStamp = DateTime.Now;
-            }
+            TickCounter++;
         }
 
         private void BlockLimiterConnection(PluginManager Plugins)
