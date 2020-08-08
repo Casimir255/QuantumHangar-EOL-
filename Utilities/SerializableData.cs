@@ -283,8 +283,8 @@ namespace QuantumHangar
         public int ServerPort = 0;
         public bool GridForSale = false;
         public double MarketValue = 0;
-
-
+        public Dictionary<long, int> ShipPCU = new Dictionary<long, int>();
+        public bool ForceSpawnNearPlayer = false;
 
 
         public string SellerFaction = "N/A";

@@ -21,19 +21,17 @@ namespace QuantumHangar.Utilities
 {
     class AutoHangar
     {
-        private Settings Config;
         private CrossServer Servers;
         private GridTracker Tracker;
+        private readonly Hangar Plugin;
 
 
-        public AutoHangar(Settings config, GridTracker gridTracker, GridMarket Market = null)
+        public AutoHangar(Hangar PluginInstance, GridTracker gridTracker, GridMarket Market = null)
         {
-
-            Config = config;
-            
+            Plugin = PluginInstance;
             Tracker = gridTracker;
 
-            if(Market != null)
+            if (Market != null)
             {
                 Servers = Market.MarketServers;
             }
@@ -45,34 +43,32 @@ namespace QuantumHangar.Utilities
         public void RunAutoHangar()
         {
 
-
-
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.DoWork += new DoWorkEventHandler(AutoHangarWorker);
-            worker.RunWorkerAsync();
+            Task AutoHangar = new Task(() => AutoHangarWorker(Plugin));
+            AutoHangar.Start();
         }
 
         public void RunAutoHangarUnderPlanet()
         {
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.DoWork += new DoWorkEventHandler(UnderPlanetWorker);
-            worker.RunWorkerAsync();
+
+            Task UnderPlanetSearch = new Task(() => UnderPlanetWorker(Plugin));
+            UnderPlanetSearch.Start();
         }
 
 
         public void RunAutoSell()
         {
             if (Servers == null)
-                throw new Exception("Grid Market is null!");
+                return;
 
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.DoWork += new DoWorkEventHandler(AutoSellWorker);
-            worker.RunWorkerAsync();
+
+            Task AutoSell = new Task(() => AutoSellWorker(Plugin));
+            AutoSell.Start();
+
         }
 
 
 
-        private void AutoHangarWorker(object sender, DoWorkEventArgs e)
+        private void AutoHangarWorker(Hangar Plugin)
         {
 
             //Significant performance increase
@@ -99,10 +95,10 @@ namespace QuantumHangar.Utilities
                     LastLogin = player.LastLoginTime;
 
                     ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
-                    if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
+                    if (LastLogin.AddDays(Plugin.Config.AutoHangarDayAmount) < DateTime.Now)
                     {
                         //AutoHangarBlacklist
-                        if (!Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                        if (!Plugin.Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
                         {
                             ExportPlayerIdentities.Add(player);
                         }
@@ -133,7 +129,7 @@ namespace QuantumHangar.Utilities
                         continue;
                     }
 
-                    GridMethods methods = new GridMethods(id, Config.FolderDirectory);
+                    GridMethods methods = new GridMethods(id, Plugin.Config.FolderDirectory);
                     //string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
 
                     if (!methods.LoadInfoFile(out PlayerInfo Data))
@@ -148,7 +144,7 @@ namespace QuantumHangar.Utilities
 
                     long LargestGridID = 0;
 
-                    if (Config.KeepPlayersLargestGrid)
+                    if (Plugin.Config.KeepPlayersLargestGrid)
                     {
                         //First need to find their largets grid
                         int BlocksCount = 0;
@@ -187,7 +183,7 @@ namespace QuantumHangar.Utilities
                             continue;
 
 
-                        if (grids[0].IsRespawnGrid && Config.DeleteRespawnPods)
+                        if (grids[0].IsRespawnGrid && Plugin.Config.DeleteRespawnPods)
                         {
                             grids[0].Close();
                             continue;
@@ -207,7 +203,7 @@ namespace QuantumHangar.Utilities
                         }
 
 
-                        if (Config.KeepPlayersLargestGrid)
+                        if (Plugin.Config.KeepPlayersLargestGrid)
                         {
                             if (BiggestGrid.EntityId == LargestGridID)
                             {
@@ -220,16 +216,16 @@ namespace QuantumHangar.Utilities
                         //Grid Size Checks
                         if (BiggestGrid.GridSizeEnum == MyCubeSize.Large)
                         {
-                            if (BiggestGrid.IsStatic && !Config.AutoHangarStaticGrids)
+                            if (BiggestGrid.IsStatic && !Plugin.Config.AutoHangarStaticGrids)
                             {
                                 continue;
                             }
-                            else if (!BiggestGrid.IsStatic && !Config.AutoHangarLargeGrids)
+                            else if (!BiggestGrid.IsStatic && !Plugin.Config.AutoHangarLargeGrids)
                             {
                                 continue;
                             }
                         }
-                        else if (BiggestGrid.GridSizeEnum == MyCubeSize.Small && !Config.AutoHangarSmallGrids)
+                        else if (BiggestGrid.GridSizeEnum == MyCubeSize.Small && !Plugin.Config.AutoHangarSmallGrids)
                         {
                             continue;
                         }
@@ -246,11 +242,11 @@ namespace QuantumHangar.Utilities
 
 
 
-                        if (methods.SaveGrids(result.grids, result.GridName))
+                        if (methods.SaveGrids(result.grids, result.GridName, Plugin))
                         {
                             //Load player file and update!
                             //Fill out grid info and store in file
-                            HangarChecks.GetBPDetails(result, Config, out GridStamp Grid);
+                            HangarChecks.GetBPDetails(result, Plugin.Config, out GridStamp Grid);
 
                             Grid.GridName = result.GridName;
                             Data.Grids.Add(Grid);
@@ -281,9 +277,9 @@ namespace QuantumHangar.Utilities
 
 
         //AutoSellsGrids (HotPile of shite)
-        private void AutoSellWorker(object sender, DoWorkEventArgs e)
+        private void AutoSellWorker(Hangar Plugin)
         {
-            String[] subdirectoryEntries = Directory.GetDirectories(Config.FolderDirectory);
+            String[] subdirectoryEntries = Directory.GetDirectories(Plugin.Config.FolderDirectory);
             foreach (string subdir in subdirectoryEntries)
             {
                 string FolderName = new DirectoryInfo(subdir).Name;
@@ -322,7 +318,7 @@ namespace QuantumHangar.Utilities
                     //MyPlayer.PlayerId PlayerID = MySession.Static.Players.GetAllPlayers().First(x => x.SteamId == SteamID);
                     //CurrentPlayer = MySession.Static.Players.GetPlayerById(0);
                     LastLogin = identity.LastLoginTime;
-                    if (LastLogin.AddDays(Config.SellAFKDayAmount) < DateTime.Now)
+                    if (LastLogin.AddDays(Plugin.Config.SellAFKDayAmount) < DateTime.Now)
                     {
                         Hangar.Debug("Grids will be auto sold by auction!");
                     }
@@ -445,8 +441,8 @@ namespace QuantumHangar.Utilities
                 GridSell.GridDefinition = Definition;
 
 
-                    //Seller faction
-                    var fc = MyAPIGateway.Session.Factions.GetObjectBuilder();
+                //Seller faction
+                var fc = MyAPIGateway.Session.Factions.GetObjectBuilder();
 
                 MyObjectBuilder_Faction factionBuilder;
                 try
@@ -480,8 +476,8 @@ namespace QuantumHangar.Utilities
                         Hangar.Debug("Welp tbh fix failed! Please why no fix. :(", a, Hangar.ErrorType.Trace);
                     }
 
-                        //Bugged player!
-                    }
+                    //Bugged player!
+                }
 
 
 
@@ -505,14 +501,14 @@ namespace QuantumHangar.Utilities
                 List.PCU = Grid.GridPCU;
 
 
-                    //List item as server offer
-                    List.ServerOffer = true;
+                //List item as server offer
+                List.ServerOffer = true;
 
 
 
 
-                    //We need to send to all to add one item to the list!
-                    CrossServerMessage SendMessage = new CrossServerMessage();
+                //We need to send to all to add one item to the list!
+                CrossServerMessage SendMessage = new CrossServerMessage();
                 SendMessage.Type = CrossServer.MessageType.AddItem;
                 SendMessage.GridDefinition.Add(GridSell);
                 SendMessage.List.Add(List);
@@ -614,7 +610,7 @@ namespace QuantumHangar.Utilities
 
 
         }
-        private void UnderPlanetWorker(object sender, DoWorkEventArgs e)
+        private void UnderPlanetWorker(Hangar Plugin)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -626,69 +622,79 @@ namespace QuantumHangar.Utilities
 
             Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
             {
-
-                List<MyCubeGrid> gridList = new List<MyCubeGrid>();
-                var BiggestGrid = group.Nodes.First().NodeData;
-                Result result = new Result();
-                foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                try
                 {
 
-                    MyCubeGrid grid = groupNodes.NodeData;
-
-                    if (grid.Physics == null)
-                        continue;
-
-                    if (grid.BlocksCount > BiggestGrid.BlocksCount)
+                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
+                    var BiggestGrid = group.Nodes.First().NodeData;
+                    Result result = new Result();
+                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
                     {
-                        BiggestGrid = grid;
-                    }
-                    TotalGridCounter += 1;
-                    gridList.Add(grid);
-                }
 
+                        MyCubeGrid grid = groupNodes.NodeData;
 
-                if (gridList.Count == 0)
-                {
-                    return;
-                }
+                        if (grid.Physics == null)
+                            continue;
 
-                result.grids = gridList;
-                result.biggestGrid = BiggestGrid;
-
-
-
-
-
-                Vector3D Position = BiggestGrid.PositionComp.GetPosition();
-                if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Position)))
-                {
-                    MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(Position);
-
-                    //Main.Debug("Planet Min Radius: " + planet.MinimumRadius);
-
-                    double distance = Vector3D.Distance(Position, planet.PositionComp.GetPosition());
-
-                    //Main.Debug("Your distance from center: " + distance);
-
-                    if (distance < planet.MinimumRadius * .7)
-                    {
-                        //Will save grid!
-                        Hangar.Debug("Will save grid");
-
-                        if (ToSaveGrids.ContainsKey(BiggestGrid.BigOwners[0]))
+                        if (grid.BlocksCount > BiggestGrid.BlocksCount)
                         {
-                            //Dictionary already contains grid!
-                            ToSaveGrids[BiggestGrid.BigOwners[0]].Add(result);
+                            BiggestGrid = grid;
+                        }
+                        TotalGridCounter += 1;
+                        gridList.Add(grid);
+                    }
+
+
+                    if (gridList.Count == 0)
+                    {
+                        return;
+                    }
+
+                    result.grids = gridList;
+                    result.biggestGrid = BiggestGrid;
+                    result.GridName = BiggestGrid.DisplayName;
+                    
+
+
+
+
+
+                    Vector3D Position = BiggestGrid.PositionComp.GetPosition();
+                    if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(Position)))
+                    {
+                        MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(Position);
+
+                        //Main.Debug("Planet Min Radius: " + planet.MinimumRadius);
+
+                        double distance = Vector3D.Distance(Position, planet.PositionComp.GetPosition());
+
+                        //Main.Debug("Your distance from center: " + distance);
+
+                        if (distance < planet.MinimumRadius * .7)
+                        {
+                            //Will save grid!
+
+
+                            if (ToSaveGrids.ContainsKey(BiggestGrid.BigOwners[0]))
+                            {
+                                //Dictionary already contains grid!
+                                ToSaveGrids[BiggestGrid.BigOwners[0]].Add(result);
+                            }
+                            else
+                            {
+                                List<Result> AllGrids = new List<Result>();
+                                AllGrids.Add(result);
+                                ToSaveGrids.Add(BiggestGrid.BigOwners[0], AllGrids);
+                            }
+
+
+                            return;
                         }
                         else
                         {
-                            List<Result> AllGrids = new List<Result>();
-                            AllGrids.Add(result);
-                            ToSaveGrids.Add(BiggestGrid.BigOwners[0], AllGrids);
+                            return;
                         }
 
-
-                        return;
                     }
                     else
                     {
@@ -696,18 +702,17 @@ namespace QuantumHangar.Utilities
                     }
 
                 }
-                else
+                catch (Exception ex)
                 {
-                    return;
+                    Hangar.Debug("Help", ex);
                 }
-
-
             });
 
 
             //Attempt save!
             foreach (var item in ToSaveGrids)
             {
+
                 ulong id = 0;
                 try
                 {
@@ -726,7 +731,7 @@ namespace QuantumHangar.Utilities
                     continue;
                 }
 
-                GridMethods methods = new GridMethods(id, Config.FolderDirectory);
+                GridMethods methods = new GridMethods(id, Plugin.Config.FolderDirectory);
                 //string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
 
 
@@ -736,19 +741,20 @@ namespace QuantumHangar.Utilities
 
                 foreach (Result R in item.Value)
                 {
+                   
                     //Fix invalid characters
                     Utils.FormatGridName(Data, R);
 
-                    if (methods.SaveGrids(R.grids, R.GridName))
+                    if (methods.SaveGrids(R.grids, R.GridName, Plugin))
                     {
+                    
                         //Load player file and update!
                         //Fill out grid info and store in file
-                        HangarChecks.GetBPDetails(R, Config, out GridStamp Grid);
-
+                        HangarChecks.GetBPDetails(R, Plugin.Config, out GridStamp Grid);
+                        Grid.ForceSpawnNearPlayer = true;
                         Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);
                         Tracker.HangarUpdate(id, true, Grid);
-
 
 
                         GridCounter += 1;
@@ -762,6 +768,7 @@ namespace QuantumHangar.Utilities
                 methods.SaveInfoFile(Data);
 
             }
+
 
 
             stopwatch.Stop();
@@ -848,7 +855,7 @@ namespace QuantumHangar.Utilities
                     continue;
                 }
 
-                GridMethods methods = new GridMethods(id, Config.FolderDirectory);
+                GridMethods methods = new GridMethods(id, Plugin.Config.FolderDirectory);
                 //string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
 
 
@@ -862,11 +869,11 @@ namespace QuantumHangar.Utilities
                     Utils.FormatGridName(Data, R);
 
 
-                    if (methods.SaveGrids(R.grids, R.GridName))
+                    if (methods.SaveGrids(R.grids, R.GridName, Plugin))
                     {
                         //Load player file and update!
                         //Fill out grid info and store in file
-                        HangarChecks.GetBPDetails(R, Config, out GridStamp Grid);
+                        HangarChecks.GetBPDetails(R, Plugin.Config, out GridStamp Grid);
 
                         Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);

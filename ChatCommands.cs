@@ -60,7 +60,7 @@ namespace QuantumHangar
             Checks.ListGrids();
         }
 
-        [Command("delete", "Deletes grid from your hangar. Enter 0 to delete all grids")]
+        [Command("remove", "Remove grid from your hangar. Enter 0 to delete all grids")]
         [Permission(MyPromoteLevel.None)]
         public void delete(string GridNameOrNumber)
         {
@@ -141,11 +141,11 @@ namespace QuantumHangar
 
         [Command("load", "loads targeted grid from hangar ignoring limits")]
         [Permission(MyPromoteLevel.SpaceMaster)]
-        public void AdminLoad(string NameOrID, string GridNameOrNumber)
+        public void AdminLoad(string NameOrSteamID, string GridNameOrNumber)
         {
 
             HangarChecks Checks = new HangarChecks(Context, Plugin, true);
-            Checks.AdminLoadGrid(NameOrID, GridNameOrNumber);
+            Checks.AdminLoadGrid(NameOrSteamID, GridNameOrNumber);
 
 
         }
@@ -156,79 +156,68 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void RunAuto()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin, Plugin.Tracker);
             autoHangar.RunAutoHangar();
         }
 
 
         [Command("list", "Lists all the grids in someones hangar.")]
         [Permission(MyPromoteLevel.SpaceMaster)]
-        public void List(string NameOrID)
+        public void List(string NameOrSteamID)
         {
             if (!Plugin.Config.PluginEnabled)
                 return;
 
             Chat chat = new Chat(Context, true);
-            MyIdentity MPlayer;
 
-            try
+
+            if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
             {
-                MPlayer = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == NameOrID);
+
+                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+
+                if (!methods.LoadInfoFile(out PlayerInfo Data))
+                {
+                    return;
+                }
+                
+                if (Data.Grids == null || Data.Grids.Count == 0)
+                {
+                    chat.Respond("There are no grids in the hangar!");
+                    return;
+                }
+
+
+                int MaxStorage = Plugin.Config.NormalHangarAmount;
+                if (MySession.Static.PromotedUsers.ContainsKey(SteamID))
+                {
+                    //prob redundant but ill leave it incase some future leveling system
+                    MyPromoteLevel level = MySession.Static.PromotedUsers[SteamID];
+                    if (level >= MyPromoteLevel.Scripter)
+                    {
+                        MaxStorage = Plugin.Config.ScripterHangarAmount;
+                    }
+                }
+
+
+                var sb = new StringBuilder();
+
+                sb.AppendLine("Player has " + Data.Grids.Count() + "/" + MaxStorage + " stored grids:");
+                //sb.AppendLine("Player has " + Data.Grids.Count() +" stored grids:");
+                int count = 1;
+                foreach (var grid in Data.Grids)
+                {
+                    sb.AppendLine(" [" + count + "] - " + grid.GridName);
+                    count++;
+                }
+
+                chat.Respond(sb.ToString());
             }
-            catch (Exception e)
-            {
-                Hangar.Debug("Player dosnt exist on the server!", e, Hangar.ErrorType.Warn);
-                chat.Respond("Player doesnt exist!");
-                return;
-            }
-            ulong SteamID = MySession.Static.Players.TryGetSteamId(MPlayer.IdentityId);
-
-            GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
-
-            PlayerInfo Data = new PlayerInfo();
-            //Get PlayerInfo from file
-            try
-            {
-                Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(methods.FolderPath, "PlayerInfo.json")));
-            }
-            catch
-            {
-                //New player. Go ahead and create new. Should not have a timer.
-
-            }
-
-            if (Data.Grids == null || Data.Grids.Count == 0)
-            {
-                chat.Respond("There are no grids in the hangar!");
-                return;
-            }
-
-            //Comment this out for now
-            MyPromoteLevel level = MySession.Static.PromotedUsers[SteamID];
-            int MaxStorage = Plugin.Config.NormalHangarAmount;
-            if (level >= MyPromoteLevel.Scripter)
-            {
-                MaxStorage = Plugin.Config.ScripterHangarAmount;
-            }
-
-
-            var sb = new StringBuilder();
-
-            sb.AppendLine("Player has " + Data.Grids.Count() + "/" + MaxStorage + " stored grids:");
-            //sb.AppendLine("Player has " + Data.Grids.Count() +" stored grids:");
-            int count = 1;
-            foreach (var grid in Data.Grids)
-            {
-                sb.AppendLine(" [" + count + "] - " + grid.GridName);
-                count++;
-            }
-
-            chat.Respond(sb.ToString());
         }
 
         [Command("info", "Provides information about the ship in your hangar")]
         [Permission(MyPromoteLevel.SpaceMaster)]
-        public void HangarDetails(string NameOrID, string GridNameOrNumber)
+        public void HangarDetails(string NameOrSteamID, string GridNameOrNumber)
         {
             Parallel.Invoke(() =>
             {
@@ -238,153 +227,189 @@ namespace QuantumHangar
                     return;
 
                 Chat chat = new Chat(Context, true);
-                MyIdentity MPlayer = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == NameOrID);
-                ulong SteamID = MySession.Static.Players.TryGetSteamId(MPlayer.IdentityId);
-
-                IMyPlayer Player = Context.Player;
-
-                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
 
 
-                PlayerInfo Data = new PlayerInfo();
-                //Get PlayerInfo from file
-                try
+                if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
                 {
-                    Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(methods.FolderPath, "PlayerInfo.json")));
+                    GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+                    methods.LoadInfoFile(out PlayerInfo Data);
+
+
+
+         
+                    if(Int32.TryParse(GridNameOrNumber, out int result))
+                    {
+                        GridStamp Grid = Data.Grids[result - 1];
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        stringBuilder.AppendLine("__________•°•[ Ship Properties ]•°•__________");
+                        stringBuilder.AppendLine("Estimated Market Value: " + Grid.MarketValue + " [sc]");
+                        stringBuilder.AppendLine("GridMass: " + Grid.GridMass + "kg");
+                        stringBuilder.AppendLine("Num of Small Grids: " + Grid.SmallGrids);
+                        stringBuilder.AppendLine("Num of Large Grids: " + Grid.LargeGrids);
+                        stringBuilder.AppendLine("Max Power Output: " + Grid.MaxPowerOutput);
+                        stringBuilder.AppendLine("Build Percentage: " + Math.Round(Grid.GridBuiltPercent * 100, 2) + "%");
+                        stringBuilder.AppendLine("Max Jump Distance: " + Grid.JumpDistance);
+                        stringBuilder.AppendLine("Ship PCU: " + Grid.GridPCU);
+                        stringBuilder.AppendLine();
+                        stringBuilder.AppendLine();
+
+                        stringBuilder.AppendLine("__________•°•[ Block Count ]•°•__________");
+                        foreach (KeyValuePair<string, int> pair in Grid.BlockTypeCount)
+                        {
+                            stringBuilder.AppendLine(pair.Key + ": " + pair.Value);
+                        }
+
+
+                        if (Context.Player != null)
+                        {
+                            ModCommunication.SendMessageTo(new DialogMessage(Grid.GridName, $"Ship Information", stringBuilder.ToString()), Context.Player.SteamUserId);
+                        }
+                        else
+                        {
+                            chat.Respond(stringBuilder.ToString());
+                        }
+                    }
+                    else
+                    {
+                        //Scan containg Grids if the user typed one
+                        foreach (var grid in Data.Grids)
+                        {
+
+                            if (grid.GridName == GridNameOrNumber)
+                            {
+
+                                StringBuilder stringBuilder = new StringBuilder();
+
+                                stringBuilder.AppendLine("__________•°•[ Ship Properties ]•°•__________");
+                                stringBuilder.AppendLine("Estimated Market Value: " + grid.MarketValue + " [sc]");
+                                stringBuilder.AppendLine("GridMass: " + grid.GridMass + "kg");
+                                stringBuilder.AppendLine("Num of Small Grids: " + grid.SmallGrids);
+                                stringBuilder.AppendLine("Num of Large Grids: " + grid.LargeGrids);
+                                stringBuilder.AppendLine("Max Power Output: " + grid.MaxPowerOutput);
+                                stringBuilder.AppendLine("Build Percentage: " + Math.Round(grid.GridBuiltPercent * 100, 2) + "%");
+                                stringBuilder.AppendLine("Max Jump Distance: " + grid.JumpDistance);
+                                stringBuilder.AppendLine("Ship PCU: " + grid.GridPCU);
+                                stringBuilder.AppendLine();
+                                stringBuilder.AppendLine();
+
+                                stringBuilder.AppendLine("__________•°•[ Block Count ]•°•__________");
+                                foreach (KeyValuePair<string, int> pair in grid.BlockTypeCount)
+                                {
+                                    stringBuilder.AppendLine(pair.Key + ": " + pair.Value);
+                                }
+
+
+                                if (Context.Player != null)
+                                {
+                                    ModCommunication.SendMessageTo(new DialogMessage(grid.GridName, $"Ship Information", stringBuilder.ToString()), Context.Player.SteamUserId);
+                                }
+                                else
+                                {
+                                    chat.Respond(stringBuilder.ToString());
+                                }
+                                // Context.Respond("You removed " + grid.GridName + " from the market!");
+                            }
+                        }
+                    }
                 }
-                catch (Exception e)
+
+  
+  
+                
+
+
+            });
+        }
+
+
+        [Command("remove", "Removes specified grid from hangar")]
+        [Permission(MyPromoteLevel.SpaceMaster)]
+        public void HangarRemove(string NameOrSteamID, string GridNameOrNumber)
+        {
+            if (!Plugin.Config.PluginEnabled)
+                return;
+
+            Chat chat = new Chat(Context, true);
+
+
+            if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
+            {
+                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+                
+                if (!methods.LoadInfoFile(out PlayerInfo Data))
                 {
-                    //New player. Go ahead and create new. Should not have a timer.
-                    Hangar.Debug("Unable to open PlayerData!", e, Hangar.ErrorType.Warn);
                     return;
                 }
 
 
-                int result = 0;
-
-                try
+                if(Int32.TryParse(GridNameOrNumber, out int result))
                 {
-                    result = Int32.Parse(GridNameOrNumber);
-                    //Got result. Check to see if its not an absured number
-                }
-                catch
-                {
-                    //If failed cont to normal string name
-                }
-
-
-                if (Data.Grids != null && result != 0 && result <= Data.Grids.Count)
-                {
-
-                    GridStamp Grid = Data.Grids[result - 1];
-
-
-                    StringBuilder stringBuilder = new StringBuilder();
-
-                    stringBuilder.AppendLine("__________•°•[ Ship Properties ]•°•__________");
-                    stringBuilder.AppendLine("Estimated Market Value: " + Grid.MarketValue + " [sc]");
-                    stringBuilder.AppendLine("GridMass: " + Grid.GridMass + "kg");
-                    stringBuilder.AppendLine("Num of Small Grids: " + Grid.SmallGrids);
-                    stringBuilder.AppendLine("Num of Large Grids: " + Grid.LargeGrids);
-                    stringBuilder.AppendLine("Max Power Output: " + Grid.MaxPowerOutput);
-                    stringBuilder.AppendLine("Build Percentage: " + Math.Round(Grid.GridBuiltPercent * 100, 2) + "%");
-                    stringBuilder.AppendLine("Max Jump Distance: " + Grid.JumpDistance);
-                    stringBuilder.AppendLine("Ship PCU: " + Grid.GridPCU);
-                    stringBuilder.AppendLine();
-                    stringBuilder.AppendLine();
-
-                    stringBuilder.AppendLine("__________•°•[ Block Count ]•°•__________");
-                    foreach (KeyValuePair<string, int> pair in Grid.BlockTypeCount)
+                    if (result > Data.Grids.Count)
                     {
-                        stringBuilder.AppendLine(pair.Key + ": " + pair.Value);
+                        chat.Respond("This hangar slot is empty! Select a grid that is in the hangar!");
+                        return;
                     }
 
 
-                    if (Context.Player != null)
+                    if (result != 0)
                     {
-                        ModCommunication.SendMessageTo(new DialogMessage(Grid.GridName, $"Ship Information", stringBuilder.ToString()), Player.SteamUserId);
+
+                        GridStamp Grid = Data.Grids[result - 1];
+                        Data.Grids.RemoveAt(result - 1);
+                        string path = Path.Combine(methods.FolderPath, Grid.GridName + ".sbc");
+                        File.Delete(path);
+                        chat.Respond(string.Format("{0} was successfully deleted!", Grid.GridName));
+                        FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
+                        return;
+
                     }
-                    else
+                    else if (result == 0)
                     {
-                        chat.Respond(stringBuilder.ToString());
+                        int counter = 0;
+                        foreach (var grid in Data.Grids)
+                        {
+                            string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
+                            File.Delete(path);
+                            counter++;
+                        }
+
+                        Data.Grids.Clear();
+                        chat.Respond(string.Format("Successfully deleted {0} grids!", counter));
+                        FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
+                        return;
+
                     }
 
 
-                    //Context.Respond("You removed " + Grid.GridName + " from the market!");
                 }
-
-
-                if (GridNameOrNumber != null || GridNameOrNumber != "")
+                else
                 {
-                    //Scan containg Grids if the user typed one
                     foreach (var grid in Data.Grids)
                     {
 
                         if (grid.GridName == GridNameOrNumber)
                         {
 
-                            StringBuilder stringBuilder = new StringBuilder();
+                            Data.Grids.Remove(grid);
+                            string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
+                            File.Delete(path);
+                            chat.Respond(string.Format("{0} was successfully deleted!", grid.GridName));
+                            FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
+                            return;
 
-                            stringBuilder.AppendLine("__________•°•[ Ship Properties ]•°•__________");
-                            stringBuilder.AppendLine("Estimated Market Value: " + grid.MarketValue + " [sc]");
-                            stringBuilder.AppendLine("GridMass: " + grid.GridMass + "kg");
-                            stringBuilder.AppendLine("Num of Small Grids: " + grid.SmallGrids);
-                            stringBuilder.AppendLine("Num of Large Grids: " + grid.LargeGrids);
-                            stringBuilder.AppendLine("Max Power Output: " + grid.MaxPowerOutput);
-                            stringBuilder.AppendLine("Build Percentage: " + Math.Round(grid.GridBuiltPercent * 100, 2) + "%");
-                            stringBuilder.AppendLine("Max Jump Distance: " + grid.JumpDistance);
-                            stringBuilder.AppendLine("Ship PCU: " + grid.GridPCU);
-                            stringBuilder.AppendLine();
-                            stringBuilder.AppendLine();
-
-                            stringBuilder.AppendLine("__________•°•[ Block Count ]•°•__________");
-                            foreach (KeyValuePair<string, int> pair in grid.BlockTypeCount)
-                            {
-                                stringBuilder.AppendLine(pair.Key + ": " + pair.Value);
-                            }
-
-
-                            if (Context.Player != null)
-                            {
-                                ModCommunication.SendMessageTo(new DialogMessage(grid.GridName, $"Ship Information", stringBuilder.ToString()), Player.SteamUserId);
-                            }
-                            else
-                            {
-                                chat.Respond(stringBuilder.ToString());
-                            }
-                            // Context.Respond("You removed " + grid.GridName + " from the market!");
                         }
                     }
                 }
-
-
-            });
+            }
         }
-
-        /*
-        [Command("removeoffer", "Removes active grid from market")]
-        [Permission(MyPromoteLevel.SpaceMaster)]
-        public void RemoveOffer(string GridNameOrOfferNumber)
-        {
-            return;
-        }
-
-        [Command("forceupdate", "updates all players hangar folders. (you can remove files)")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void ForceUpdate(bool FixMarket = false)
-        {
-            //Context.Respond("Updates Hangars");
-            //var p = Task.Run(() => HangarScans.HangarReset(Plugin.Config.FolderDirectory, FixMarket));
-        }
-
-    */
 
 
         [Command("SaveAll", "Saves Everygrid in the server to players hangars")]
         [Permission(MyPromoteLevel.Admin)]
         public void SaveAll()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin.Config, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin, Plugin.Tracker);
             autoHangar.SaveAll();
         }
 

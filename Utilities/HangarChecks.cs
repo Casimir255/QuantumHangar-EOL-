@@ -42,11 +42,10 @@ namespace QuantumHangar.Utilities
 
         private MyCharacter myCharacter;
         private MyIdentity myIdentity;
-
-
+        private long TargetIdentity { get; set; }
         private ulong PlayerSteamID { get; set; }
         private int MaxHangarSlots;
-        public string PlayerHangarPath;
+        public string PlayerHangarPath { get; set; }
         private GridMethods Methods;
         private GridTracker Tracker;
 
@@ -90,6 +89,7 @@ namespace QuantumHangar.Utilities
                 return false;
             }
             myIdentity = ((MyPlayer)Context.Player).Identity;
+            TargetIdentity = myIdentity.IdentityId;
 
             if (myIdentity.Character == null)
             {
@@ -112,11 +112,11 @@ namespace QuantumHangar.Utilities
             }
             else if (Context.Player.PromoteLevel == MyPromoteLevel.Moderator)
             {
-
+                MaxHangarSlots = Plugin.Config.ScripterHangarAmount*2;
             }
             else if (Context.Player.PromoteLevel >= MyPromoteLevel.Admin)
             {
-
+                MaxHangarSlots = Plugin.Config.ScripterHangarAmount*10;
             }
 
 
@@ -189,9 +189,9 @@ namespace QuantumHangar.Utilities
             }
         }
 
-        public void LoadGrid(string GridNameOrNumber, bool ForceLoadAtSavePosition)
+        public void LoadGrid(string GridNameOrNumber, bool ForceLoadAtSavePosition = false)
         {
-
+            
             LoadFromSavePosition = ForceLoadAtSavePosition;
 
             //Log.Info("Player Path: " + path);
@@ -217,15 +217,21 @@ namespace QuantumHangar.Utilities
             {
                 result = Int32.Parse(GridNameOrNumber);
                 //Got result. Check to see if its not an absured number
-
-                if (result > Data.Grids.Count && result < MaxHangarSlots)
+                if(result < 0)
                 {
-                    chat.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
+                    chat.Respond("Jeez! Why so negative! Maybe you should try positive numbers for a change!");
                     return;
                 }
-                else if (result > MaxHangarSlots)
+
+                if(result == 0)
                 {
-                    chat.Respond("Invalid number! You only have a max of " + MaxHangarSlots + " slots!");
+                    chat.Respond("OHH COME ON! There is no ZEROTH hangar slot! Start with 1!!");
+                    return;
+                }
+
+                if (result > Data.Grids.Count)
+                {
+                    chat.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
                     return;
                 }
             }
@@ -257,8 +263,6 @@ namespace QuantumHangar.Utilities
 
                 if (!RequireLoadCurrency(Grid))
                     return;
-
-
 
 
                 //string path = Path.Combine(PlayerHangarPath, Grid.GridName + ".sbc");
@@ -723,7 +727,7 @@ namespace QuantumHangar.Utilities
 
 
 
-            if (Methods.SaveGrids(result.grids, result.GridName))
+            if (Methods.SaveGrids(result.grids, result.GridName, Plugin))
             {
                 chat.Respond("Save Complete!");
 
@@ -752,93 +756,89 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
+            
+
             MyIdentity NewPlayer = ((MyPlayer)Context.Player).Identity;
-
-            MyIdentity MPlayer = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName == NameOrID);
-            ulong SteamID = MySession.Static.Players.TryGetSteamId(MPlayer.IdentityId);
-
-            Methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory, this);
-            PlayerHangarPath = Methods.FolderPath;
-
-            //Log.Info("Player Path: " + path);
+            myCharacter = NewPlayer.Character;
 
 
-            //FileInfo SelectedFile = null;
 
-            var executingPlayer = ((MyPlayer)Context.Player).Identity;
-            if (executingPlayer.Character == null)
+            if(Utils.AdminTryGetPlayerSteamID(NameOrID, chat, out ulong SteamID))
             {
-                chat.Respond("Player has no character to spawn the grid close to!");
-                return;
-            }
 
-            PlayerInfo Data = new PlayerInfo();
-            //Get PlayerInfo from file
-            try
-            {
-                Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(PlayerHangarPath, "PlayerInfo.json")));
-            }
-            catch
-            {
-                //New player. Go ahead and create new. Should not have a timer.
-
-            }
+                Methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory, this);
+                PlayerHangarPath = Methods.FolderPath;
 
 
-
-            var playerPosition = Vector3D.Zero;
-            playerPosition = executingPlayer.Character.PositionComp.GetPosition();
-
-            int result = 0;
-
-            try
-            {
-                result = Int32.Parse(gridNameOrEntityId);
-                //Got result. Check to see if its not an absured number
-            }
-            catch
-            {
-                //If failed cont to normal string name
-            }
-
-            if (Data.Grids != null && result != 0 && result <= Data.Grids.Count)
-            {
-                GridStamp Grid = Data.Grids[result - 1];
-
-                //string path = Path.Combine(IDPath, Grid.GridName + ".sbc");
-                PlayerSteamID = SteamID;
-                if (!LoadGridFile(Grid.GridName, Data, Grid))
+                var executingPlayer = ((MyPlayer)Context.Player).Identity;
+                if (executingPlayer.Character == null)
                 {
+                    chat.Respond("Player has no character to spawn the grid close to!");
                     return;
                 }
 
-                return;
-            }
-
-
-
-            foreach (var grid in Data.Grids)
-            {
-                if (grid.GridName == gridNameOrEntityId)
+                PlayerInfo Data = new PlayerInfo();
+                //Get PlayerInfo from file
+                try
                 {
+                    Data = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(Path.Combine(PlayerHangarPath, "PlayerInfo.json")));
+                }
+                catch
+                {
+                    //New player. Go ahead and create new. Should not have a timer.
+
+                }
+
+                var playerPosition = Vector3D.Zero;
+                playerPosition = executingPlayer.Character.PositionComp.GetPosition();
+
+                int result = 0;
+
+                try
+                {
+                    result = Int32.Parse(gridNameOrEntityId);
+                    //Got result. Check to see if its not an absured number
+                }
+                catch
+                {
+                    //If failed cont to normal string name
+                }
+
+                if (Data.Grids != null && result > 0 && result <= Data.Grids.Count)
+                {
+                    GridStamp Grid = Data.Grids[result - 1];
+
+                    //string path = Path.Combine(IDPath, Grid.GridName + ".sbc");
                     PlayerSteamID = SteamID;
-                    if (!LoadGridFile(grid.GridName, Data, grid))
+                    if (!LoadGridFile(Grid.GridName, Data, Grid))
                     {
                         return;
+                    }
+
+                    return;
+                }
+
+
+
+                foreach (var grid in Data.Grids)
+                {
+                    if (grid.GridName == gridNameOrEntityId)
+                    {
+                        PlayerSteamID = SteamID;
+                        if (!LoadGridFile(grid.GridName, Data, grid))
+                        {
+                            return;
+                        }
                     }
                 }
             }
 
+
+
+
+
+
         }
-
-
-
-
-
-
-
-
-
 
 
         public bool CrossServerCheck(GridStamp Grid)
@@ -1074,6 +1074,13 @@ namespace QuantumHangar.Utilities
             if(Grid.GridSavePosition == Vector3D.Zero)
             {
                 LegacyLoadGrid = true;
+            }
+
+            //If this grid got saved under planet, we need to make sure this will be loaded near player
+            if (Grid.ForceSpawnNearPlayer)
+            {
+                LoadFromSavePosition = false;
+                return true;
             }
 
 
@@ -1544,11 +1551,7 @@ namespace QuantumHangar.Utilities
                 return true;
             }
 
-
             Utils.FormatGridName(Data, result);
-
- 
-
 
 
             return true;
@@ -1557,7 +1560,7 @@ namespace QuantumHangar.Utilities
         private bool BeginSave(Result result, PlayerInfo Data)
         {
 
-            if (Methods.SaveGrids(result.grids, result.GridName))
+            if (Methods.SaveGrids(result.grids, result.GridName, Plugin))
             {
                 
                 TimeStamp stamp = new TimeStamp();
@@ -1570,10 +1573,11 @@ namespace QuantumHangar.Utilities
 
 
 
-                //Fill out grid info and store in file
-                //GridStamp Grid = new GridStamp();
 
-                GetBPDetails(result, Plugin.Config, out GridStamp Grid);
+                    //Fill out grid info and store in file
+                    //GridStamp Grid = new GridStamp();
+
+                    GetBPDetails(result, Plugin.Config, out GridStamp Grid);
 
 
 
@@ -1642,6 +1646,12 @@ namespace QuantumHangar.Utilities
                 {
                     var Block = (IMyCubeBlock)SingleBlock;
 
+
+                    if(SingleBlock.BuiltBy != 0)
+                    {
+                        UpdatePCUCounter(Grid, SingleBlock.BuiltBy, SingleBlock.BlockDefinition.PCU);
+                    }
+
                     if (Block as IMyLargeTurretBase != null)
                     {
                         Grid.BlockTypeCount["Turrets"] += 1;
@@ -1703,6 +1713,19 @@ namespace QuantumHangar.Utilities
 
 
             return true;
+        }
+
+
+        private static void UpdatePCUCounter(GridStamp Stamp, long Player, int Amount)
+        {
+            if (Stamp.ShipPCU.ContainsKey(Player))
+            {
+                Stamp.ShipPCU[Player] += Amount;
+            }
+            else
+            {
+                Stamp.ShipPCU.Add(Player, Amount);
+            }
         }
 
 
@@ -2052,41 +2075,94 @@ namespace QuantumHangar.Utilities
 
         private bool CheckGridLimits(MyIdentity NewPlayer, GridStamp Grid)
         {
-
-            MyBlockLimits blockLimits = NewPlayer.BlockLimits;
-
-            MyBlockLimits a = MySession.Static.GlobalBlockLimits;
-
-            if (a.PCU <= 0)
+            //Backwards compatibale
+            if(Grid.ShipPCU.Count == 0)
             {
-                //PCU Limits on server is 0
-                //Skip PCU Checks
-                Hangar.Debug("PCU Server limits is 0!");
+                MyBlockLimits blockLimits = NewPlayer.BlockLimits;
+
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    Hangar.Debug("PCU Server limits is 0!");
+                    return true;
+                }
+
+                //Main.Debug("PCU Limit from Server:"+a.PCU);
+                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
+                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                Hangar.Debug("Current PCU: " + CurrentPcu);
+
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+
+                int pcu = MaxPcu - CurrentPcu;
+                //Main.Debug("MaxPcu: " + pcu);
+                Hangar.Debug("Grid PCU: " + Grid.GridPCU);
+
+
+                Hangar.Debug("Current player PCU:" + CurrentPcu);
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
+                {
+                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
+                    Chat.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!", Context);
+                    return false;
+                }
+
                 return true;
             }
 
-            //Main.Debug("PCU Limit from Server:"+a.PCU);
-            //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
-            //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
 
-            int CurrentPcu = blockLimits.PCUBuilt;
-            Hangar.Debug("Current PCU: " + CurrentPcu);
-
-            int MaxPcu = blockLimits.PCU + CurrentPcu;
-
-            int pcu = MaxPcu - CurrentPcu;
-            //Main.Debug("MaxPcu: " + pcu);
-            Hangar.Debug("Grid PCU: " + Grid.GridPCU);
-
-
-            Hangar.Debug("Current player PCU:" + CurrentPcu);
-
-            //Find the difference
-            if (MaxPcu - CurrentPcu <= Grid.GridPCU)
+            foreach(KeyValuePair<long, int> Player in Grid.ShipPCU)
             {
-                int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
-                Chat.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!", Context);
-                return false;
+
+                MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
+                if(Identity == null)
+                {
+                    continue;
+                }
+
+
+                MyBlockLimits blockLimits = Identity.BlockLimits;
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    //Hangar.Debug("PCU Server limits is 0!");
+                    continue;
+                }
+
+                //Main.Debug("PCU Limit from Server:"+a.PCU);
+                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
+                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                //Hangar.Debug("Current PCU: " + CurrentPcu);
+
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+
+                int pcu = MaxPcu - CurrentPcu;
+                //Main.Debug("MaxPcu: " + pcu);
+                //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
+
+
+                //Hangar.Debug("Current player PCU:" + CurrentPcu);
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
+                {
+                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
+                    Chat.Respond("PCU limit reached! "+Identity.DisplayName+" needs an additional " + Need + " PCU to load this grid!", Context);
+                    return false;
+                }
+
             }
 
             return true;
@@ -2150,8 +2226,9 @@ namespace QuantumHangar.Utilities
 
                             foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
                             {
-
+                              
                                 MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
+                                
                                 if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
                                 {
                                     //Check for BlockPair or SubType?
@@ -2355,12 +2432,13 @@ namespace QuantumHangar.Utilities
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid)
         {
 
-            if (Methods.LoadGrid(GridName, myCharacter, LoadFromSavePosition, chat, true))
+            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, true))
             {
 
                 chat.Respond("Load Complete!");
                 Data.Grids.Remove(Grid);
                 Tracker.HangarUpdate(PlayerSteamID, false, Grid);
+
 
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;

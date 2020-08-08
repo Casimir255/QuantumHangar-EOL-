@@ -141,9 +141,6 @@ namespace QuantumHangar
         private bool _AutoHangarGrids = false;
         public bool AutoHangarGrids { get => _AutoHangarGrids; set => SetValue(ref _AutoHangarGrids, value); }
 
-        private bool _AutoOrientateToSurface = false;
-        public bool AutoOrientateToSurface { get => _AutoOrientateToSurface; set => SetValue(ref _AutoOrientateToSurface, value); }
-
         private bool _AutoDisconnectGearConnectors = false;
         public bool AutoDisconnectGearConnectors { get => _AutoDisconnectGearConnectors; set => SetValue(ref _AutoDisconnectGearConnectors, value); }
 

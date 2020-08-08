@@ -629,6 +629,7 @@ namespace QuantumHangar.Utilities
                 GridStamp gridsold = SellerData.Grids.FirstOrDefault(x => x.GridName == grid.name);
                 //Reset grid for sale and remove it from the sellers hangarplayerinfo
                 gridsold.GridForSale = false;
+                gridsold.ForceSpawnNearPlayer = true;
                 SellerData.Grids.Remove(gridsold);
                 gridsold.GridName = NewGridName;
 

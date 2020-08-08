@@ -53,6 +53,7 @@ namespace QuantumHangar
 
         private bool ServerRunning;
         public static MethodInfo CheckFuture;
+        public ITorchPlugin GridBackup;
 
         public GridMarket Market;
 
@@ -143,12 +144,15 @@ namespace QuantumHangar
                 case TorchSessionState.Loaded:
                     IsRunning = true;
 
+                    
+
                     MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
                     ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
                     PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
 
 
                     BlockLimiterConnection(Plugins);
+                    GridBackupConnection(Plugins);
                     Tracker.ServerStarted(Config.FolderDirectory);
 
                     if (Config.GridMarketEnabled)
@@ -181,24 +185,24 @@ namespace QuantumHangar
 
                     if (Config.AutoHangarGrids)
                     {
-                        AutoHangar Auto = new AutoHangar(Config, Tracker);
+                        AutoHangar Auto = new AutoHangar(this, Tracker);
                         Auto.RunAutoHangar();
                     }
 
 
-                    if (Config.AutosellHangarGrids && Market.IsHostServer)
+                    if (Config.GridMarketEnabled && Config.AutosellHangarGrids && Market.IsHostServer)
                     {
-                        AutoHangar Auto = new AutoHangar(Config, Tracker, Market);
+                        AutoHangar Auto = new AutoHangar(this, Tracker, Market);
                         Auto.RunAutoSell();
                     }
 
                     AutoHangarStamp = DateTime.Now;
                 }
 
-                if (AutoVoxelStamp.AddMinutes(5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
+                if (AutoVoxelStamp.AddMinutes(2.5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
                 {
                     Debug("Getting grids in voxels!!");
-                    AutoHangar Auto = new AutoHangar(Config, Tracker);
+                    AutoHangar Auto = new AutoHangar(this, Tracker);
 
                     Auto.RunAutoHangarUnderPlanet();
                     AutoVoxelStamp = DateTime.Now;
@@ -236,6 +240,40 @@ namespace QuantumHangar
                 catch (Exception e)
                 {
                     Log.Warn(e, "Could not connect to Blocklimiter Plugin.");
+                }
+            }
+        }
+
+
+        private void GridBackupConnection(PluginManager Plugins)
+        {
+            Guid GridBackupGUID = new Guid("75e99032-f0eb-4c0d-8710-999808ed970c");
+            Plugins.Plugins.TryGetValue(GridBackupGUID, out ITorchPlugin BlockLimiterT);
+
+            if (BlockLimiterT != null)
+            {
+                Hangar.Debug("Plugin: " + BlockLimiterT.Name + " " + BlockLimiterT.Version + " is installed!");
+                try
+                {
+                    //Grab refrence to TorchPluginBase class in the plugin
+                    GridBackup = BlockLimiterT;
+
+
+                    if(GridBackup != null)
+                    {
+                        Log.Debug("Successfully attached to GridBackup!");
+                    }
+
+
+                    //Example Method call
+                    //object value = CandAddMethod.Invoke(Class, new object[] { grid });
+                    //Convert to value return type
+                    Log.Info("GridBackup Reference added to backup grids upon hangar save!");
+
+                }
+                catch (Exception e)
+                {
+                    Log.Warn(e, "Could not connect to GridBackup Plugin.");
                 }
             }
         }
