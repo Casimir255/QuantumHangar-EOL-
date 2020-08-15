@@ -810,7 +810,7 @@ namespace QuantumHangar.Utilities
 
                     //string path = Path.Combine(IDPath, Grid.GridName + ".sbc");
                     PlayerSteamID = SteamID;
-                    if (!LoadGridFile(Grid.GridName, Data, Grid))
+                    if (!LoadGridFile(Grid.GridName, Data, Grid, true))
                     {
                         return;
                     }
@@ -825,7 +825,7 @@ namespace QuantumHangar.Utilities
                     if (grid.GridName == gridNameOrEntityId)
                     {
                         PlayerSteamID = SteamID;
-                        if (!LoadGridFile(grid.GridName, Data, grid))
+                        if (!LoadGridFile(grid.GridName, Data, grid, true))
                         {
                             return;
                         }
@@ -1561,7 +1561,7 @@ namespace QuantumHangar.Utilities
         {
 
             if (Methods.SaveGrids(result.grids, result.GridName, Plugin))
-            {
+            { 
                 
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
@@ -2156,9 +2156,9 @@ namespace QuantumHangar.Utilities
                 //Hangar.Debug("Current player PCU:" + CurrentPcu);
 
                 //Find the difference
-                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
+                if (MaxPcu - CurrentPcu <= Player.Value)
                 {
-                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
+                    int Need = Player.Value - (MaxPcu - CurrentPcu);
                     Chat.Respond("PCU limit reached! "+Identity.DisplayName+" needs an additional " + Need + " PCU to load this grid!", Context);
                     return false;
                 }
@@ -2429,7 +2429,7 @@ namespace QuantumHangar.Utilities
 
             return true;
         }
-        private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid)
+        private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
 
             if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, true))
@@ -2440,11 +2440,13 @@ namespace QuantumHangar.Utilities
                 Tracker.HangarUpdate(PlayerSteamID, false, Grid);
 
 
-                TimeStamp stamp = new TimeStamp();
-                stamp.OldTime = DateTime.Now;
-                stamp.PlayerID = myIdentity.IdentityId;
-
-                Data.Timer = stamp;
+                if (!admin)
+                {
+                    TimeStamp stamp = new TimeStamp();
+                    stamp.OldTime = DateTime.Now;
+                    stamp.PlayerID = myIdentity.IdentityId;
+                    Data.Timer = stamp;
+                }
 
                 FileSaver.Save(Path.Combine(PlayerHangarPath, "PlayerInfo.json"), Data);
                 //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));

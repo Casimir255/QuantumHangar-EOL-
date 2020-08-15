@@ -393,13 +393,19 @@ namespace QuantumHangar
                         foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
                         {
                             IMyEntity Grid = gear.GetAttachedEntity();
+
+                            //Should prevent entity attachments with voxels
+                            if (Grid is MyVoxelBase)
+                               
+
                             if (Grid == null || Grid.EntityId == 0)
                             {
                                 continue;
                             }
 
-                            MyCubeGrid attactedGrid = (MyCubeGrid)Grid;
-                            if ((MyCubeGrid)attactedGrid == null || attactedGrid.EntityId == 0)
+                            
+
+                            if (!(Grid is MyCubeGrid))
                             {
                                 //If grid is attacted to voxel or something
                                 gear.AutoLock = false;
@@ -408,6 +414,7 @@ namespace QuantumHangar
                                 continue;
                             }
 
+                            MyCubeGrid attactedGrid = (MyCubeGrid)Grid;
 
                             //If the attaced grid is enemy
                             if (!attactedGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
@@ -587,41 +594,43 @@ namespace QuantumHangar
         {
 
 
+
+
+            List<MyObjectBuilder_CubeGrid> objectBuilders = new List<MyObjectBuilder_CubeGrid>();
+
+                foreach (MyCubeGrid grid in grids)
+                {
+                    /* What else should it be? LOL? */
+                    if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
+                        throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
+
+                    objectBuilders.Add(objectBuilder);
+                }
+
+       
+
+
+
             try
             {
+                MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
 
                 if (Plugin.GridBackup != null)
                 {
-
-  
-                        Plugin.GridBackup.GetType().GetMethod("BackupGridsManually", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(Plugin.GridBackup, new object[] { grids, null, null, null });
-                        Log.Warn("Successfully BackedUp grid!");
-  
-
-
+                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { objectBuilders , IDentity.IdentityId});
+                    Log.Warn("Successfully BackedUp grid!");
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Log.Fatal(e);
             }
 
 
-            List<MyObjectBuilder_CubeGrid> objectBuilders = new List<MyObjectBuilder_CubeGrid>();
-
-            foreach (MyCubeGrid grid in grids)
-            {
-                /* What else should it be? LOL? */
-                if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
-                    throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
-
-                objectBuilders.Add(objectBuilder);
-            }
 
 
             try
             {
-
-
                 //Need To check grid name
 
                 string GridSavePath = Path.Combine(FolderPath, GridName + ".sbc");
