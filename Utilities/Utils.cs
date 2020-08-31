@@ -187,6 +187,8 @@ namespace QuantumHangar
                 if (Config.OnLoadTransfer)
                 {
 
+                    Log.Warn("Target player: " + TargetPlayerID);
+
                     //Will transfer pcu to new player
                     foreach (MyObjectBuilder_ShipBlueprintDefinition definition in shipBlueprints)
                     {

@@ -65,7 +65,7 @@ namespace QuantumHangar.Utilities
             PlayerSteamID = Context.Player.SteamUserId;
 
             //Sanity distance check (Incase user fucks it up)
-            if(Plugin.Config.LoadRadius <= 1)
+            if (Plugin.Config.LoadRadius <= 1)
             {
                 LoadRadius = 100;
             }
@@ -112,11 +112,11 @@ namespace QuantumHangar.Utilities
             }
             else if (Context.Player.PromoteLevel == MyPromoteLevel.Moderator)
             {
-                MaxHangarSlots = Plugin.Config.ScripterHangarAmount*2;
+                MaxHangarSlots = Plugin.Config.ScripterHangarAmount * 2;
             }
             else if (Context.Player.PromoteLevel >= MyPromoteLevel.Admin)
             {
-                MaxHangarSlots = Plugin.Config.ScripterHangarAmount*10;
+                MaxHangarSlots = Plugin.Config.ScripterHangarAmount * 10;
             }
 
 
@@ -191,7 +191,7 @@ namespace QuantumHangar.Utilities
 
         public void LoadGrid(string GridNameOrNumber, bool ForceLoadAtSavePosition = false)
         {
-            
+
             LoadFromSavePosition = ForceLoadAtSavePosition;
 
             //Log.Info("Player Path: " + path);
@@ -217,13 +217,13 @@ namespace QuantumHangar.Utilities
             {
                 result = Int32.Parse(GridNameOrNumber);
                 //Got result. Check to see if its not an absured number
-                if(result < 0)
+                if (result < 0)
                 {
                     chat.Respond("Jeez! Why so negative! Maybe you should try positive numbers for a change!");
                     return;
                 }
 
-                if(result == 0)
+                if (result == 0)
                 {
                     chat.Respond("OHH COME ON! There is no ZEROTH hangar slot! Start with 1!!");
                     return;
@@ -756,14 +756,14 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            
+
 
             MyIdentity NewPlayer = ((MyPlayer)Context.Player).Identity;
             myCharacter = NewPlayer.Character;
 
 
 
-            if(Utils.AdminTryGetPlayerSteamID(NameOrID, chat, out ulong SteamID))
+            if (Utils.AdminTryGetPlayerSteamID(NameOrID, chat, out ulong SteamID))
             {
 
                 Methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory, this);
@@ -1071,7 +1071,7 @@ namespace QuantumHangar.Utilities
         {
             //Need to get grid position (for legacy check. Old grids will have grid position of zero. When they re-save the position will be updated)
             bool LegacyLoadGrid = false;
-            if(Grid.GridSavePosition == Vector3D.Zero)
+            if (Grid.GridSavePosition == Vector3D.Zero)
             {
                 LegacyLoadGrid = true;
             }
@@ -1106,7 +1106,7 @@ namespace QuantumHangar.Utilities
                     {
                         double PlayerDistance = Vector3D.Distance(Context.Player.GetPosition(), Grid.GridSavePosition);
 
-                        if(PlayerDistance > Plugin.Config.LoadRadius)
+                        if (PlayerDistance > Plugin.Config.LoadRadius)
                         {
                             //Send GPS of Position to player
                             chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
@@ -1118,7 +1118,7 @@ namespace QuantumHangar.Utilities
                         {
                             return true;
                         }
-                            
+
                     }
                     else
                     {
@@ -1561,8 +1561,8 @@ namespace QuantumHangar.Utilities
         {
 
             if (Methods.SaveGrids(result.grids, result.GridName, Plugin))
-            { 
-                
+            {
+
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
                 stamp.PlayerID = myIdentity.IdentityId;
@@ -1574,10 +1574,10 @@ namespace QuantumHangar.Utilities
 
 
 
-                    //Fill out grid info and store in file
-                    //GridStamp Grid = new GridStamp();
+                //Fill out grid info and store in file
+                //GridStamp Grid = new GridStamp();
 
-                    GetBPDetails(result, Plugin.Config, out GridStamp Grid);
+                GetBPDetails(result, Plugin.Config, out GridStamp Grid);
 
 
 
@@ -1604,7 +1604,7 @@ namespace QuantumHangar.Utilities
         }
 
 
-        
+
 
         public static bool GetBPDetails(Result result, Settings Config, out GridStamp Grid)
         {
@@ -1647,7 +1647,7 @@ namespace QuantumHangar.Utilities
                     var Block = (IMyCubeBlock)SingleBlock;
 
 
-                    if(SingleBlock.BuiltBy != 0)
+                    if (SingleBlock.BuiltBy != 0)
                     {
                         UpdatePCUCounter(Grid, SingleBlock.BuiltBy, SingleBlock.BlockDefinition.PCU);
                     }
@@ -1924,7 +1924,7 @@ namespace QuantumHangar.Utilities
                 }
                 else
                 {
-                    
+
                     Utils.SendGps(ClosestZone, Plugin.Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Plugin.Config.ZoneRestrictions[ClosestPoint].Radius + "m)", Context.Player.IdentityId);
                     //Chat chat = new Chat(Context);
                     chat.Respond("Nearest load area has been added to your HUD");
@@ -2076,7 +2076,12 @@ namespace QuantumHangar.Utilities
         private bool CheckGridLimits(MyIdentity NewPlayer, GridStamp Grid)
         {
             //Backwards compatibale
-            if(Grid.ShipPCU.Count == 0)
+            if (Plugin.Config.OnLoadTransfer)
+                return true;
+
+
+
+            if (Grid.ShipPCU.Count == 0)
             {
                 MyBlockLimits blockLimits = NewPlayer.BlockLimits;
 
@@ -2118,11 +2123,11 @@ namespace QuantumHangar.Utilities
             }
 
 
-            foreach(KeyValuePair<long, int> Player in Grid.ShipPCU)
+            foreach (KeyValuePair<long, int> Player in Grid.ShipPCU)
             {
 
                 MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
-                if(Identity == null)
+                if (Identity == null)
                 {
                     continue;
                 }
@@ -2159,7 +2164,7 @@ namespace QuantumHangar.Utilities
                 if (MaxPcu - CurrentPcu <= Player.Value)
                 {
                     int Need = Player.Value - (MaxPcu - CurrentPcu);
-                    Chat.Respond("PCU limit reached! "+Identity.DisplayName+" needs an additional " + Need + " PCU to load this grid!", Context);
+                    Chat.Respond("PCU limit reached! " + Identity.DisplayName + " needs an additional " + Need + " PCU to load this grid!", Context);
                     return false;
                 }
 
@@ -2226,9 +2231,9 @@ namespace QuantumHangar.Utilities
 
                             foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
                             {
-                              
+
                                 MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
-                                
+
                                 if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
                                 {
                                     //Check for BlockPair or SubType?
