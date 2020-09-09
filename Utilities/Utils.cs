@@ -699,6 +699,53 @@ namespace QuantumHangar
             Data = Info;
             return true;
         }
+
+        public int SyncWithDisk()
+        {
+            PlayerInfo Data;
+            LoadInfoFile(out Data);
+            string[] files = Directory.GetFiles(FolderPath, "*.sbc");
+            List<GridStamp> gridStamps = new List<GridStamp>(Data.Grids);
+            int newGrids = 0;
+            foreach (var f in files)
+            {
+                if (!f.EndsWith(".sbc"))
+                {
+                    continue;
+                }
+
+                string gridName = f.Replace(".sbc", "");
+                bool found = false;
+                foreach (var stamp in gridStamps)
+                {
+                    if (stamp.GridName == gridName)
+                    {
+                        found = true;
+                        gridStamps.Remove(stamp);
+                        break;
+                    }
+                }
+                if (found)
+                    continue;
+                var newStamp = new GridStamp();
+                newStamp.GridName = gridName;
+                newStamp.ForceSpawnNearPlayer = true;
+                Data.Grids.Add(newStamp);
+                newGrids++;
+            }
+
+            // delete stamps for grids no longer present
+            foreach (var stamp in gridStamps)
+            {
+                Data.Grids.Remove(stamp);
+            }
+            
+            SaveInfoFile(Data);
+
+            Log.Info($"Deleted {gridStamps.Count} that weren't on disk for {SteamID}");
+            Log.Info($"Found {newGrids} that weren't registered for {SteamID}");
+            return newGrids;
+        }
     }
 
 
