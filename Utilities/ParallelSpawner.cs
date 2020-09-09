@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Torch.Commands;
 using VRage;
 using VRage.Game;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
@@ -48,12 +49,68 @@ namespace QuantumHangar
             if (_spawned.Count < _maxCount)
                 return;
 
-            foreach (var g in _spawned)
+            foreach (MyCubeGrid g in _spawned)
             {
+                g.AddedToScene += EnablePower;
+                g.AddedToScene += EnableDampeners;
+                g.AddedToScene += EnableThrusters;
                 MyAPIGateway.Entities.AddEntity(g, true);
             }
 
             _callback?.Invoke(_spawned);
+        }
+        
+        private void EnableThrusters(MyEntity _grid)
+        {
+            MyCubeGrid grid = _grid as MyCubeGrid;
+            if (!grid.IsStatic)
+            {
+                if (grid.EntityThrustComponent != null && !grid.EntityThrustComponent.Enabled)
+                {
+                    var blocks = new List<IMySlimBlock>();
+                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock != null && f.FatBlock is IMyThrust);
+                    var list = blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled);
+                    foreach (var item in list)
+                    {
+                        item.Enabled = true;
+                    }
+                }
+            }
+        }
+
+        private void EnableDampeners(MyEntity _grid)
+        {
+            MyCubeGrid grid = _grid as MyCubeGrid;
+            if (!grid.IsStatic)
+            {
+                if (grid.EntityThrustComponent != null && !grid.EntityThrustComponent.DampenersEnabled)
+                {
+                    var blocks = new List<IMySlimBlock>();
+                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock is IMyShipController);
+                    blocks
+                        .Select(block => (IMyShipController)block.FatBlock)
+                        .FirstOrDefault()?
+                        .SwitchDamping();
+                }
+            }
+        }
+
+        private void EnablePower(MyEntity _grid)
+        {
+            MyCubeGrid grid = _grid as MyCubeGrid;
+            if (!grid.IsStatic)
+            {
+                if (!grid.IsPowered)
+                {
+                    var blocks = new List<IMySlimBlock>();
+                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock != null && f.FatBlock is IMyPowerProducer);
+                    var list = blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled);
+                    foreach (var item in list)
+                    {
+                        item.Enabled = true;
+                    }
+                }
+            }
         }
     }
 
