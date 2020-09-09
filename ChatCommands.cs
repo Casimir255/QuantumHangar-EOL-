@@ -146,11 +146,55 @@ namespace QuantumHangar
 
             HangarChecks Checks = new HangarChecks(Context, Plugin, true);
             Checks.AdminLoadGrid(NameOrSteamID, GridNameOrNumber);
-
-
         }
 
+        [Command("sync", "syncs player hangar with the sbcs on disk")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void AdminSyncPlayer(string NameOrSteamId)
+        {
+            if (!Plugin.Config.PluginEnabled)
+                return;
+            Chat chat = new Chat(Context, true);
+            int newGrids = 0;
+            if (Utils.AdminTryGetPlayerSteamID(NameOrSteamId, chat, out ulong SteamID))
+            {
+                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+                newGrids = methods.SyncWithDisk();
+            }
+            chat.Respond($"Found {newGrids} grids");
+        }
 
+        [Command("syncall", "syncs all player hangars with the sbcs on disk")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void AdminSyncAllPlayers()
+        {
+            if (!Plugin.Config.PluginEnabled)
+                return;
+            Chat chat = new Chat(Context, true);
+            var PlayerIdentities = MySession.Static.Players.GetAllIdentities().OfType<MyIdentity>();
+            int newGrids = 0;
+            HashSet<ulong> processedIds = new HashSet<ulong>();
+            foreach (MyIdentity player in PlayerIdentities)
+            {
+                if (player == null)
+                {
+                    continue;
+                }
+
+                ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
+                if (SteamID != 0)
+                {
+                    if (processedIds.Contains(SteamID))
+                    {
+                        continue;
+                    }
+                    processedIds.Add(SteamID);
+                    GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+                    newGrids += methods.SyncWithDisk();
+                }
+            }
+            chat.Respond($"Found {newGrids} grids for {processedIds.Count} players");
+        }
 
         [Command("AutoHangar", "Runs AutoHangar based off of configs")]
         [Permission(MyPromoteLevel.Admin)]
