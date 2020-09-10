@@ -38,7 +38,12 @@ namespace QuantumHangar
         public void Start()
         {
             foreach (var o in _grids)
+            {
+                //Reset velocity
+                o.LinearVelocity = new SerializableVector3(0, 0, 0);
+                o.AngularVelocity = new SerializableVector3(0, 0, 0);
                 MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
+            }
         }
 
         public void Increment(IMyEntity entity)
@@ -87,10 +92,7 @@ namespace QuantumHangar
                 {
                     var blocks = new List<IMySlimBlock>();
                     (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock is IMyShipController);
-                    blocks
-                        .Select(block => (IMyShipController)block.FatBlock)
-                        .FirstOrDefault()?
-                        .SwitchDamping();
+                    blocks.Select(block => (IMyShipController)block.FatBlock).FirstOrDefault()?.SwitchDamping();
                 }
             }
         }
@@ -104,11 +106,7 @@ namespace QuantumHangar
                 {
                     var blocks = new List<IMySlimBlock>();
                     (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock != null && f.FatBlock is IMyPowerProducer);
-                    var list = blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled);
-                    foreach (var item in list)
-                    {
-                        item.Enabled = true;
-                    }
+                    blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled).ForEach(x => x.Enabled = true);
                 }
             }
         }
@@ -366,13 +364,15 @@ namespace QuantumHangar
         private Vector3D? FindPastePosition(MyObjectBuilder_CubeGrid[] grids, Vector3D playerPosition)
         {
 
-            BoundingSphere sphere = FindBoundingSphere(grids);
+            BoundingSphereD sphere = FindBoundingSphere(grids);
 
             /* 
              * Now we know the radius that can house all grids which will now be 
              * used to determine the perfect place to paste the grids to. 
              */
-            return MyEntities.FindFreePlace(playerPosition, sphere.Radius);
+         
+
+            return MyEntities.FindFreePlace(playerPosition, (float)sphere.Radius,20,5,1, null);
         }
 
         private BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
