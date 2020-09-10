@@ -134,19 +134,15 @@ namespace QuantumHangar
             
             List<MyObjectBuilder_CubeGrid> TotalGrids = new List<MyObjectBuilder_CubeGrid>();
             List<MyObjectBuilder_Cockpit> cockpits = new List<MyObjectBuilder_Cockpit>();
-            Vector3D direction = _PlayerPosition;
+            Vector3D forwardVector = Vector3D.Zero;
 
 
-            
+
 
             //Get all cockpit blkocks on the grid
             foreach (var shipBlueprint in _ShipBlueprints)
             {
                 TotalGrids.AddRange(shipBlueprint.CubeGrids.ToList());
-                foreach (MyObjectBuilder_CubeGrid grid in shipBlueprint.CubeGrids)
-                {
-                    cockpits.AddRange(grid.CubeBlocks.OfType<MyObjectBuilder_Cockpit>().ToList());
-                }
             }
 
             MyObjectBuilder_CubeGrid[] array = TotalGrids.ToArray();
@@ -157,25 +153,6 @@ namespace QuantumHangar
             }
             Hangar.Debug("Total Grids to be pasted: " + array.Count());
 
-            if (cockpits.Count > 0)
-            {
-                //Main.Debug("Cockpits found!");
-                foreach (MyObjectBuilder_Cockpit Block in cockpits)
-                {
-                    if (Block.IsMainCockpit)
-                    {
-                        Hangar.Debug("Main cockpit found! Attempting to Align!");
-                        direction = new Vector3D(Block.Orientation.x, Block.Orientation.y, Block.Orientation.z);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                Hangar.Debug("No Cockpits. Continuing based off of grid pivot point!");
-            }
-
-
             //Attempt to get gravity/Artificial gravity to align the grids to
             Vector3D position = _PlayerPosition;
 
@@ -185,49 +162,49 @@ namespace QuantumHangar
             float gravityOffset = 0f;
             float gravityRotation = 0f;
 
-            Vector3 vector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(position);
-            if (vector == Vector3.Zero)
+            Vector3 gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(position);
+            if (gravityDirectionalVector == Vector3.Zero)
             {
-                vector = MyGravityProviderSystem.CalculateArtificialGravityInPoint(position);
+                gravityDirectionalVector = MyGravityProviderSystem.CalculateArtificialGravityInPoint(position);
             }
-            Vector3D vector3D;
-            if (vector != Vector3.Zero)
+            Vector3D upDirectionalVector;
+            if (gravityDirectionalVector != Vector3.Zero)
             {
                 Hangar.Debug("Attempting to correct grid orientation!");
-                vector.Normalize();
-                vector3D = -vector;
-                position += vector * gravityOffset;
-                if (direction == Vector3D.Zero)
+                gravityDirectionalVector.Normalize();
+                upDirectionalVector = -gravityDirectionalVector;
+                position += gravityDirectionalVector * gravityOffset;
+                if (forwardVector == Vector3D.Zero)
                 {
-                    direction = Vector3D.CalculatePerpendicularVector(vector);
+                    forwardVector = Vector3D.CalculatePerpendicularVector(gravityDirectionalVector);
                     if (gravityRotation != 0f)
                     {
-                        MatrixD matrixa = MatrixD.CreateFromAxisAngle(vector3D, gravityRotation);
-                        direction = Vector3D.Transform(direction, matrixa);
+                        MatrixD matrixa = MatrixD.CreateFromAxisAngle(upDirectionalVector, gravityRotation);
+                        forwardVector = Vector3D.Transform(forwardVector, matrixa);
                     }
                 }
             }
-            else if (direction == Vector3D.Zero)
+            else if (forwardVector == Vector3D.Zero)
             {
-                direction = Vector3D.Right;
-                vector3D = Vector3D.Up;
+                forwardVector = Vector3D.Right;
+                upDirectionalVector = Vector3D.Up;
             }
             else
             {
-                vector3D = Vector3D.CalculatePerpendicularVector(-direction);
+                upDirectionalVector = Vector3D.CalculatePerpendicularVector(-forwardVector);
             }
 
-
-            return BeginAlignToGravity(array, position, direction, vector3D);
+            return BeginAlignToGravity(array, position, forwardVector, upDirectionalVector);
         }
 
-        private bool BeginAlignToGravity(MyObjectBuilder_CubeGrid[] AllGrids, Vector3D position, Vector3D direction, Vector3D vector3D)
+        private bool BeginAlignToGravity(MyObjectBuilder_CubeGrid[] AllGrids, Vector3D position, Vector3D forwardVector, Vector3D upVector)
         {
             //Create WorldMatrix
-            MatrixD worldMatrix = MatrixD.CreateWorld(position, direction, vector3D);
+            MatrixD worldMatrix = MatrixD.CreateWorld(Vector3D.Zero, forwardVector, upVector);
 
             int num = 0;
-            MatrixD matrix = MatrixD.Identity;
+            MatrixD referenceMatrix = MatrixD.Identity;
+            MatrixD rotationMatrix = MatrixD.Identity;
 
             //Find biggest grid and get their postion matrix
             Parallel.For(0, AllGrids.Length, i =>
@@ -237,7 +214,8 @@ namespace QuantumHangar
                 if (AllGrids[i].CubeBlocks.Count > num)
                 {
                     num = AllGrids[i].CubeBlocks.Count;
-                    matrix = (AllGrids[i].PositionAndOrientation.HasValue ? AllGrids[i].PositionAndOrientation.Value.GetMatrix() : MatrixD.Identity);
+                    referenceMatrix = AllGrids[i].PositionAndOrientation.Value.GetMatrix();
+                    rotationMatrix = FindRotationMatrix(AllGrids[i]);
                 }
 
             });
@@ -251,7 +229,7 @@ namespace QuantumHangar
             {
                 value = AllGrids[0].PositionAndOrientation.Value.Position;
             }
-            matrix2 = MatrixD.CreateWorld(-value, direction, vector3D);
+            matrix2 = MatrixD.CreateWorld(-value, forwardVector, upVector);
 
 
             //Huh? (Keen does this so i guess i will too) My guess so it can create large entities
@@ -264,13 +242,12 @@ namespace QuantumHangar
 
                 if (AllGrids[j].PositionAndOrientation.HasValue)
                 {
-                    MatrixD matrix3 = AllGrids[j].PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(matrix);
+                    MatrixD matrix3 = AllGrids[j].PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
                     newWorldMatrix = matrix3 * worldMatrix;
                     AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(newWorldMatrix);
                 }
                 else
                 {
-                    newWorldMatrix = worldMatrix;
                     AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
                 }
 
@@ -313,6 +290,58 @@ namespace QuantumHangar
 
             //Return completeted
             return true;
+        }
+
+        private MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
+        {
+            var resultMatrix = MatrixD.Identity;
+            var cockpits = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_Cockpit>()
+                .Where(blk => {
+                    // we exclude bathroom and cryochamber
+                    return blk.SubtypeName.IndexOf("bathroom", StringComparison.InvariantCultureIgnoreCase) == -1 
+                        && blk.SubtypeName.IndexOf("cryochamber", StringComparison.InvariantCultureIgnoreCase) == -1;
+                })
+                .ToList();
+
+            MyObjectBuilder_CubeBlock referenceBlock = cockpits.Find(blk => blk.IsMainCockpit) ?? cockpits.FirstOrDefault();
+
+            if (referenceBlock == null)
+            {
+                var remoteControls = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_RemoteControl>().ToList();
+                referenceBlock = remoteControls.Find(blk => blk.IsMainCockpit) ?? remoteControls.FirstOrDefault();
+            }
+
+            if (referenceBlock == null)
+            {
+                referenceBlock = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>().FirstOrDefault();
+            }
+
+            if (referenceBlock != null)
+            {
+                if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Right)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(-90));
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Left)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(90));
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Down)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(180));
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Forward)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Backward)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
+
+                if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Right)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(90));
+                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Left)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(-90));
+                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Backward)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(180));
+                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Up)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
+                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Down)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
+            }
+            
+            return resultMatrix;
         }
 
         //These three methods based off of LordTylus grid spawning
