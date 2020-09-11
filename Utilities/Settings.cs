@@ -170,6 +170,8 @@ namespace QuantumHangar
         public bool OnLoadTransfer { get => _OnLoadTransfer; set => SetValue(ref _OnLoadTransfer, value); }
 
         //ExtendedConfigs
+        private bool _requireAdminPermForHangarWipe = true;
+        public bool requireAdminPermForHangarWipe { get => _requireAdminPermForHangarWipe;}
 
 
 
