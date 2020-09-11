@@ -347,7 +347,12 @@ namespace QuantumHangar.Utilities
                 chat.Respond("You have no grids in your hangar!");
                 return;
             }
-
+            
+            if(!Plugin.Config.requireAdminPermForHangarWipe)
+            {
+                chat.Respond("You don't have permission to wipe your entire Hanger!");
+                return;
+            }
 
 
             int result = -1;
