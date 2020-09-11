@@ -151,6 +151,7 @@ namespace QuantumHangar
             return MyObjectBuilderSerializer.SerializeXML(path, false, builderDefinition);
         }
 
+
         public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, bool force = false)
         {
             string path = Path.Combine(FolderPath, GridName + ".sbc");
@@ -398,14 +399,14 @@ namespace QuantumHangar
 
                             //Should prevent entity attachments with voxels
                             if (Grid is MyVoxelBase)
-                               
 
-                            if (Grid == null || Grid.EntityId == 0)
-                            {
-                                continue;
-                            }
 
-                            
+                                if (Grid == null || Grid.EntityId == 0)
+                                {
+                                    continue;
+                                }
+
+
 
                             if (!(Grid is MyCubeGrid))
                             {
@@ -600,16 +601,16 @@ namespace QuantumHangar
 
             List<MyObjectBuilder_CubeGrid> objectBuilders = new List<MyObjectBuilder_CubeGrid>();
 
-                foreach (MyCubeGrid grid in grids)
-                {
-                    /* What else should it be? LOL? */
-                    if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
-                        throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
+            foreach (MyCubeGrid grid in grids)
+            {
+                /* What else should it be? LOL? */
+                if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
+                    throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
 
-                    objectBuilders.Add(objectBuilder);
-                }
+                objectBuilders.Add(objectBuilder);
+            }
 
-       
+
 
 
 
@@ -619,7 +620,7 @@ namespace QuantumHangar
 
                 if (Plugin.GridBackup != null)
                 {
-                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { objectBuilders , IDentity.IdentityId});
+                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { objectBuilders, IDentity.IdentityId });
                     Log.Warn("Successfully BackedUp grid!");
                 }
             }
@@ -659,6 +660,15 @@ namespace QuantumHangar
         {
             foreach (MyCubeGrid Grid in Grids)
             {
+                foreach (MyCockpit Block in Grid.GetBlocks().OfType<MyCockpit>())
+                {
+                    if (Block.Pilot != null)
+                    {
+                        Block.RemovePilot();
+                    }
+                }
+
+
                 Grid.Close();
             }
         }
@@ -698,6 +708,53 @@ namespace QuantumHangar
 
             Data = Info;
             return true;
+        }
+
+        public int SyncWithDisk()
+        {
+            PlayerInfo Data;
+            LoadInfoFile(out Data);
+            string[] files = Directory.GetFiles(FolderPath, "*.sbc");
+            List<GridStamp> gridStamps = new List<GridStamp>(Data.Grids);
+            int newGrids = 0;
+            foreach (var f in files)
+            {
+                if (!f.EndsWith(".sbc"))
+                {
+                    continue;
+                }
+
+                string gridName = Path.GetFileNameWithoutExtension(f);
+                bool found = false;
+                foreach (var stamp in gridStamps)
+                {
+                    if (stamp.GridName == gridName)
+                    {
+                        found = true;
+                        gridStamps.Remove(stamp);
+                        break;
+                    }
+                }
+                if (found)
+                    continue;
+                var newStamp = new GridStamp();
+                newStamp.GridName = gridName;
+                newStamp.ForceSpawnNearPlayer = true;
+                Data.Grids.Add(newStamp);
+                newGrids++;
+            }
+
+            // delete stamps for grids no longer present
+            foreach (var stamp in gridStamps)
+            {
+                Data.Grids.Remove(stamp);
+            }
+
+            SaveInfoFile(Data);
+
+            Log.Info($"Deleted {gridStamps.Count} that weren't on disk for {SteamID}");
+            Log.Info($"Found {newGrids} that weren't registered for {SteamID}");
+            return newGrids;
         }
     }
 
