@@ -295,9 +295,8 @@ namespace QuantumHangar
             var resultMatrix = MatrixD.Identity;
             var cockpits = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_Cockpit>()
                 .Where(blk => {
-                    // we exclude bathroom and cryochamber
-                    return blk.SubtypeName.IndexOf("bathroom", StringComparison.InvariantCultureIgnoreCase) == -1 
-                        && blk.SubtypeName.IndexOf("cryochamber", StringComparison.InvariantCultureIgnoreCase) == -1;
+                    return !(blk is MyObjectBuilder_CryoChamber)
+                        && blk.SubtypeName.IndexOf("bathroom", StringComparison.InvariantCultureIgnoreCase) == -1;
                 })
                 .ToList();
 
@@ -322,10 +321,6 @@ namespace QuantumHangar
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(90));
                 else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Down)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(180));
-                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Forward)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
-                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Backward)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
 
                 if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Right)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(90));
@@ -333,6 +328,11 @@ namespace QuantumHangar
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(-90));
                 else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Backward)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(180));
+
+                if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Forward)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Backward)
+                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
                 else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Up)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
                 else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Down)
