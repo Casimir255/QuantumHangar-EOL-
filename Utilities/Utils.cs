@@ -222,6 +222,7 @@ namespace QuantumHangar
                             return false;
                         }
                     }
+                    File.Move(path, path + ".bak");
                     //File.Delete(path);
                     return true;
                 }
@@ -233,6 +234,7 @@ namespace QuantumHangar
 
                     if (GravityAligner.Start())
                     {
+                        File.Move(path, Path.Combine(FolderPath, GridName + ".bak"));
                         //File.Delete(path);
                         return true;
                     }
