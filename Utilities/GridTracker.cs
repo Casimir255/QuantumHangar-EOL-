@@ -93,7 +93,7 @@ namespace QuantumHangar.Utilities
 
                         //Now that weve got the index,
                         Log.Warn("Grid needs to be removed: " + Data.Grids[i.Value].GridName);
-                        string GridPath = Path.Combine(methods.FolderPath, Data.Grids[i.Value].GridName + ".sbc");
+                        string GridPath = Path.Combine(methods.FolderPath, Data.Grids[i.Value].GridName + ".bak");
 
 
                         File.Delete(GridPath);
@@ -107,8 +107,12 @@ namespace QuantumHangar.Utilities
                         //Means the grid is gone on the user side
 
                         //To fix this, we wont delete grids in peoples hangars until server saves.
-                        //This will allow us to simply add this stamp to the players info file (sbc is still there since it didnt get deleted when server saved)
+                        //This will allow us to simply add this stamp to the players info file (the sbc has to be renamed from the .bak created on load)
                         Data.Grids.Add(StampKey.Value);
+                        string GridBakPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".bak");
+                        string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".sbc");
+                        Log.Warn($"Restored grid that was not saved after being unhangared: {StampKey.Value.GridName}");
+                        File.Move(GridBakPath, GridPath);
                     }
 
                 }
@@ -144,13 +148,13 @@ namespace QuantumHangar.Utilities
                             {
                                 //This means that we successfully saved the server with the grid loaded into the server
                                 //Need to delete the file now
-                                Log.Warn("Server Successfully saved with " + StampKey.Value.GridName + " loaded in server! Deleting sbc!");
-                                string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".sbc");
+                                Log.Warn("Server Successfully saved with " + StampKey.Value.GridName + " owned by "  + item.Key + " loaded in server! Deleting bak!");
+                                string GridPath = Path.Combine(methods.FolderPath, StampKey.Value.GridName + ".bak");
                                 File.Delete(GridPath);
                             }
                             else
                             {
-                                Log.Warn("Server succesfully saved with grid " + StampKey.Value.GridName + " in hangar! Clearing ID!");
+                                Log.Warn("Server succesfully saved with grid " + StampKey.Value.GridName + " owned by " + item.Key + " in hangar! Clearing ID!");
                                 int? Grid = Data.Grids.FindIndex(x => x.GridName.Equals(StampKey.Value.GridName));
                                 if (Grid.HasValue && Data.Grids.IsValidIndex(Grid.Value))
                                 {
