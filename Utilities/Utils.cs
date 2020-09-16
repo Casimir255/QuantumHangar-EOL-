@@ -222,7 +222,6 @@ namespace QuantumHangar
                             return false;
                         }
                     }
-                    File.Move(path, path + ".bak");
                     //File.Delete(path);
                     return true;
                 }
@@ -231,11 +230,8 @@ namespace QuantumHangar
                     Hangar.Debug("Attempting to align grid to gravity!");
                     AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, Player.PositionComp.GetPosition(), chat);
 
-
                     if (GravityAligner.Start())
                     {
-                        File.Move(path, Path.Combine(FolderPath, GridName + ".bak"));
-                        //File.Delete(path);
                         return true;
                     }
 
@@ -499,6 +495,9 @@ namespace QuantumHangar
              * Now we know the radius that can house all grids which will now be 
              * used to determine the perfect place to paste the grids to. 
              */
+
+          
+
             return MyEntities.FindFreePlace(playerPosition, sphere.Radius);
         }
 
