@@ -161,17 +161,12 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            List<MyCubeGrid> grids = result.grids;
-            MyCubeGrid biggestGrid = result.biggestGrid;
-
-
             if (!ExtensiveLimitChecker(result, Data))
             {
                 return;
             }
 
-
-
+            Log.Warn("Checking for exsisting grids in hangar!");
             //Check for existing grids in hangar!
             CheckForExistingGrids(Data, ref result);
 
@@ -353,13 +348,6 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            if (!Plugin.Config.requireAdminPermForHangarWipe)
-            {
-                chat.Respond("You don't have permission to wipe your entire Hanger!");
-                return;
-            }
-
-
             int result = -1;
             try
             {
@@ -396,8 +384,14 @@ namespace QuantumHangar.Utilities
                 return;
 
             }
-            else if (result == 0 && result != -1)
+            else if (result == 0)
             {
+                if (Plugin.Config.requireAdminPermForHangarWipe)
+                {
+                    chat.Respond("You don't have permission to wipe your entire Hanger!");
+                    return;
+                }
+
                 int counter = 0;
                 foreach (var grid in Data.Grids)
                 {
@@ -1564,18 +1558,17 @@ namespace QuantumHangar.Utilities
             return Return;
         }
 
-        private bool CheckForExistingGrids(PlayerInfo Data, ref Result result)
+        private void CheckForExistingGrids(PlayerInfo Data, ref Result result)
         {
             if (Data == null)
             {
+                Log.Warn("PlayerInfoData is NULL");
                 //If Player info is empty, return true. (No data in hangar)
-                return true;
+                return;
             }
 
+            Log.Warn("Checking Grid Name");
             Utils.FormatGridName(Data, result);
-
-
-            return true;
         }
 
         private bool BeginSave(Result result, PlayerInfo Data)

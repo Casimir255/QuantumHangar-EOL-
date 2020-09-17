@@ -436,13 +436,6 @@ namespace QuantumHangar
                         grids.RemoveAt(i);
                     }
                 }
-
-
-
-
-
-
-
             }
             else
             {
@@ -457,8 +450,6 @@ namespace QuantumHangar
 
                 if (groups.Count > 1)
                     return null;
-
-
 
 
                 foreach (var group in groups)
@@ -612,9 +603,6 @@ namespace QuantumHangar
             }
 
 
-
-
-
             try
             {
                 MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
@@ -629,8 +617,6 @@ namespace QuantumHangar
             {
                 Log.Fatal(e);
             }
-
-
 
 
             try
@@ -659,6 +645,7 @@ namespace QuantumHangar
 
         public void DisposeGrids(List<MyCubeGrid> Grids)
         {
+
             foreach (MyCubeGrid Grid in Grids)
             {
                 foreach (MyCockpit Block in Grid.GetBlocks().OfType<MyCockpit>())
@@ -668,7 +655,6 @@ namespace QuantumHangar
                         Block.RemovePilot();
                     }
                 }
-
 
                 Grid.Close();
             }
@@ -1131,7 +1117,7 @@ namespace QuantumHangar
 
     public class Utils
     {
-
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static bool TryUpdatePlayerBalance(PlayerAccount Account)
         {
             try
@@ -1293,22 +1279,31 @@ namespace QuantumHangar
 
         public static void FormatGridName(PlayerInfo Data, Result result)
         {
-            Hangar.Debug("F");
-
             try
             {
                 string GridName = FileSaver.CheckInvalidCharacters(result.biggestGrid.DisplayName);
                 result.GridName = GridName;
-                if (Data.Grids.Any(x => x.GridName.Equals(GridName, StringComparison.OrdinalIgnoreCase)))
+
+
+                bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName));
+
+                Log.Warn("Running GridName Checks: {" + GridName + "} :"+Test);
+
+                if (Test)
                 {
                     //There is already a grid with that name!
                     bool NameCheckDone = false;
-                    int a = 0;
+                    int a = 1;
                     while (!NameCheckDone)
                     {
-                        a++;
-                        if (!Data.Grids.Any(x => x.GridName.Equals(GridName + " [" + a + "]", StringComparison.OrdinalIgnoreCase)))
+                        
+                        if (Data.Grids.Any(x => x.GridName.Equals(GridName + "[" + a + "]")))
                         {
+                            a++;
+                        }
+                        else
+                        {
+                            Hangar.Debug("Name check done! " + a);
                             NameCheckDone = true;
                             break;
                         }
@@ -1323,10 +1318,8 @@ namespace QuantumHangar
             }
             catch (Exception e)
             {
-                Hangar.Debug("eeerror", e);
+                Log.Warn("eeerror", e);
             }
-
-            Hangar.Debug("G");
         }
 
     }
