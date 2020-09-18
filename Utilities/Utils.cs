@@ -152,7 +152,7 @@ namespace QuantumHangar
         }
 
 
-        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, bool force = false)
+        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
             string path = Path.Combine(FolderPath, GridName + ".sbc");
 
@@ -207,7 +207,7 @@ namespace QuantumHangar
                     }
                 }
 
-
+                
 
 
                 if (keepOriginalLocation)
@@ -215,14 +215,14 @@ namespace QuantumHangar
                     foreach (var shipBlueprint in shipBlueprints)
                     {
 
-                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat))
+                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat, Plugin))
                         {
 
                             Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                             return false;
                         }
                     }
-                    //File.Delete(path);
+                    File.Delete(path);
                     return true;
                 }
                 else
@@ -232,6 +232,7 @@ namespace QuantumHangar
 
                     if (GravityAligner.Start())
                     {
+                        File.Delete(path);
                         return true;
                     }
 
@@ -242,7 +243,7 @@ namespace QuantumHangar
         }
 
         private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
-            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, bool force = false)
+            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
 
             var grids = shipBlueprint.CubeGrids;
@@ -254,6 +255,21 @@ namespace QuantumHangar
                 chat.Respond("No grids in blueprint!");
 
                 return false;
+            }
+
+            try
+            {
+                MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
+
+                if (Plugin.GridBackup != null)
+                {
+                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { grids.ToList(), IDentity.IdentityId });
+                    Log.Warn("Successfully BackedUp grid!");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Fatal(e);
             }
 
 
