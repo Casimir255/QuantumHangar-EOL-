@@ -1,8 +1,11 @@
-﻿using Sandbox;
+﻿using Havok;
+using Sandbox;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Engine.Voxels;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -15,6 +18,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
+using VRage.Utils;
 using VRageMath;
 
 namespace QuantumHangar
@@ -37,13 +41,16 @@ namespace QuantumHangar
 
         public void Start()
         {
-            foreach (var o in _grids)
+            MyAPIGateway.Utilities.InvokeOnGameThread(delegate
             {
-                //Reset velocity
-                o.LinearVelocity = new SerializableVector3(0, 0, 0);
-                o.AngularVelocity = new SerializableVector3(0, 0, 0);
-                MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
-            }
+                foreach (var o in _grids)
+                {
+                    //Reset velocity
+                    o.LinearVelocity = new SerializableVector3(0, 0, 0);
+                    o.AngularVelocity = new SerializableVector3(0, 0, 0);
+                    MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
+                }
+            });
         }
 
         public void Increment(IMyEntity entity)
@@ -59,12 +66,14 @@ namespace QuantumHangar
                 g.AddedToScene += EnablePower;
                 g.AddedToScene += EnableDampeners;
                 g.AddedToScene += EnableThrusters;
+
                 MyAPIGateway.Entities.AddEntity(g, true);
             }
 
             _callback?.Invoke(_spawned);
+
         }
-        
+
         private void EnableThrusters(MyEntity _grid)
         {
             MyCubeGrid grid = _grid as MyCubeGrid;
@@ -129,13 +138,13 @@ namespace QuantumHangar
 
         private bool CalculateGridPosition()
         {
-            
+
             List<MyObjectBuilder_CubeGrid> TotalGrids = new List<MyObjectBuilder_CubeGrid>();
             List<MyObjectBuilder_Cockpit> cockpits = new List<MyObjectBuilder_Cockpit>();
             Vector3D direction = _PlayerPosition;
 
 
-            
+
 
             //Get all cockpit blkocks on the grid
             foreach (var shipBlueprint in _ShipBlueprints)
@@ -271,9 +280,6 @@ namespace QuantumHangar
                     newWorldMatrix = worldMatrix;
                     AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
                 }
-
-
-
             });
 
 
@@ -283,8 +289,6 @@ namespace QuantumHangar
             {
 
                 Hangar.Debug("No free Space found!");
-
-
                 chat.Respond("No free space available!");
 
                 return false;
@@ -363,7 +367,7 @@ namespace QuantumHangar
 
         private Vector3D? FindPastePosition(MyObjectBuilder_CubeGrid[] grids, Vector3D playerPosition)
         {
-
+            
             BoundingSphereD sphere = FindBoundingSphere(grids);
 
             /* 
@@ -372,51 +376,70 @@ namespace QuantumHangar
              */
          
 
-            return MyEntities.FindFreePlace(playerPosition, (float)sphere.Radius,20,5,1, null);
+            return FindFreePlace(playerPosition, (float)sphere.Radius+10);
         }
 
+        public static Vector3D? FindFreePlace(Vector3D basePos, float radius, int maxTestCount = 40, int testsPerDistance = 6, float stepSize = 1f, float radiusIncrement = 10f, MyEntity ignoreEnt = null)
+        {
+            Vector3D position = basePos;
+            Quaternion rotation = Quaternion.Identity;
+            HkShape shape = new HkSphereShape(radius);
+            try
+            {
+                if (MyEntities.IsInsideWorld(position) && !MyEntities.IsShapePenetrating(shape, ref position, ref rotation, 15, ignoreEnt))
+                {
+                    BoundingSphereD sphere = new BoundingSphereD(position, radius);
+                    MyVoxelBase overlappingWithSphere = MySession.Static.VoxelMaps.GetOverlappingWithSphere(ref sphere);
+                    if (overlappingWithSphere == null)
+                    {
+                        return position;
+                    }
+                    if (overlappingWithSphere is MyPlanet)
+                    {
+                        (overlappingWithSphere as MyPlanet).CorrectSpawnLocation(ref basePos, radius);
+                    }
+                    return basePos;
+                }
+                int num = (int)Math.Ceiling((float)maxTestCount / (float)testsPerDistance);
+                float num2 = 0f;
+                for (int i = 0; i < num; i++)
+                {
+                    num2 += radius * stepSize + radiusIncrement;
+                    for (int j = 0; j < testsPerDistance; j++)
+                    {
+                        position = basePos + MyUtils.GetRandomVector3Normalized() * num2;
+                        if (MyEntities.IsInsideWorld(position) && !MyEntities.IsShapePenetrating(shape, ref position, ref rotation, 15, ignoreEnt))
+                        {
+                            BoundingSphereD sphere2 = new BoundingSphereD(position, radius);
+                            MyVoxelBase overlappingWithSphere2 = MySession.Static.VoxelMaps.GetOverlappingWithSphere(ref sphere2);
+                            if (overlappingWithSphere2 == null)
+                            {
+                                return position;
+                            }
+                            if (overlappingWithSphere2 is MyPlanet)
+                            {
+                                (overlappingWithSphere2 as MyPlanet).CorrectSpawnLocation(ref basePos, radius);
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+            finally
+            {
+                shape.RemoveReference();
+            }
+        }
         private BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
         {
-
-            Vector3? vector = null;
-            float radius = 0F;
-
-            foreach (var grid in grids)
+            BoundingSphere result = new BoundingSphere(Vector3.Zero, float.MinValue);
+            foreach (MyObjectBuilder_CubeGrid myObjectBuilder_CubeGrid in grids)
             {
-
-                var gridSphere = grid.CalculateBoundingSphere();
-
-                /* If this is the first run, we use the center of that grid, and its radius as it is */
-                if (vector == null)
-                {
-
-                    vector = gridSphere.Center;
-                    radius = gridSphere.Radius;
-                    continue;
-                }
-
-
-                /* 
-                 * If its not the first run, we use the vector we already have and 
-                 * figure out how far it is away from the center of the subgrids sphere. 
-                 */
-                float distance = Vector3.Distance(vector.Value, gridSphere.Center);
-
-                /* 
-                 * Now we figure out how big our new radius must be to house both grids
-                 * so the distance between the center points + the radius of our subgrid.
-                 */
-                float newRadius = distance + gridSphere.Radius;
-
-                /*
-                 * If the new radius is bigger than our old one we use that, otherwise the subgrid 
-                 * is contained in the other grid and therefore no need to make it bigger. 
-                 */
-                if (newRadius > radius)
-                    radius = newRadius;
+                BoundingSphere boundingSphere = MyCubeGridExtensions.CalculateBoundingSphere(myObjectBuilder_CubeGrid);
+                MatrixD m = myObjectBuilder_CubeGrid.PositionAndOrientation.HasValue ? myObjectBuilder_CubeGrid.PositionAndOrientation.Value.GetMatrix() : MatrixD.Identity;
+                result.Include(boundingSphere.Transform(m));
             }
-
-            return new BoundingSphereD(vector.Value, radius);
+            return result;
         }
 
         //Start grid spawning
@@ -457,7 +480,7 @@ namespace QuantumHangar
             }
         }
 
-        
+
 
         public static void Respond(string response, CommandContext context)
         {

@@ -152,7 +152,7 @@ namespace QuantumHangar
         }
 
 
-        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, bool force = false)
+        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
             string path = Path.Combine(FolderPath, GridName + ".sbc");
 
@@ -207,7 +207,7 @@ namespace QuantumHangar
                     }
                 }
 
-
+                
 
 
                 if (keepOriginalLocation)
@@ -215,14 +215,14 @@ namespace QuantumHangar
                     foreach (var shipBlueprint in shipBlueprints)
                     {
 
-                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat))
+                        if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat, Plugin))
                         {
 
                             Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                             return false;
                         }
                     }
-                    //File.Delete(path);
+                    File.Delete(path);
                     return true;
                 }
                 else
@@ -230,10 +230,9 @@ namespace QuantumHangar
                     Hangar.Debug("Attempting to align grid to gravity!");
                     AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, Player.PositionComp.GetPosition(), chat);
 
-
                     if (GravityAligner.Start())
                     {
-                        //File.Delete(path);
+                        File.Delete(path);
                         return true;
                     }
 
@@ -244,7 +243,7 @@ namespace QuantumHangar
         }
 
         private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
-            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, bool force = false)
+            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
 
             var grids = shipBlueprint.CubeGrids;
@@ -256,6 +255,21 @@ namespace QuantumHangar
                 chat.Respond("No grids in blueprint!");
 
                 return false;
+            }
+
+            try
+            {
+                MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
+
+                if (Plugin.GridBackup != null)
+                {
+                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { grids.ToList(), IDentity.IdentityId });
+                    Log.Warn("Successfully BackedUp grid!");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Fatal(e);
             }
 
 
@@ -438,13 +452,6 @@ namespace QuantumHangar
                         grids.RemoveAt(i);
                     }
                 }
-
-
-
-
-
-
-
             }
             else
             {
@@ -459,8 +466,6 @@ namespace QuantumHangar
 
                 if (groups.Count > 1)
                     return null;
-
-
 
 
                 foreach (var group in groups)
@@ -497,6 +502,9 @@ namespace QuantumHangar
              * Now we know the radius that can house all grids which will now be 
              * used to determine the perfect place to paste the grids to. 
              */
+
+          
+
             return MyEntities.FindFreePlace(playerPosition, sphere.Radius);
         }
 
@@ -611,9 +619,6 @@ namespace QuantumHangar
             }
 
 
-
-
-
             try
             {
                 MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
@@ -628,8 +633,6 @@ namespace QuantumHangar
             {
                 Log.Fatal(e);
             }
-
-
 
 
             try
@@ -658,6 +661,7 @@ namespace QuantumHangar
 
         public void DisposeGrids(List<MyCubeGrid> Grids)
         {
+
             foreach (MyCubeGrid Grid in Grids)
             {
                 foreach (MyCockpit Block in Grid.GetBlocks().OfType<MyCockpit>())
@@ -667,7 +671,6 @@ namespace QuantumHangar
                         Block.RemovePilot();
                     }
                 }
-
 
                 Grid.Close();
             }
@@ -1130,7 +1133,7 @@ namespace QuantumHangar
 
     public class Utils
     {
-
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static bool TryUpdatePlayerBalance(PlayerAccount Account)
         {
             try
@@ -1292,22 +1295,31 @@ namespace QuantumHangar
 
         public static void FormatGridName(PlayerInfo Data, Result result)
         {
-            Hangar.Debug("F");
-
             try
             {
                 string GridName = FileSaver.CheckInvalidCharacters(result.biggestGrid.DisplayName);
                 result.GridName = GridName;
-                if (Data.Grids.Any(x => x.GridName.Equals(GridName, StringComparison.OrdinalIgnoreCase)))
+
+
+                bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName));
+
+                Log.Warn("Running GridName Checks: {" + GridName + "} :"+Test);
+
+                if (Test)
                 {
                     //There is already a grid with that name!
                     bool NameCheckDone = false;
-                    int a = 0;
+                    int a = 1;
                     while (!NameCheckDone)
                     {
-                        a++;
-                        if (!Data.Grids.Any(x => x.GridName.Equals(GridName + " [" + a + "]", StringComparison.OrdinalIgnoreCase)))
+                        
+                        if (Data.Grids.Any(x => x.GridName.Equals(GridName + "[" + a + "]")))
                         {
+                            a++;
+                        }
+                        else
+                        {
+                            Hangar.Debug("Name check done! " + a);
                             NameCheckDone = true;
                             break;
                         }
@@ -1322,10 +1334,8 @@ namespace QuantumHangar
             }
             catch (Exception e)
             {
-                Hangar.Debug("eeerror", e);
+                Log.Warn("eeerror", e);
             }
-
-            Hangar.Debug("G");
         }
 
     }

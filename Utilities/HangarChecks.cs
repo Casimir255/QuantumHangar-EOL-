@@ -161,17 +161,12 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            List<MyCubeGrid> grids = result.grids;
-            MyCubeGrid biggestGrid = result.biggestGrid;
-
-
             if (!ExtensiveLimitChecker(result, Data))
             {
                 return;
             }
 
-
-
+            Log.Warn("Checking for exsisting grids in hangar!");
             //Check for existing grids in hangar!
             CheckForExistingGrids(Data, ref result);
 
@@ -204,6 +199,11 @@ namespace QuantumHangar.Utilities
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
                 return;
 
+            //Check Player Timer
+            if (!CheckPlayerTimeStamp(ref Data))
+            {
+                return;
+            }
 
 
             if (Data.Grids.Count == 0)
@@ -347,13 +347,6 @@ namespace QuantumHangar.Utilities
                 chat.Respond("You have no grids in your hangar!");
                 return;
             }
-            
-            if(!Plugin.Config.requireAdminPermForHangarWipe)
-            {
-                chat.Respond("You don't have permission to wipe your entire Hanger!");
-                return;
-            }
-
 
             int result = -1;
             try
@@ -391,8 +384,14 @@ namespace QuantumHangar.Utilities
                 return;
 
             }
-            else if (result == 0 && result != -1)
+            else if (result == 0)
             {
+                if (Plugin.Config.requireAdminPermForHangarWipe)
+                {
+                    chat.Respond("You don't have permission to wipe your entire Hanger!");
+                    return;
+                }
+
                 int counter = 0;
                 foreach (var grid in Data.Grids)
                 {
@@ -1404,26 +1403,37 @@ namespace QuantumHangar.Utilities
         private bool CheckEnemyDistance()
         {
             IMyPlayer Player = Context.Player;
-            var fc = MyAPIGateway.Session.Factions.GetObjectBuilder();
-            var faction = fc.Factions.FirstOrDefault(f => f.Members.Any(a => a.PlayerId == Player.IdentityId));
+
+            MyFaction PlayersFaction = MySession.Static.Factions.GetPlayerFaction(Player.IdentityId);
 
             //Check enemy location! If under limit return!
             foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
             {
-                if (faction == null || !faction.Members.Any(m => m.PlayerId == OnlinePlayer.Identity.IdentityId))
+                MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
+                if (PlayersFaction != null && TargetPlayerFaction != null)
                 {
-                    if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
+                    if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
                     {
-                        //Some kinda stupid faction bug
                         continue;
                     }
 
-                    if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
-                    {
-                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
-                        return false;
-                    }
+                    if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                        continue;
                 }
+
+
+                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
+                {
+                    //Some kinda stupid faction bug
+                    continue;
+                }
+
+                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
+                {
+                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
+                    return false;
+                }
+
             }
 
             return true;
@@ -1548,18 +1558,17 @@ namespace QuantumHangar.Utilities
             return Return;
         }
 
-        private bool CheckForExistingGrids(PlayerInfo Data, ref Result result)
+        private void CheckForExistingGrids(PlayerInfo Data, ref Result result)
         {
             if (Data == null)
             {
+                Log.Warn("PlayerInfoData is NULL");
                 //If Player info is empty, return true. (No data in hangar)
-                return true;
+                return;
             }
 
+            Log.Warn("Checking Grid Name");
             Utils.FormatGridName(Data, result);
-
-
-            return true;
         }
 
         private bool BeginSave(Result result, PlayerInfo Data)
@@ -2442,7 +2451,7 @@ namespace QuantumHangar.Utilities
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
 
-            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, true))
+            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, true))
             {
 
                 chat.Respond("Load Complete!");
