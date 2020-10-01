@@ -27,6 +27,34 @@ using QuantumHangar.Utilities;
 
 namespace QuantumHangar
 {
+    [Torch.Commands.Category("hanger")]
+    public class FunnyChatCommands : CommandModule
+    {
+        [Command("save", "Doesnt save targeted grid in hangar")]
+        public void CheekySave()
+        {
+            if (Context.Player == null)
+                return;
+
+            StringBuilder S = new StringBuilder();
+            S.AppendLine(string.Format("I'm suprised you can even build a ship when you dont know the difference between Hanger & Hangar, {0}!", Context.Player.DisplayName));
+            S.AppendLine("Hangeeeer Save denied! Because its !hangar not !hanger boi");
+            Context.Respond(S.ToString(), Color.Yellow, "R");
+        }
+
+        [Command("load", "Doesnt load targeted grid in hangar")]
+        public void Cheekyload()
+        {
+            if (Context.Player == null)
+                return;
+
+            StringBuilder S = new StringBuilder();
+            S.AppendLine(string.Format("How did you manage to even save a grid if you STILL cant figure out the difference between Hanger & Hangar, {0}!", Context.Player.DisplayName));
+            S.AppendLine("Hangeeeer Load denied! Go fly into the sun!");
+            Context.Respond(S.ToString(), Color.Yellow, "R");
+        }
+    }
+
 
     [Torch.Commands.Category("hangar")]
     public class ChatCommands : CommandModule
