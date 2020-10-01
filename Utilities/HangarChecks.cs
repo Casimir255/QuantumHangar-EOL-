@@ -1416,14 +1416,14 @@ namespace QuantumHangar.Utilities
             }
 
 
-            if(Plugin.Config.GridDistanceCheck > 0 && EnemyFoundFlag == false)
+            if(Plugin.Config.GridDistanceCheck > 0 && Plugin.Config.GridCheckMinBlock > 0 && EnemyFoundFlag == false)
             {
                 BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
 
                 List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
                 foreach(var Grid in Grids)
                 {
-                    if (Grid.BigOwners.Count <= 0)
+                    if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Plugin.Config.GridCheckMinBlock)
                         continue;
 
                     long BiggestIdentityID = Grid.BigOwners[0];
@@ -1439,10 +1439,10 @@ namespace QuantumHangar.Utilities
                     }
 
                     //Stop loop
+                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
                     EnemyFoundFlag = true;
                     break;
                 }
-
             }
 
 

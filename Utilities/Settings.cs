@@ -26,6 +26,9 @@ namespace QuantumHangar
         private double _GridDistanceCheck = 0;
         public double GridDistanceCheck { get => _GridDistanceCheck; set => SetValue(ref _GridDistanceCheck, value); }
 
+        private int _GridCheckMinBlock = 25;
+        public int GridCheckMinBlock { get => _GridCheckMinBlock; set => SetValue(ref _GridCheckMinBlock, value); }
+
         private int _ScripterHangarAmount = 6;
         public int ScripterHangarAmount { get => _ScripterHangarAmount; set => SetValue(ref _ScripterHangarAmount, value); }
 
