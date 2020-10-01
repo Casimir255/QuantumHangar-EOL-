@@ -179,7 +179,7 @@ namespace QuantumHangar
             //Optional how often to check
             if (TickCounter > 1000)
             {
-                if (AutoHangarStamp.AddMinutes(30) < DateTime.Now)
+                if (Config.PluginEnabled && AutoHangarStamp.AddMinutes(30) < DateTime.Now)
                 {
                     //Run checks
 
@@ -199,7 +199,7 @@ namespace QuantumHangar
                     AutoHangarStamp = DateTime.Now;
                 }
 
-                if (AutoVoxelStamp.AddMinutes(2.5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
+                if (Config.PluginEnabled && AutoVoxelStamp.AddMinutes(2.5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
                 {
                     Debug("Getting grids in voxels!!");
                     AutoHangar Auto = new AutoHangar(this, Tracker);
