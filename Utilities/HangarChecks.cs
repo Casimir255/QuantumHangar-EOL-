@@ -1398,19 +1398,16 @@ namespace QuantumHangar.Utilities
                 MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
                 if (PlayersFaction != null && TargetPlayerFaction != null)
                 {
-                    if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
-                    {
-                        continue;
-                    }
-
                     if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                        continue;
+
+                    if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
                         continue;
                 }
 
 
                 if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
                 {
-                    //Some kinda stupid faction bug
                     continue;
                 }
 
