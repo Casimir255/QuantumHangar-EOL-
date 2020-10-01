@@ -1076,12 +1076,13 @@ namespace QuantumHangar.Utilities
                 return true;
             }
 
-
+            bool PositionFlag = false;
             switch (Plugin.Config.LoadType)
             {
                 case LoadType.ForceLoadMearPlayer:
-                    return true;
+                    PositionFlag = true;
                     break;
+
 
                 case LoadType.ForceLoadNearOriginalPosition:
                     //Legacy check
@@ -1092,7 +1093,8 @@ namespace QuantumHangar.Utilities
                     {
                         LoadFromSavePosition = false;
                         chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                        return true;
+                        PositionFlag = true;
+                        break;
                     }
 
                     if (Plugin.Config.RequireLoadRadius)
@@ -1105,11 +1107,11 @@ namespace QuantumHangar.Utilities
                             chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                             string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "m]";
                             Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                            return false;
+                            PositionFlag = false;
                         }
                         else
                         {
-                            return true;
+                            PositionFlag = true;
                         }
 
                     }
@@ -1120,13 +1122,12 @@ namespace QuantumHangar.Utilities
                         {
                             //Send GPS of Position to player
                             chat.Respond("A GPS has been added to your HUD");
-                            string Name = Grid.GridName + " Location ";
+                            string Name = Grid.GridName + " Spawn Location";
                             Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
                         }
-                        return true;
+                        PositionFlag = true;
                     }
                     break;
-
 
                 case LoadType.Optional:
                     if (LoadFromSavePosition)
@@ -1136,7 +1137,8 @@ namespace QuantumHangar.Utilities
                         {
                             LoadFromSavePosition = false;
                             chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                            return true;
+                            PositionFlag = true;
+                            break;
                         }
 
                         if (Plugin.Config.RequireLoadRadius)
@@ -1149,29 +1151,16 @@ namespace QuantumHangar.Utilities
                                 chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                                 string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "]";
                                 Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                                return false;
-                            }
-                            else
-                            {
-                                return true;
+                                PositionFlag = false;
+                                break;
                             }
                         }
-                        else
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return true;
                     }
 
+                    PositionFlag = true;
                     break;
             }
-
-
-
-            return true;
+            return PositionFlag;
         }
 
         private bool CheckHanagarLimits(PlayerInfo Data)

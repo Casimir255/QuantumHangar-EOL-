@@ -43,13 +43,9 @@ namespace QuantumHangar.Utilities
         private static MultiplayerManagerBase _MP;
         private string _StoragePath;
         public bool IsHostServer = false;
-        
-
-        
+       
         public static Comms Comms;
         public Settings Config => Hangar._config?.Data;
-
-
 
 
         public GridMarket(string InstancePath)
@@ -175,9 +171,6 @@ namespace QuantumHangar.Utilities
             MarketServers.Dispose();
 
         }
-
-
-
         private void MP_PlayerLeft(IPlayer obj)
         {
             //Main.Debug("Player Left! : " + obj.State.ToString());
