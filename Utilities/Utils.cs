@@ -184,8 +184,6 @@ namespace QuantumHangar
                         return false;
                     }
 
-
-
                     if (Config.OnLoadTransfer)
                     {
 
@@ -207,9 +205,6 @@ namespace QuantumHangar
                             }
                         }
                     }
-
-
-
 
                     if (keepOriginalLocation)
                     {
@@ -299,11 +294,12 @@ namespace QuantumHangar
                 {
                     if (entity is MyCubeGrid)
                     {
-                        chat.Respond("There are potentially other grids in the way. Loading near the original point.");
-
                         LoadNearPosition = true;
                     }
                 }
+
+                if(LoadNearPosition == true)
+                    chat.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
 
                 if (!LoadNearPosition)
                 {
@@ -333,8 +329,7 @@ namespace QuantumHangar
             {
 
                 Hangar.Debug("No free Space found!");
-                chat.Respond("No free space available!");
-
+                chat.Respond("No free spawning zone found! Stopping load!");
                 return false;
             }
 
@@ -344,7 +339,6 @@ namespace QuantumHangar
             if (!UpdateGridsPosition(grids, newPosition))
             {
                 chat.Respond("The File to be imported does not seem to be compatible with the server!");
-
                 return false;
             }
 
@@ -1133,7 +1127,6 @@ namespace QuantumHangar
     }
 
 
-
     public class Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
@@ -1287,7 +1280,7 @@ namespace QuantumHangar
             myGps.ShowOnHud = true;
             myGps.Coords = Position;
             myGps.Name = name;
-            myGps.Description = "This is where you must be to load your grid.";
+            myGps.Description = "Hangar location for loading grid at or around this position";
             myGps.AlwaysVisible = true;
 
             MyGps gps = myGps;

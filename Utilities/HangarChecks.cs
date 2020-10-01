@@ -190,7 +190,6 @@ namespace QuantumHangar.Utilities
 
             if (!InitilizeCharacter()
                 || !CheckZoneRestrictions(false)
-                || !CheckEnemyDistance()
                 || !CheckGravity()
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
                 return;
@@ -243,8 +242,9 @@ namespace QuantumHangar.Utilities
 
                 GridStamp Grid = Data.Grids[result - 1];
 
-                if (!CrossServerCheck(Grid))
+                if (!CheckEnemyDistance(ForceLoadAtSavePosition, Grid.GridSavePosition))
                     return;
+
 
                 //Check PCU!
                 if (!CheckGridLimits(myIdentity, Grid))
@@ -840,11 +840,7 @@ namespace QuantumHangar.Utilities
         }
 
 
-        public bool CrossServerCheck(GridStamp Grid)
-        {
 
-            return true;
-        }
 
         /*
          *  Main utility commands
@@ -894,8 +890,6 @@ namespace QuantumHangar.Utilities
                         }
 
                         //Multiply by 
-
-
                         break;
 
 
@@ -1113,20 +1107,17 @@ namespace QuantumHangar.Utilities
                         {
                             PositionFlag = true;
                         }
-
                     }
                     else
                     {
-                        double PlayerDistance = Vector3D.Distance(Context.Player.GetPosition(), Grid.GridSavePosition);
-                        if (PlayerDistance > Plugin.Config.LoadRadius)
-                        {
-                            //Send GPS of Position to player
-                            chat.Respond("A GPS has been added to your HUD");
-                            string Name = Grid.GridName + " Spawn Location";
-                            Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                        }
+                        //Send GPS of Position to player
+                        chat.Respond("A GPS has been added to your HUD");
+                        string Name = Grid.GridName + " Spawn Location";
+                        Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
+
                         PositionFlag = true;
                     }
+
                     break;
 
                 case LoadType.Optional:
@@ -1386,40 +1377,76 @@ namespace QuantumHangar.Utilities
 
         }
 
-        private bool CheckEnemyDistance()
+        private bool CheckEnemyDistance(bool LoadingAtSavePoint = false, Vector3D Position = new Vector3D())
         {
             IMyPlayer Player = Context.Player;
+            if (!LoadingAtSavePoint)
+            {
+                Position = Player.GetPosition();
+            }
 
             MyFaction PlayersFaction = MySession.Static.Factions.GetPlayerFaction(Player.IdentityId);
-
-            //Check enemy location! If under limit return!
-            foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
+            bool EnemyFoundFlag = false;
+            if (Plugin.Config.DistanceCheck > 0)
             {
-                MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
-                if (PlayersFaction != null && TargetPlayerFaction != null)
+                //Check enemy location! If under limit return!
+                foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
                 {
-                    if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
+                    if (PlayersFaction != null && TargetPlayerFaction != null)
+                    {
+                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                            continue;
+
+                        if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
+                            continue;
+                    }
+
+                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) == 0)
+                    {
+                        continue;
+                    }
+
+                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
+                    {
+                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
+                        EnemyFoundFlag = true;
+                    }
+                }
+            }
+
+
+            if(Plugin.Config.GridDistanceCheck > 0 && EnemyFoundFlag == false)
+            {
+                BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
+
+                List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
+                foreach(var Grid in Grids)
+                {
+                    if (Grid.BigOwners.Count <= 0)
                         continue;
 
-                    if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
-                        continue;
-                }
+                    long BiggestIdentityID = Grid.BigOwners[0];
+                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(BiggestIdentityID);
 
+                    if (PlayersFaction != null && TargetPlayerFaction != null)
+                    {
+                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                            continue;
 
-                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
-                {
-                    continue;
-                }
+                        if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
+                            continue;
+                    }
 
-                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
-                {
-                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
-                    return false;
+                    //Stop loop
+                    EnemyFoundFlag = true;
+                    break;
                 }
 
             }
 
-            return true;
+
+            return !EnemyFoundFlag;
 
         }
 

@@ -112,20 +112,22 @@
                             <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
                             <CheckBox x:Name="Enabled" Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding PluginEnabled}"/>
                             <TextBlock Grid.Column="0" Grid.Row ="5" Text="Wait time between commands in minutes:" Margin="3" Grid.ColumnSpan="2"/>
-                            <TextBlock Grid.Column="0" Grid.Row ="6" Text="Enemy player minimum distance check in meters:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="6" Text="Enemy Player minimum distance check in meters:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="7" Text="Enemy Grid minimum distance check in meters:" Margin="3" Grid.ColumnSpan="2"/>
 
 
-
-                            <TextBlock Grid.Column="0" Grid.Row ="7" Text="Default role hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
-                            <TextBlock Grid.Column="0" Grid.Row ="8" Text="Scripter role hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="8" Text="Default role hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row ="9" Text="Scripter role hangar amount:" Margin="3" Grid.ColumnSpan="2"/>
 
                             <TextBlock Grid.Column="0" Grid.Row ="4" Text="Hangar Directory Folder:" Margin="3" Grid.ColumnSpan="2"/>
                             <TextBox Grid.Column="2" Grid.Row="4" Width="240" HorizontalAlignment="Left" Margin="2" Text="{Binding FolderDirectory}"/>
                             <TextBox Grid.Column="2" Grid.Row="5" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding WaitTime}"/>
 
+                            <TextBox Grid.Column="2" Grid.Row="7" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding GridDistanceCheck}"/>
                             <TextBox Grid.Column="2" Grid.Row="6" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding DistanceCheck}"/>
-                            <TextBox Grid.Column="2" Grid.Row="7" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding NormalHangarAmount}"/>
-                            <TextBox Grid.Column="2" Grid.Row="8" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding ScripterHangarAmount}"/>
+                            
+                            <TextBox Grid.Column="2" Grid.Row="8" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding NormalHangarAmount}"/>
+                            <TextBox Grid.Column="2" Grid.Row="9" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding ScripterHangarAmount}"/>
 
 
 
