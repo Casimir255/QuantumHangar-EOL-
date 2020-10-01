@@ -134,7 +134,7 @@ namespace QuantumHangar.Utilities
             if (!InitilizeCharacter()
                 || !CheckZoneRestrictions(true)
                 || !CheckGravity()
-                || !CheckEnemyDistance()
+                || CheckEnemyDistance()
                 || !Methods.LoadInfoFile(out PlayerInfo Data)
                 || !CheckHanagarLimits(Data))
                 return;
@@ -242,7 +242,7 @@ namespace QuantumHangar.Utilities
 
                 GridStamp Grid = Data.Grids[result - 1];
 
-                if (!CheckEnemyDistance(ForceLoadAtSavePosition, Grid.GridSavePosition))
+                if (CheckEnemyDistance(ForceLoadAtSavePosition, Grid.GridSavePosition))
                     return;
 
 
@@ -1392,13 +1392,17 @@ namespace QuantumHangar.Utilities
                 //Check enemy location! If under limit return!
                 foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
                 {
+                    if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId)
+                        continue;
+
                     MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
                     if (PlayersFaction != null && TargetPlayerFaction != null)
                     {
                         if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
                             continue;
 
-                        if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
+                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                        if (Relation == MyRelationsBetweenFactions.Friends)
                             continue;
                     }
 
@@ -1427,6 +1431,9 @@ namespace QuantumHangar.Utilities
                         continue;
 
                     long BiggestIdentityID = Grid.BigOwners[0];
+                    if (BiggestIdentityID == Context.Player.IdentityId)
+                        continue;
+
                     MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(BiggestIdentityID);
 
                     if (PlayersFaction != null && TargetPlayerFaction != null)
@@ -1434,10 +1441,13 @@ namespace QuantumHangar.Utilities
                         if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
                             continue;
 
-                        if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
+                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                        if (Relation == MyRelationsBetweenFactions.Friends)
                             continue;
                     }
 
+
+                    Hangar.Debug(Grid.DisplayName + ":" + BiggestIdentityID);
                     //Stop loop
                     Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
                     EnemyFoundFlag = true;
@@ -1446,7 +1456,7 @@ namespace QuantumHangar.Utilities
             }
 
 
-            return !EnemyFoundFlag;
+            return EnemyFoundFlag;
 
         }
 
