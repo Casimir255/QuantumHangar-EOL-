@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using NLog;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
@@ -1119,9 +1119,16 @@ namespace QuantumHangar.Utilities
                     }
                     else
                     {
+                        double PlayerDistance = Vector3D.Distance(Context.Player.GetPosition(), Grid.GridSavePosition);
+                        if (PlayerDistance > Plugin.Config.LoadRadius)
+                        {
+                            //Send GPS of Position to player
+                            chat.Respond("A GPS has been added to your HUD");
+                            string Name = Grid.GridName + " Location ";
+                            Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
+                        }
                         return true;
                     }
-
                     break;
 
 
@@ -1380,7 +1387,7 @@ namespace QuantumHangar.Utilities
                 {
                     int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
                     string Timeformat = string.Format("{0:mm}min & {0:ss}s", Subtracted);
-                    Chat.Respond("You have " + Timeformat + " before you can perform this action!", Context);
+                    Chat.Respond("You have " + RemainingTime + " mins before you can perform this action!", Context);
                     return false;
                 }
                 else
