@@ -49,7 +49,6 @@
     <Compile Include="Properties\Debug.cs" />
     <Compile Include="Utilities\AutoHangar.cs" />
     <Compile Include="Utilities\GridMarket.cs" />
-    <Compile Include="Utilities\GridTracker.cs" />
     <Compile Include="Utilities\HangarChecks.cs" />
     <Compile Include="Utilities\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -45,7 +45,6 @@ namespace QuantumHangar
         public static string Dir;
         public static MultiplayerManagerBase MP;
         public static TorchSessionManager TorchSession;
-        public GridTracker Tracker;
 
         private static bool EnableDebug = true;
         public static bool IsRunning = false;
@@ -99,8 +98,6 @@ namespace QuantumHangar
                 TorchSession.SessionStateChanged += SessionChanged;
 
 
-            Tracker = new GridTracker();
-
 
 
 
@@ -153,7 +150,6 @@ namespace QuantumHangar
 
                     BlockLimiterConnection(Plugins);
                     GridBackupConnection(Plugins);
-                    Tracker.ServerStarted(Config.FolderDirectory);
 
                     if (Config.GridMarketEnabled)
                     {
@@ -185,14 +181,14 @@ namespace QuantumHangar
 
                     if (Config.AutoHangarGrids)
                     {
-                        AutoHangar Auto = new AutoHangar(this, Tracker);
+                        AutoHangar Auto = new AutoHangar(this);
                         Auto.RunAutoHangar();
                     }
 
 
                     if (Config.GridMarketEnabled && Config.AutosellHangarGrids && Market.IsHostServer)
                     {
-                        AutoHangar Auto = new AutoHangar(this, Tracker, Market);
+                        AutoHangar Auto = new AutoHangar(this, Market);
                         Auto.RunAutoSell();
                     }
 
@@ -202,7 +198,7 @@ namespace QuantumHangar
                 if (Config.PluginEnabled && AutoVoxelStamp.AddMinutes(2.5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
                 {
                     Debug("Getting grids in voxels!!");
-                    AutoHangar Auto = new AutoHangar(this, Tracker);
+                    AutoHangar Auto = new AutoHangar(this);
 
                     Auto.RunAutoHangarUnderPlanet();
                     AutoVoxelStamp = DateTime.Now;

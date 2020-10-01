@@ -200,7 +200,7 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void RunAuto()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin);
             autoHangar.RunAutoHangar();
         }
 
@@ -453,7 +453,7 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void SaveAll()
         {
-            AutoHangar autoHangar = new AutoHangar(Plugin, Plugin.Tracker);
+            AutoHangar autoHangar = new AutoHangar(Plugin);
             autoHangar.SaveAll();
         }
 

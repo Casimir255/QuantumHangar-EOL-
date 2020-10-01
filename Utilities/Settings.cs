@@ -68,6 +68,8 @@ namespace QuantumHangar
 
         private LoadType _LoadType = LoadType.ForceLoadMearPlayer;
         public LoadType LoadType { get => _LoadType; set => SetValue(ref _LoadType, value); }
+
+
         private double _LoadRadius = 100;
         public double LoadRadius { get => _LoadRadius; set => SetValue(ref _LoadRadius, value); }
 

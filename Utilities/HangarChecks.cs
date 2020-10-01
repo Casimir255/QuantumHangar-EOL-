@@ -47,7 +47,6 @@ namespace QuantumHangar.Utilities
         private int MaxHangarSlots;
         public string PlayerHangarPath { get; set; }
         private GridMethods Methods;
-        private GridTracker Tracker;
 
         private double LoadRadius;
         private bool LoadFromSavePosition;
@@ -60,8 +59,6 @@ namespace QuantumHangar.Utilities
             chat = new Chat(Context, Admin);
             _Admin = Admin;
 
-
-            Tracker = _Plugin.Tracker;
             PlayerSteamID = Context.Player.SteamUserId;
 
             //Sanity distance check (Incase user fucks it up)
@@ -737,7 +734,6 @@ namespace QuantumHangar.Utilities
                 //Fill out grid info and store in file
                 GetBPDetails(result, Plugin.Config, out GridStamp Grid);
                 Data.Grids.Add(Grid);
-                Tracker.HangarUpdate(id, true, Grid);
 
 
                 //Overwrite file
@@ -1601,10 +1597,6 @@ namespace QuantumHangar.Utilities
                 Data.Grids.Add(Grid);
                 Data.Timer = stamp;
 
-
-
-                Tracker.HangarUpdate(PlayerSteamID, true, Grid);
-
                 //Overwrite file
                 FileSaver.Save(Path.Combine(PlayerHangarPath, "PlayerInfo.json"), Data);
                 chat.Respond("Save Complete!");
@@ -2457,7 +2449,6 @@ namespace QuantumHangar.Utilities
 
                 chat.Respond("Load Complete!");
                 Data.Grids.Remove(Grid);
-                Tracker.HangarUpdate(PlayerSteamID, false, Grid);
 
 
                 if (!admin)
