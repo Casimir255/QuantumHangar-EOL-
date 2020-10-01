@@ -138,7 +138,6 @@ namespace QuantumHangar.Utilities
                 || !CheckZoneRestrictions(true)
                 || !CheckGravity()
                 || !CheckEnemyDistance()
-                || !CheckEnemyDistance()
                 || !Methods.LoadInfoFile(out PlayerInfo Data)
                 || !CheckHanagarLimits(Data))
                 return;
@@ -847,14 +846,8 @@ namespace QuantumHangar.Utilities
 
         public bool CrossServerCheck(GridStamp Grid)
         {
-            if (Grid.ServerPort == MySandboxGame.ConfigDedicated.ServerPort)
-                return true;
 
-            if (Grid.ServerPort == 0)
-                return true;
-
-            chat.Respond("This grid hasnt been saved on the previous server! Please wait!");
-            return false;
+            return true;
         }
 
         /*
@@ -1386,7 +1379,8 @@ namespace QuantumHangar.Utilities
                 if (Subtracted.TotalMinutes <= Plugin.Config.WaitTime)
                 {
                     int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                    Chat.Respond("You have " + RemainingTime + " mins before you can perform this action!", Context);
+                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Subtracted);
+                    Chat.Respond("You have " + Timeformat + " before you can perform this action!", Context);
                     return false;
                 }
                 else

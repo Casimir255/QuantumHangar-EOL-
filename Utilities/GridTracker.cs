@@ -34,10 +34,6 @@ namespace QuantumHangar.Utilities
      *      -Once a grid gets saved, we have to check if that grid is in the hangar delete queue, and remove it
      *
      * 
-     * 
-     * 
-     * 
-     * 
      */
 
 
@@ -138,6 +134,8 @@ namespace QuantumHangar.Utilities
 
         public void ServerSave()
         {
+            return;
+
             try
             {
 
@@ -241,12 +239,15 @@ namespace QuantumHangar.Utilities
 
         private void SaveFile(GridTrackerObject Data)
         {
+
             //Log.Warn(StoragePath);
             FileSaver.Save(StoragePath, Data);
         }
 
         private bool LoadFile(out GridTrackerObject Data)
         {
+
+
             GridTrackerObject Info = new GridTrackerObject();
 
 
