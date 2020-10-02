@@ -1114,7 +1114,6 @@ namespace QuantumHangar.Utilities
                         chat.Respond("A GPS has been added to your HUD");
                         string Name = Grid.GridName + " Spawn Location";
                         Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-
                         PositionFlag = true;
                     }
 

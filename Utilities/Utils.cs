@@ -206,26 +206,24 @@ namespace QuantumHangar
                         }
                     }
 
+                    //If the configs have keep originial position on, we dont want to align this to gravity.
                     if (keepOriginalLocation)
                     {
                         foreach (var shipBlueprint in shipBlueprints)
                         {
-
                             if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat, Plugin))
                             {
-
                                 Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                                 return false;
                             }
                         }
+
                         File.Delete(path);
                         return true;
                     }
                     else
                     {
-                        Hangar.Debug("Attempting to align grid to gravity!");
                         AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, Player.PositionComp.GetPosition(), chat);
-
                         if (GravityAligner.Start())
                         {
                             File.Delete(path);
@@ -234,10 +232,11 @@ namespace QuantumHangar
 
                     }
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 chat.Respond("This ship failed to load. Contact staff & Check logs!");
-                Log.Error(ex, "Failed to deserialize grid: "+ path + " from file! Is this a shipblueprint?");
+                Log.Error(ex, "Failed to deserialize grid: " + path + " from file! Is this a shipblueprint?");
             }
 
             return false;
@@ -246,15 +245,11 @@ namespace QuantumHangar
         private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
             Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
-
             var grids = shipBlueprint.CubeGrids;
 
             if (grids == null || grids.Length == 0)
             {
-
-                Hangar.Debug("No grids in blueprint!");
                 chat.Respond("No grids in blueprint!");
-
                 return false;
             }
 
@@ -273,80 +268,17 @@ namespace QuantumHangar
                 Log.Fatal(e);
             }
 
-
-            bool LoadNearPosition = false;
             //For loading in the same location
-
-            ParallelSpawner Spawner = new ParallelSpawner(grids);
-            var position = grids[0].PositionAndOrientation.Value;
-            if (keepOriginalLocation)
-            {
-                var sphere = FindBoundingSphere(grids);
+            
 
 
 
-                sphere.Center = position.Position;
-
-                List<MyEntity> entities = new List<MyEntity>();
-                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
-
-                foreach (var entity in entities)
-                {
-                    if (entity is MyCubeGrid)
-                    {
-                        LoadNearPosition = true;
-                    }
-                }
-
-                if(LoadNearPosition == true)
-                    chat.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
-
-                if (!LoadNearPosition)
-                {
-                    /* Remapping to prevent any key problems upon paste. */
-                    MyEntities.RemapObjectBuilderCollection(grids);
-
-                    Spawner.Start();
-
-                    return true;
-                }
-            }
-
-
-
-            /*
-             *  Everything else is loading for near player
-             * 
-             * 
-             * 
-             */
-
-
-
-            /* Where do we want to paste the grids? Lets find out. */
-            var pos = FindPastePosition(grids, position.Position);
-            if (pos == null)
-            {
-
-                Hangar.Debug("No free Space found!");
-                chat.Respond("No free spawning zone found! Stopping load!");
-                return false;
-            }
-
-            var newPosition = pos.Value;
-
-            /* Update GridsPosition if that doesnt work get out of here. */
-            if (!UpdateGridsPosition(grids, newPosition))
-            {
-                chat.Respond("The File to be imported does not seem to be compatible with the server!");
-                return false;
-            }
-
-
-            MyEntities.RemapObjectBuilderCollection(grids);
-            Spawner.Start();
-            return true;
+            ParallelSpawner Spawner = new ParallelSpawner(grids, chat);
+            return Spawner.Start(keepOriginalLocation, playerPosition);
         }
+
+
+
 
         public static List<MyCubeGrid> FindGridList(string gridNameOrEntityId, MyCharacter character, Settings Config)
         {
@@ -387,8 +319,9 @@ namespace QuantumHangar
 
                         grids.Add(Grid);
                     }
-
                 }
+
+
 
                 for (int i = 0; i < grids.Count(); i++)
                 {
@@ -397,50 +330,59 @@ namespace QuantumHangar
                     if (Config.AutoDisconnectGearConnectors && !grid.BigOwners.Contains(character.GetPlayerIdentityId()))
                     {
                         //This disabels enemy grids that have clamped on
-                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                        Action ResetBlocks = new Action(delegate
                         {
-                            gear.AutoLock = false;
-                            gear.RequestLock(false);
-                        }
+                            foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                            {
+                                gear.AutoLock = false;
+                                gear.RequestLock(false);
+                            }
+                        });
+
+                        Task Bool = GameEvents.InvokeActionAsync(ResetBlocks);
+                        if (!Bool.Wait(1000))
+                            return null;
 
                     }
                     else if (Config.AutoDisconnectGearConnectors && grid.BigOwners.Contains(character.GetPlayerIdentityId()))
                     {
                         //This will check to see 
-                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                        Action ResetBlocks = new Action(delegate
                         {
-                            IMyEntity Grid = gear.GetAttachedEntity();
-
-                            //Should prevent entity attachments with voxels
-                            if (Grid is MyVoxelBase)
-
-
-                                if (Grid == null || Grid.EntityId == 0)
+                            foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                            {
+                                IMyEntity Entity = gear.GetAttachedEntity();
+                                if (Entity == null || Entity.EntityId == 0)
                                 {
                                     continue;
                                 }
 
 
+                                //Should prevent entity attachments with voxels
+                                if (!(Entity is MyCubeGrid))
+                                {
+                                    //If grid is attacted to voxel or something
+                                    gear.AutoLock = false;
+                                    gear.RequestLock(false);
 
-                            if (!(Grid is MyCubeGrid))
-                            {
-                                //If grid is attacted to voxel or something
-                                gear.AutoLock = false;
-                                gear.RequestLock(false);
+                                    continue;
+                                }
 
-                                continue;
+                                MyCubeGrid attactedGrid = (MyCubeGrid)Entity;
+
+                                //If the attaced grid is enemy
+                                if (!attactedGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
+                                {
+                                    gear.AutoLock = false;
+                                    gear.RequestLock(false);
+
+                                }
                             }
+                        });
 
-                            MyCubeGrid attactedGrid = (MyCubeGrid)Grid;
-
-                            //If the attaced grid is enemy
-                            if (!attactedGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
-                            {
-                                gear.AutoLock = false;
-                                gear.RequestLock(false);
-
-                            }
-                        }
+                        Task Bool = GameEvents.InvokeActionAsync(ResetBlocks);
+                        if (!Bool.Wait(1000))
+                            return null;
                     }
                 }
 
@@ -468,137 +410,40 @@ namespace QuantumHangar
                     return null;
 
 
-                foreach (var group in groups)
+
+                Action ResetBlocks = new Action(delegate
                 {
-                    foreach (var node in group.Nodes)
+                    foreach (var group in groups)
                     {
-
-                        MyCubeGrid grid = node.NodeData;
-
-
-                        foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                        foreach (var node in group.Nodes)
                         {
-                            gear.AutoLock = false;
-                            gear.RequestLock(false);
+
+                            MyCubeGrid grid = node.NodeData;
+
+
+                            foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
+                            {
+                                gear.AutoLock = false;
+                                gear.RequestLock(false);
+                            }
+
+
+                            if (grid.Physics == null)
+                                continue;
+
+                            grids.Add(grid);
                         }
-
-
-                        if (grid.Physics == null)
-                            continue;
-
-                        grids.Add(grid);
                     }
-                }
+                });
+
+                Task Bool = GameEvents.InvokeActionAsync(ResetBlocks);
+                if (!Bool.Wait(1000))
+                    return null;
+
+
             }
 
             return grids;
-        }
-        private Vector3D? FindPastePosition(MyObjectBuilder_CubeGrid[] grids, Vector3D playerPosition)
-        {
-
-            BoundingSphere sphere = FindBoundingSphere(grids);
-
-            /* 
-             * Now we know the radius that can house all grids which will now be 
-             * used to determine the perfect place to paste the grids to. 
-             */
-
-          
-
-            return MyEntities.FindFreePlace(playerPosition, sphere.Radius);
-        }
-
-        private BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
-        {
-
-            Vector3? vector = null;
-            float radius = 0F;
-
-            foreach (var grid in grids)
-            {
-
-                var gridSphere = grid.CalculateBoundingSphere();
-
-                /* If this is the first run, we use the center of that grid, and its radius as it is */
-                if (vector == null)
-                {
-
-                    vector = gridSphere.Center;
-                    radius = gridSphere.Radius;
-                    continue;
-                }
-
-
-                /* 
-                 * If its not the first run, we use the vector we already have and 
-                 * figure out how far it is away from the center of the subgrids sphere. 
-                 */
-                float distance = Vector3.Distance(vector.Value, gridSphere.Center);
-
-                /* 
-                 * Now we figure out how big our new radius must be to house both grids
-                 * so the distance between the center points + the radius of our subgrid.
-                 */
-                float newRadius = distance + gridSphere.Radius;
-
-                /*
-                 * If the new radius is bigger than our old one we use that, otherwise the subgrid 
-                 * is contained in the other grid and therefore no need to make it bigger. 
-                 */
-                if (newRadius > radius)
-                    radius = newRadius;
-            }
-
-            return new BoundingSphereD(vector.Value, radius);
-        }
-
-        private bool UpdateGridsPosition(MyObjectBuilder_CubeGrid[] grids, Vector3D newPosition)
-        {
-
-            bool firstGrid = true;
-            double deltaX = 0;
-            double deltaY = 0;
-            double deltaZ = 0;
-
-
-            foreach (MyObjectBuilder_CubeGrid grid in grids)
-            {
-
-                var position = grid.PositionAndOrientation;
-
-                var realPosition = position.Value;
-
-                var currentPosition = realPosition.Position;
-
-                if (firstGrid)
-                {
-                    deltaX = newPosition.X - currentPosition.X;
-                    deltaY = newPosition.Y - currentPosition.Y;
-                    deltaZ = newPosition.Z - currentPosition.Z;
-
-                    currentPosition.X = newPosition.X;
-                    currentPosition.Y = newPosition.Y;
-                    currentPosition.Z = newPosition.Z;
-
-                    firstGrid = false;
-
-                }
-                else
-                {
-
-                    currentPosition.X += deltaX;
-                    currentPosition.Y += deltaY;
-                    currentPosition.Z += deltaZ;
-                }
-
-                realPosition.Position = currentPosition;
-                grid.PositionAndOrientation = realPosition;
-
-
-            }
-
-
-            return true;
         }
 
         public bool SaveGrids(List<MyCubeGrid> grids, string GridName, Hangar Plugin)
@@ -1299,7 +1144,7 @@ namespace QuantumHangar
 
                 bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName));
 
-                Log.Warn("Running GridName Checks: {" + GridName + "} :"+Test);
+                Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
 
                 if (Test)
                 {
@@ -1308,7 +1153,7 @@ namespace QuantumHangar
                     int a = 1;
                     while (!NameCheckDone)
                     {
-                        
+
                         if (Data.Grids.Any(x => x.GridName.Equals(GridName + "[" + a + "]")))
                         {
                             a++;

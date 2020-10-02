@@ -70,7 +70,7 @@ namespace QuantumHangar
         public void Save()
         {
             Commands.SaveGrid(Plugin, Context);
-  
+
         }
 
         [Command("load", "Loads given grid from hangar")]
@@ -218,8 +218,9 @@ namespace QuantumHangar
 
     }
 
-    
-    public static class Commands {
+
+    public static class Commands
+    {
 
         //Non Admin commands
         public static void SaveGrid(Hangar Plugin, CommandContext Context)
@@ -290,7 +291,8 @@ namespace QuantumHangar
 
         public static void AdminSyncPlayer(Hangar Plugin, CommandContext Context, string NameOrSteamId)
         {
-            Action X = new Action(delegate {
+            Action X = new Action(delegate
+            {
 
                 if (!Plugin.Config.PluginEnabled)
                     return;
@@ -311,34 +313,35 @@ namespace QuantumHangar
 
         public static void AdminSyncAllPlayers(Hangar Plugin, CommandContext Context)
         {
-            Action X = new Action(delegate { 
-
-            if (!Plugin.Config.PluginEnabled)
-                return;
-            Chat chat = new Chat(Context, true);
-            var PlayerIdentities = MySession.Static.Players.GetAllIdentities().OfType<MyIdentity>();
-            int newGrids = 0;
-            HashSet<ulong> processedIds = new HashSet<ulong>();
-            foreach (MyIdentity player in PlayerIdentities)
+            Action X = new Action(delegate
             {
-                if (player == null)
-                {
-                    continue;
-                }
 
-                ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
-                if (SteamID != 0)
+                if (!Plugin.Config.PluginEnabled)
+                    return;
+                Chat chat = new Chat(Context, true);
+                var PlayerIdentities = MySession.Static.Players.GetAllIdentities().OfType<MyIdentity>();
+                int newGrids = 0;
+                HashSet<ulong> processedIds = new HashSet<ulong>();
+                foreach (MyIdentity player in PlayerIdentities)
                 {
-                    if (processedIds.Contains(SteamID))
+                    if (player == null)
                     {
                         continue;
                     }
-                    processedIds.Add(SteamID);
-                    GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
-                    newGrids += methods.SyncWithDisk();
+
+                    ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
+                    if (SteamID != 0)
+                    {
+                        if (processedIds.Contains(SteamID))
+                        {
+                            continue;
+                        }
+                        processedIds.Add(SteamID);
+                        GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+                        newGrids += methods.SyncWithDisk();
+                    }
                 }
-            }
-            chat.Respond($"Found {newGrids} grids for {processedIds.Count} players");
+                chat.Respond($"Found {newGrids} grids for {processedIds.Count} players");
 
             });
 
@@ -358,65 +361,68 @@ namespace QuantumHangar
 
         public static void AdminList(Hangar Plugin, CommandContext Context, string NameOrSteamID)
         {
-            Action X = new Action(delegate { 
-
-            if (!Plugin.Config.PluginEnabled)
-                return;
-
-            Chat chat = new Chat(Context, true);
-
-
-            if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
+            Action X = new Action(delegate
             {
 
-                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
-
-                if (!methods.LoadInfoFile(out PlayerInfo Data))
-                {
+                if (!Plugin.Config.PluginEnabled)
                     return;
-                }
 
-                if (Data.Grids == null || Data.Grids.Count == 0)
+                Chat chat = new Chat(Context, true);
+
+
+                if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
                 {
-                    chat.Respond("There are no grids in the hangar!");
-                    return;
-                }
 
+                    GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
 
-                int MaxStorage = Plugin.Config.NormalHangarAmount;
-                if (MySession.Static.PromotedUsers.ContainsKey(SteamID))
-                {
-                    //prob redundant but ill leave it incase some future leveling system
-                    MyPromoteLevel level = MySession.Static.PromotedUsers[SteamID];
-                    if (level >= MyPromoteLevel.Scripter)
+                    if (!methods.LoadInfoFile(out PlayerInfo Data))
                     {
-                        MaxStorage = Plugin.Config.ScripterHangarAmount;
+                        return;
                     }
+
+                    if (Data.Grids == null || Data.Grids.Count == 0)
+                    {
+                        chat.Respond("There are no grids in the hangar!");
+                        return;
+                    }
+
+
+                    int MaxStorage = Plugin.Config.NormalHangarAmount;
+                    if (MySession.Static.PromotedUsers.ContainsKey(SteamID))
+                    {
+                        //prob redundant but ill leave it incase some future leveling system
+                        MyPromoteLevel level = MySession.Static.PromotedUsers[SteamID];
+                        if (level >= MyPromoteLevel.Scripter)
+                        {
+                            MaxStorage = Plugin.Config.ScripterHangarAmount;
+                        }
+                    }
+
+
+                    var sb = new StringBuilder();
+
+                    sb.AppendLine("Player has " + Data.Grids.Count() + "/" + MaxStorage + " stored grids:");
+                    //sb.AppendLine("Player has " + Data.Grids.Count() +" stored grids:");
+                    int count = 1;
+                    foreach (var grid in Data.Grids)
+                    {
+                        sb.AppendLine(" [" + count + "] - " + grid.GridName);
+                        count++;
+                    }
+
+                    chat.Respond(sb.ToString());
                 }
-
-
-                var sb = new StringBuilder();
-
-                sb.AppendLine("Player has " + Data.Grids.Count() + "/" + MaxStorage + " stored grids:");
-                //sb.AppendLine("Player has " + Data.Grids.Count() +" stored grids:");
-                int count = 1;
-                foreach (var grid in Data.Grids)
-                {
-                    sb.AppendLine(" [" + count + "] - " + grid.GridName);
-                    count++;
-                }
-
-                chat.Respond(sb.ToString());
-            }
             });
             Task T = new Task(X);
             T.Start();
         }
 
-        public static void AdminDetails(Hangar Plugin, CommandContext Context, string NameOrSteamID, string GridNameOrNumber) {
+        public static void AdminDetails(Hangar Plugin, CommandContext Context, string NameOrSteamID, string GridNameOrNumber)
+        {
 
 
-            Action X = new Action(delegate {
+            Action X = new Action(delegate
+            {
 
                 if (!Plugin.Config.PluginEnabled)
                     return;
@@ -522,83 +528,84 @@ namespace QuantumHangar
 
         public static void AdminRemove(Hangar Plugin, CommandContext Context, string NameOrSteamID, string GridNameOrNumber)
         {
-            Action X = new Action(delegate { 
-
-            if (!Plugin.Config.PluginEnabled)
-                return;
-
-            Chat chat = new Chat(Context, true);
-
-
-            if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
+            Action X = new Action(delegate
             {
-                GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
 
-                if (!methods.LoadInfoFile(out PlayerInfo Data))
-                {
+                if (!Plugin.Config.PluginEnabled)
                     return;
-                }
+
+                Chat chat = new Chat(Context, true);
 
 
-                if (Int32.TryParse(GridNameOrNumber, out int result))
+                if (Utils.AdminTryGetPlayerSteamID(NameOrSteamID, chat, out ulong SteamID))
                 {
-                    if (result > Data.Grids.Count)
+                    GridMethods methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory);
+
+                    if (!methods.LoadInfoFile(out PlayerInfo Data))
                     {
-                        chat.Respond("This hangar slot is empty! Select a grid that is in the hangar!");
                         return;
                     }
 
 
-                    if (result != 0)
+                    if (Int32.TryParse(GridNameOrNumber, out int result))
                     {
-
-                        GridStamp Grid = Data.Grids[result - 1];
-                        Data.Grids.RemoveAt(result - 1);
-                        string path = Path.Combine(methods.FolderPath, Grid.GridName + ".sbc");
-                        File.Delete(path);
-                        chat.Respond(string.Format("{0} was successfully deleted!", Grid.GridName));
-                        FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
-                        return;
-
-                    }
-                    else if (result == 0)
-                    {
-                        int counter = 0;
-                        foreach (var grid in Data.Grids)
+                        if (result > Data.Grids.Count)
                         {
-                            string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
-                            File.Delete(path);
-                            counter++;
+                            chat.Respond("This hangar slot is empty! Select a grid that is in the hangar!");
+                            return;
                         }
 
-                        Data.Grids.Clear();
-                        chat.Respond(string.Format("Successfully deleted {0} grids!", counter));
-                        FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
-                        return;
 
-                    }
-
-
-                }
-                else
-                {
-                    foreach (var grid in Data.Grids)
-                    {
-
-                        if (grid.GridName == GridNameOrNumber)
+                        if (result != 0)
                         {
 
-                            Data.Grids.Remove(grid);
-                            string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
+                            GridStamp Grid = Data.Grids[result - 1];
+                            Data.Grids.RemoveAt(result - 1);
+                            string path = Path.Combine(methods.FolderPath, Grid.GridName + ".sbc");
                             File.Delete(path);
-                            chat.Respond(string.Format("{0} was successfully deleted!", grid.GridName));
+                            chat.Respond(string.Format("{0} was successfully deleted!", Grid.GridName));
                             FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
                             return;
 
                         }
+                        else if (result == 0)
+                        {
+                            int counter = 0;
+                            foreach (var grid in Data.Grids)
+                            {
+                                string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
+                                File.Delete(path);
+                                counter++;
+                            }
+
+                            Data.Grids.Clear();
+                            chat.Respond(string.Format("Successfully deleted {0} grids!", counter));
+                            FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
+                            return;
+
+                        }
+
+
+                    }
+                    else
+                    {
+                        foreach (var grid in Data.Grids)
+                        {
+
+                            if (grid.GridName == GridNameOrNumber)
+                            {
+
+                                Data.Grids.Remove(grid);
+                                string path = Path.Combine(methods.FolderPath, grid.GridName + ".sbc");
+                                File.Delete(path);
+                                chat.Respond(string.Format("{0} was successfully deleted!", grid.GridName));
+                                FileSaver.Save(Path.Combine(methods.FolderPath, "PlayerInfo.json"), Data);
+                                return;
+
+                            }
+                        }
                     }
                 }
-            }
 
             });
 
@@ -609,9 +616,10 @@ namespace QuantumHangar
 
         public static void AdminSaveAll(Hangar Plugin, CommandContext Context)
         {
-            Action X = new Action(delegate {
-            AutoHangar autoHangar = new AutoHangar(Plugin);
-            autoHangar.SaveAll();
+            Action X = new Action(delegate
+            {
+                AutoHangar autoHangar = new AutoHangar(Plugin);
+                autoHangar.SaveAll();
             });
 
             Task T = new Task(X);
