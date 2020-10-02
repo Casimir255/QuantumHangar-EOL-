@@ -1358,12 +1358,14 @@ namespace QuantumHangar.Utilities
                 TimeStamp Old = Data.Timer;
                 //There is a time limit!
                 TimeSpan Subtracted = DateTime.Now.Subtract(Old.OldTime);
+                TimeSpan WaitTimeSpawn = new TimeSpan(0, (int)Plugin.Config.WaitTime, 0);
+                TimeSpan Remainder = WaitTimeSpawn - Subtracted;
                 //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
                 if (Subtracted.TotalMinutes <= Plugin.Config.WaitTime)
                 {
-                    int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Subtracted);
-                    Chat.Respond("You have " + RemainingTime + " mins before you can perform this action!", Context);
+                    //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
+                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Remainder);
+                    Chat.Respond("You have " + Timeformat + "  before you can perform this action!", Context);
                     return false;
                 }
                 else
