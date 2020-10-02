@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using NLog;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
@@ -47,7 +47,6 @@ namespace QuantumHangar.Utilities
         private int MaxHangarSlots;
         public string PlayerHangarPath { get; set; }
         private GridMethods Methods;
-        private GridTracker Tracker;
 
         private double LoadRadius;
         private bool LoadFromSavePosition;
@@ -60,8 +59,6 @@ namespace QuantumHangar.Utilities
             chat = new Chat(Context, Admin);
             _Admin = Admin;
 
-
-            Tracker = _Plugin.Tracker;
             PlayerSteamID = Context.Player.SteamUserId;
 
             //Sanity distance check (Incase user fucks it up)
@@ -137,8 +134,7 @@ namespace QuantumHangar.Utilities
             if (!InitilizeCharacter()
                 || !CheckZoneRestrictions(true)
                 || !CheckGravity()
-                || !CheckEnemyDistance()
-                || !CheckEnemyDistance()
+                || CheckEnemyDistance()
                 || !Methods.LoadInfoFile(out PlayerInfo Data)
                 || !CheckHanagarLimits(Data))
                 return;
@@ -194,7 +190,6 @@ namespace QuantumHangar.Utilities
 
             if (!InitilizeCharacter()
                 || !CheckZoneRestrictions(false)
-                || !CheckEnemyDistance()
                 || !CheckGravity()
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
                 return;
@@ -247,8 +242,9 @@ namespace QuantumHangar.Utilities
 
                 GridStamp Grid = Data.Grids[result - 1];
 
-                if (!CrossServerCheck(Grid))
+                if (CheckEnemyDistance(ForceLoadAtSavePosition, Grid.GridSavePosition))
                     return;
+
 
                 //Check PCU!
                 if (!CheckGridLimits(myIdentity, Grid))
@@ -738,7 +734,6 @@ namespace QuantumHangar.Utilities
                 //Fill out grid info and store in file
                 GetBPDetails(result, Plugin.Config, out GridStamp Grid);
                 Data.Grids.Add(Grid);
-                Tracker.HangarUpdate(id, true, Grid);
 
 
                 //Overwrite file
@@ -845,17 +840,7 @@ namespace QuantumHangar.Utilities
         }
 
 
-        public bool CrossServerCheck(GridStamp Grid)
-        {
-            if (Grid.ServerPort == MySandboxGame.ConfigDedicated.ServerPort)
-                return true;
 
-            if (Grid.ServerPort == 0)
-                return true;
-
-            chat.Respond("This grid hasnt been saved on the previous server! Please wait!");
-            return false;
-        }
 
         /*
          *  Main utility commands
@@ -905,8 +890,6 @@ namespace QuantumHangar.Utilities
                         }
 
                         //Multiply by 
-
-
                         break;
 
 
@@ -1087,12 +1070,13 @@ namespace QuantumHangar.Utilities
                 return true;
             }
 
-
+            bool PositionFlag = false;
             switch (Plugin.Config.LoadType)
             {
                 case LoadType.ForceLoadMearPlayer:
-                    return true;
+                    PositionFlag = true;
                     break;
+
 
                 case LoadType.ForceLoadNearOriginalPosition:
                     //Legacy check
@@ -1103,7 +1087,8 @@ namespace QuantumHangar.Utilities
                     {
                         LoadFromSavePosition = false;
                         chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                        return true;
+                        PositionFlag = true;
+                        break;
                     }
 
                     if (Plugin.Config.RequireLoadRadius)
@@ -1116,21 +1101,24 @@ namespace QuantumHangar.Utilities
                             chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                             string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "m]";
                             Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                            return false;
+                            PositionFlag = false;
                         }
                         else
                         {
-                            return true;
+                            PositionFlag = true;
                         }
-
                     }
                     else
                     {
-                        return true;
+                        //Send GPS of Position to player
+                        chat.Respond("A GPS has been added to your HUD");
+                        string Name = Grid.GridName + " Spawn Location";
+                        Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
+
+                        PositionFlag = true;
                     }
 
                     break;
-
 
                 case LoadType.Optional:
                     if (LoadFromSavePosition)
@@ -1140,7 +1128,8 @@ namespace QuantumHangar.Utilities
                         {
                             LoadFromSavePosition = false;
                             chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                            return true;
+                            PositionFlag = true;
+                            break;
                         }
 
                         if (Plugin.Config.RequireLoadRadius)
@@ -1153,29 +1142,16 @@ namespace QuantumHangar.Utilities
                                 chat.Respond("You must be near where you saved your grid! A GPS has been added to your HUD");
                                 string Name = Grid.GridName + " [within " + Plugin.Config.LoadRadius + "]";
                                 Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                                return false;
-                            }
-                            else
-                            {
-                                return true;
+                                PositionFlag = false;
+                                break;
                             }
                         }
-                        else
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        return true;
                     }
 
+                    PositionFlag = true;
                     break;
             }
-
-
-
-            return true;
+            return PositionFlag;
         }
 
         private bool CheckHanagarLimits(PlayerInfo Data)
@@ -1386,6 +1362,7 @@ namespace QuantumHangar.Utilities
                 if (Subtracted.TotalMinutes <= Plugin.Config.WaitTime)
                 {
                     int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
+                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Subtracted);
                     Chat.Respond("You have " + RemainingTime + " mins before you can perform this action!", Context);
                     return false;
                 }
@@ -1400,43 +1377,86 @@ namespace QuantumHangar.Utilities
 
         }
 
-        private bool CheckEnemyDistance()
+        private bool CheckEnemyDistance(bool LoadingAtSavePoint = false, Vector3D Position = new Vector3D())
         {
             IMyPlayer Player = Context.Player;
+            if (!LoadingAtSavePoint)
+            {
+                Position = Player.GetPosition();
+            }
 
             MyFaction PlayersFaction = MySession.Static.Factions.GetPlayerFaction(Player.IdentityId);
-
-            //Check enemy location! If under limit return!
-            foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
+            bool EnemyFoundFlag = false;
+            if (Plugin.Config.DistanceCheck > 0)
             {
-                MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
-                if (PlayersFaction != null && TargetPlayerFaction != null)
+                //Check enemy location! If under limit return!
+                foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
                 {
-                    if (MySession.Static.Factions.AreFactionsFriends(PlayersFaction.FactionId, TargetPlayerFaction.FactionId))
+                    if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId)
+                        continue;
+
+                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
+                    if (PlayersFaction != null && TargetPlayerFaction != null)
+                    {
+                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                            continue;
+
+                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                        if (Relation == MyRelationsBetweenFactions.Friends)
+                            continue;
+                    }
+
+                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) == 0)
                     {
                         continue;
                     }
 
-                    if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
-                        continue;
+                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
+                    {
+                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
+                        EnemyFoundFlag = true;
+                    }
                 }
-
-
-                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) == 0)
-                {
-                    //Some kinda stupid faction bug
-                    continue;
-                }
-
-                if (Vector3D.Distance(Player.GetPosition(), OnlinePlayer.GetPosition()) <= Plugin.Config.DistanceCheck)
-                {
-                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.DistanceCheck + "m!", Context);
-                    return false;
-                }
-
             }
 
-            return true;
+
+            if(Plugin.Config.GridDistanceCheck > 0 && Plugin.Config.GridCheckMinBlock > 0 && EnemyFoundFlag == false)
+            {
+                BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
+
+                List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
+                foreach(var Grid in Grids)
+                {
+                    if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Plugin.Config.GridCheckMinBlock)
+                        continue;
+
+                    long BiggestIdentityID = Grid.BigOwners[0];
+                    if (BiggestIdentityID == Context.Player.IdentityId)
+                        continue;
+
+                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(BiggestIdentityID);
+
+                    if (PlayersFaction != null && TargetPlayerFaction != null)
+                    {
+                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                            continue;
+
+                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                        if (Relation == MyRelationsBetweenFactions.Friends)
+                            continue;
+                    }
+
+
+                    Hangar.Debug(Grid.DisplayName + ":" + BiggestIdentityID);
+                    //Stop loop
+                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
+                    EnemyFoundFlag = true;
+                    break;
+                }
+            }
+
+
+            return EnemyFoundFlag;
 
         }
 
@@ -1599,10 +1619,6 @@ namespace QuantumHangar.Utilities
                 Grid.ServerPort = MySandboxGame.ConfigDedicated.ServerPort;
                 Data.Grids.Add(Grid);
                 Data.Timer = stamp;
-
-
-
-                Tracker.HangarUpdate(PlayerSteamID, true, Grid);
 
                 //Overwrite file
                 FileSaver.Save(Path.Combine(PlayerHangarPath, "PlayerInfo.json"), Data);
@@ -2456,7 +2472,6 @@ namespace QuantumHangar.Utilities
 
                 chat.Respond("Load Complete!");
                 Data.Grids.Remove(Grid);
-                Tracker.HangarUpdate(PlayerSteamID, false, Grid);
 
 
                 if (!admin)

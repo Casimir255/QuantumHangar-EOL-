@@ -13,7 +13,6 @@ namespace QuantumHangar.Utilities
     public class Patcher
     {
         private static Hangar Plugin { get; set; }
-        private static GridTracker Tracker { get; set; }
 
 
 
@@ -27,7 +26,6 @@ namespace QuantumHangar.Utilities
                 }
                 ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
                 Plugin = plugin;
-                Tracker = plugin.Tracker;
         }
 
         private static MethodInfo Method(string name)
@@ -41,7 +39,6 @@ namespace QuantumHangar.Utilities
             {
                     Hangar.Debug("Running Server Saves! : " + __result);
                     EconPlayerSaver.SaveOnlinePlayerAccounts(Plugin);
-                    Tracker.ServerSave();
             }
         }
     }

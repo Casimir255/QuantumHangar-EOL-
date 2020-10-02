@@ -33,6 +33,7 @@ namespace QuantumHangar
 
         public ParallelSpawner(MyObjectBuilder_CubeGrid[] grids, Action<HashSet<IMyCubeGrid>> callback = null)
         {
+            EnableRequiredItemsOnLoad(grids);
             _grids = grids;
             _maxCount = grids.Length;
             _callback = callback;
@@ -41,16 +42,10 @@ namespace QuantumHangar
 
         public void Start()
         {
-            MyAPIGateway.Utilities.InvokeOnGameThread(delegate
-            {
                 foreach (var o in _grids)
                 {
-                    //Reset velocity
-                    o.LinearVelocity = new SerializableVector3(0, 0, 0);
-                    o.AngularVelocity = new SerializableVector3(0, 0, 0);
                     MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
                 }
-            });
         }
 
         public void Increment(IMyEntity entity)
@@ -63,10 +58,6 @@ namespace QuantumHangar
 
             foreach (MyCubeGrid g in _spawned)
             {
-                g.AddedToScene += EnablePower;
-                g.AddedToScene += EnableDampeners;
-                g.AddedToScene += EnableThrusters;
-
                 MyAPIGateway.Entities.AddEntity(g, true);
             }
 
@@ -74,51 +65,37 @@ namespace QuantumHangar
 
         }
 
-        private void EnableThrusters(MyEntity _grid)
+        private void EnableRequiredItemsOnLoad(MyObjectBuilder_CubeGrid[] _grid)
         {
-            MyCubeGrid grid = _grid as MyCubeGrid;
-            if (!grid.IsStatic)
+            for (int i = 0; i < _grid.Count(); i++)
             {
-                if (grid.EntityThrustComponent != null && !grid.EntityThrustComponent.Enabled)
+                _grid[i].LinearVelocity = new SerializableVector3();
+                _grid[i].AngularVelocity = new SerializableVector3();
+
+                int counter = 0;
+                foreach (MyObjectBuilder_Thrust Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_Thrust>())
                 {
-                    var blocks = new List<IMySlimBlock>();
-                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock != null && f.FatBlock is IMyThrust);
-                    var list = blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled);
-                    foreach (var item in list)
-                    {
-                        item.Enabled = true;
-                    }
+                    counter++;
+                    Block.Enabled = true;
                 }
+
+                foreach (MyObjectBuilder_Reactor Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_Reactor>())
+                {
+                    Block.Enabled = true;
+                }
+
+                foreach (MyObjectBuilder_BatteryBlock Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
+                {
+                    Block.Enabled = true;
+                    Block.SemiautoEnabled = true;
+                    Block.ProducerEnabled = true;
+                    Block.ChargeMode = 0;
+                }
+
+                _grid[i].DampenersEnabled = true;
             }
         }
 
-        private void EnableDampeners(MyEntity _grid)
-        {
-            MyCubeGrid grid = _grid as MyCubeGrid;
-            if (!grid.IsStatic)
-            {
-                if (grid.EntityThrustComponent != null && !grid.EntityThrustComponent.DampenersEnabled)
-                {
-                    var blocks = new List<IMySlimBlock>();
-                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock is IMyShipController);
-                    blocks.Select(block => (IMyShipController)block.FatBlock).FirstOrDefault()?.SwitchDamping();
-                }
-            }
-        }
-
-        private void EnablePower(MyEntity _grid)
-        {
-            MyCubeGrid grid = _grid as MyCubeGrid;
-            if (!grid.IsStatic)
-            {
-                if (!grid.IsPowered)
-                {
-                    var blocks = new List<IMySlimBlock>();
-                    (_grid as IMyCubeGrid).GetBlocks(blocks, f => f.FatBlock != null && f.FatBlock is IMyPowerProducer);
-                    blocks.Select(f => (IMyFunctionalBlock)f.FatBlock).Where(f => !f.Enabled).ForEach(x => x.Enabled = true);
-                }
-            }
-        }
     }
 
     public class AlignToGravity
@@ -296,6 +273,8 @@ namespace QuantumHangar
 
         private MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
         {
+
+         
             var resultMatrix = MatrixD.Identity;
             var cockpits = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_Cockpit>()
                 .Where(blk => {
@@ -306,15 +285,23 @@ namespace QuantumHangar
 
             MyObjectBuilder_CubeBlock referenceBlock = cockpits.Find(blk => blk.IsMainCockpit) ?? cockpits.FirstOrDefault();
 
+
+
+
             if (referenceBlock == null)
             {
                 var remoteControls = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_RemoteControl>().ToList();
                 referenceBlock = remoteControls.Find(blk => blk.IsMainCockpit) ?? remoteControls.FirstOrDefault();
+
+              
             }
 
             if (referenceBlock == null)
             {
                 referenceBlock = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>().FirstOrDefault();
+              
+
+
             }
 
             if (referenceBlock != null)
@@ -508,9 +495,6 @@ namespace QuantumHangar
                 _context.Respond(response, Color.Yellow, "Hangar");
             }
         }
-
-
-
         public static void Respond(string response, CommandContext context)
         {
             context.Respond(response, Color.Yellow, "Hangar");

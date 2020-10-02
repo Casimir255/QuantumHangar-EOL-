@@ -22,14 +22,12 @@ namespace QuantumHangar.Utilities
     class AutoHangar
     {
         private CrossServer Servers;
-        private GridTracker Tracker;
         private readonly Hangar Plugin;
 
 
-        public AutoHangar(Hangar PluginInstance, GridTracker gridTracker, GridMarket Market = null)
+        public AutoHangar(Hangar PluginInstance, GridMarket Market = null)
         {
             Plugin = PluginInstance;
-            Tracker = gridTracker;
 
             if (Market != null)
             {
@@ -250,7 +248,6 @@ namespace QuantumHangar.Utilities
 
                             Grid.GridName = result.GridName;
                             Data.Grids.Add(Grid);
-                            Tracker.HangarUpdate(id, true, Grid);
 
 
                             GridCounter++;
@@ -754,7 +751,6 @@ namespace QuantumHangar.Utilities
                         Grid.ForceSpawnNearPlayer = true;
                         Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);
-                        Tracker.HangarUpdate(id, true, Grid);
 
 
                         GridCounter += 1;
@@ -877,7 +873,6 @@ namespace QuantumHangar.Utilities
 
                         Grid.GridName = R.GridName;
                         Data.Grids.Add(Grid);
-                        Tracker.HangarUpdate(id, true, Grid);
 
 
 

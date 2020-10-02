@@ -23,6 +23,12 @@ namespace QuantumHangar
         private double _DistanceCheck = 30000;
         public double DistanceCheck { get => _DistanceCheck; set => SetValue(ref _DistanceCheck, value); }
 
+        private double _GridDistanceCheck = 0;
+        public double GridDistanceCheck { get => _GridDistanceCheck; set => SetValue(ref _GridDistanceCheck, value); }
+
+        private int _GridCheckMinBlock = 25;
+        public int GridCheckMinBlock { get => _GridCheckMinBlock; set => SetValue(ref _GridCheckMinBlock, value); }
+
         private int _ScripterHangarAmount = 6;
         public int ScripterHangarAmount { get => _ScripterHangarAmount; set => SetValue(ref _ScripterHangarAmount, value); }
 
@@ -68,6 +74,8 @@ namespace QuantumHangar
 
         private LoadType _LoadType = LoadType.ForceLoadMearPlayer;
         public LoadType LoadType { get => _LoadType; set => SetValue(ref _LoadType, value); }
+
+
         private double _LoadRadius = 100;
         public double LoadRadius { get => _LoadRadius; set => SetValue(ref _LoadRadius, value); }
 
