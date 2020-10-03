@@ -1381,6 +1381,7 @@ namespace QuantumHangar.Utilities
         private bool CheckEnemyDistance(bool LoadingAtSavePoint = false, Vector3D Position = new Vector3D())
         {
             IMyPlayer Player = Context.Player;
+            Log.Warn("PlayerIDentity: " + Player.Identity.IdentityId);
             if (!LoadingAtSavePoint)
             {
                 Position = Player.GetPosition();
@@ -1396,14 +1397,16 @@ namespace QuantumHangar.Utilities
                     if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId)
                         continue;
 
+
                     MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
                     if (PlayersFaction != null && TargetPlayerFaction != null)
                     {
                         if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
                             continue;
 
+                        //Neutrals count as allies not friends for some reason
                         MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                        if (Relation == MyRelationsBetweenFactions.Friends)
+                        if (Relation == MyRelationsBetweenFactions.Neutral || Relation == MyRelationsBetweenFactions.Friends)
                             continue;
                     }
 
@@ -1426,33 +1429,56 @@ namespace QuantumHangar.Utilities
                 BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
 
                 List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
+
+
+                //This is looping through all grids in the specified range. If we find an enemy, we need to break and return/deny spawning
                 foreach(var Grid in Grids)
                 {
                     if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Plugin.Config.GridCheckMinBlock)
                         continue;
 
-                    long BiggestIdentityID = Grid.BigOwners[0];
-                    if (BiggestIdentityID == Context.Player.IdentityId)
+                    if (Grid.BigOwners.Contains(Context.Player.IdentityId))
                         continue;
 
-                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(BiggestIdentityID);
 
-                    if (PlayersFaction != null && TargetPlayerFaction != null)
+
+                    //if the player isnt big owner, we need to scan for faction mates
+                    bool FoundAlly = true;
+                    foreach(long Owner in Grid.BigOwners)
                     {
-                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
-                            continue;
+                        Log.Warn(Owner);
 
-                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                        if (Relation == MyRelationsBetweenFactions.Friends)
-                            continue;
+                        MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(Owner);
+                        if (PlayersFaction != null && TargetPlayerFaction != null)
+                        {
+                            if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                                continue;
+
+
+                            MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                            Log.Error(Relation.ToString());
+
+                            if (Relation == MyRelationsBetweenFactions.Enemies)
+                            {
+                                FoundAlly = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            FoundAlly = false;
+                            break;
+                        }
                     }
 
 
-                    Hangar.Debug(Grid.DisplayName + ":" + BiggestIdentityID);
-                    //Stop loop
-                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
-                    EnemyFoundFlag = true;
-                    break;
+                    if (!FoundAlly)
+                    {
+                        //Stop loop
+                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
+                        EnemyFoundFlag = true;
+                        break;
+                    }
                 }
             }
 
