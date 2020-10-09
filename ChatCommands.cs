@@ -65,6 +65,20 @@ namespace QuantumHangar
 
         private Hangar Plugin => (Hangar)Context.Plugin;
 
+        [Command("disable", "Disables hangar save function until re enabled")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public void disable()
+        {
+            Hangar.IsDisabled = true;
+        }
+        [Command("enable", "enables hangar save function ")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public void enable()
+        {
+            Hangar.IsDisabled = false;
+        }
+
+
         [Command("save", "Saves targeted grid in hangar")]
         [Permission(MyPromoteLevel.None)]
         public void Save()
