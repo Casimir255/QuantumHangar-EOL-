@@ -48,7 +48,7 @@ namespace QuantumHangar
 
         private static bool EnableDebug = true;
         public static bool IsRunning = false;
-
+        public static bool IsEnabled = true;
 
         private bool ServerRunning;
         public static MethodInfo CheckFuture;
