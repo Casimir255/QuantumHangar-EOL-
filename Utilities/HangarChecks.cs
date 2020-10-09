@@ -139,6 +139,12 @@ namespace QuantumHangar.Utilities
                 || !CheckHanagarLimits(Data))
                 return;
 
+            //Check Player Timer
+            if (!CheckPlayerTimeStamp(ref Data))
+            {
+                chat.Respond("Hangar is disabled by server");
+                return;
+            }
 
 
 
