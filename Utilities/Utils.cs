@@ -242,8 +242,7 @@ namespace QuantumHangar
             return false;
         }
 
-        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint,
-            Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
+        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint, Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
             var grids = shipBlueprint.CubeGrids;
 

@@ -33,11 +33,10 @@ namespace QuantumHangar
         private readonly HashSet<IMyCubeGrid> _spawned;
         private readonly Chat _Response;
         private static int Timeout = 6000;
+        public bool LoadingInGravity = false;
 
         public ParallelSpawner(MyObjectBuilder_CubeGrid[] grids, Chat chat, Action<HashSet<IMyCubeGrid>> callback = null)
         {
-            MyEntities.RemapObjectBuilderCollection(grids);
-            EnableRequiredItemsOnLoad(grids);
             _grids = grids;
             _maxCount = grids.Length;
             _callback = callback;
@@ -47,6 +46,9 @@ namespace QuantumHangar
 
         public bool Start(bool LoadInOriginalPosition, Vector3D Target)
         {
+            MyEntities.RemapObjectBuilderCollection(_grids);
+            EnableRequiredItemsOnLoad(_grids);
+
             Task<bool> Spawn = GameEvents.InvokeAsync<bool, Vector3D, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition, Target);
             if (Spawn.Wait(Timeout))
             {
@@ -68,9 +70,6 @@ namespace QuantumHangar
                 _Response.Respond("Parrallel Grid Spawner Timed out!");
                 return false;
             }
-
-
-
         }
 
 
@@ -82,34 +81,39 @@ namespace QuantumHangar
             if (keepOriginalLocation)
             {
                 var sphere = FindBoundingSphere(_grids);
-                sphere.Center = _grids[0].PositionAndOrientation.Value.Position;
-
-
                 List<MyEntity> entities = new List<MyEntity>();
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
 
-
+                bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
                     if (entity is MyCubeGrid)
                     {
-                        keepOriginalLocation = false;
+                        PotentialGrids = true;
                         _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
                         break;
                     }
                 }
 
-                var pos = FindPastePosition(sphere.Center);
-                if (!pos.HasValue)
-                {
-                    _Response.Respond("No free spawning zone found! Stopping load!");
-                    return false;
-                }
 
-                if (!UpdateGridsPosition(pos.Value))
+                if (PotentialGrids)
                 {
-                    _Response.Respond("The File to be imported does not seem to be compatible with the server!");
-                    return false;
+                    var pos = FindPastePosition(sphere.Center);
+                    if (!pos.HasValue)
+                    {
+                        _Response.Respond("No free spawning zone found! Stopping load!");
+                        return false;
+                    }
+
+                    if (!UpdateGridsPosition(pos.Value))
+                    {
+                        _Response.Respond("The File to be imported does not seem to be compatible with the server!");
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
             }
 
@@ -140,7 +144,7 @@ namespace QuantumHangar
         private Vector3D? FindPastePosition(Vector3D playerPosition)
         {
 
-            BoundingSphere sphere = FindBoundingSphere(_grids);
+            BoundingSphereD sphere = FindBoundingSphere(_grids);
 
             /* 
              * Now we know the radius that can house all grids which will now be 
@@ -149,7 +153,7 @@ namespace QuantumHangar
 
 
 
-            return MyEntities.FindFreePlace(playerPosition, sphere.Radius);
+            return MyEntities.FindFreePlace(sphere.Center, (float)sphere.Radius, 60, 8, 1.5f);
         }
 
         private static BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
@@ -254,6 +258,10 @@ namespace QuantumHangar
 
         private void EnableRequiredItemsOnLoad(MyObjectBuilder_CubeGrid[] _grid)
         {
+            if (!LoadingInGravity)
+                return;
+
+
             for (int i = 0; i < _grid.Count(); i++)
             {
                 _grid[i].LinearVelocity = new SerializableVector3();
@@ -281,6 +289,7 @@ namespace QuantumHangar
 
                 _grid[i].DampenersEnabled = true;
             }
+
         }
 
     }
@@ -416,6 +425,7 @@ namespace QuantumHangar
 
             //Use Rexxars spciy spaghetti code for parallel spawning of ALL grids
             ParallelSpawner spawner = new ParallelSpawner(AllGrids, chat);
+            spawner.LoadingInGravity = true;
             //Return completeted
             return spawner.Start(false, _PlayerPosition);
         }

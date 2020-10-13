@@ -1381,7 +1381,6 @@ namespace QuantumHangar.Utilities
         private bool CheckEnemyDistance(bool LoadingAtSavePoint = false, Vector3D Position = new Vector3D())
         {
             IMyPlayer Player = Context.Player;
-            Log.Warn("PlayerIDentity: " + Player.Identity.IdentityId);
             if (!LoadingAtSavePoint)
             {
                 Position = Player.GetPosition();
@@ -1428,14 +1427,23 @@ namespace QuantumHangar.Utilities
             {
                 BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
 
-                List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
+                List<MyEntity> entities = new List<MyEntity>();
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref SpawnSphere, entities);
+
 
 
                 //This is looping through all grids in the specified range. If we find an enemy, we need to break and return/deny spawning
-                foreach(var Grid in Grids)
+                foreach(MyEntity G in entities)
                 {
+                    if (!(G is MyCubeGrid))
+                        continue;
+
+                    MyCubeGrid Grid = G as MyCubeGrid;
+
                     if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Plugin.Config.GridCheckMinBlock)
                         continue;
+
+                    
 
                     if (Grid.BigOwners.Contains(Context.Player.IdentityId))
                         continue;
@@ -1446,18 +1454,13 @@ namespace QuantumHangar.Utilities
                     bool FoundAlly = true;
                     foreach(long Owner in Grid.BigOwners)
                     {
-                        Log.Warn(Owner);
-
                         MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(Owner);
                         if (PlayersFaction != null && TargetPlayerFaction != null)
                         {
                             if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
                                 continue;
 
-
                             MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                            Log.Error(Relation.ToString());
-
                             if (Relation == MyRelationsBetweenFactions.Enemies)
                             {
                                 FoundAlly = false;
