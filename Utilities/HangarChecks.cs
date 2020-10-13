@@ -131,7 +131,11 @@ namespace QuantumHangar.Utilities
         public void SaveGrid()
         {
 
-            if (!InitilizeCharacter()
+
+
+
+            if (!IsServerSaving()
+                || !InitilizeCharacter()
                 || !CheckZoneRestrictions(true)
                 || !CheckGravity()
                 || CheckEnemyDistance()
@@ -188,7 +192,8 @@ namespace QuantumHangar.Utilities
             //Log.Info("Player Path: " + path);
 
 
-            if (!InitilizeCharacter()
+            if (!IsServerSaving()
+                || !InitilizeCharacter()
                 || !CheckZoneRestrictions(false)
                 || !CheckGravity()
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
@@ -971,6 +976,17 @@ namespace QuantumHangar.Utilities
             }
         }
 
+        private bool IsServerSaving()
+        {
+            bool Saving = MySession.Static.IsSaveInProgress; ;
+            if (Saving)
+            {
+                chat.Respond("Server has a save in progress... Please wait!");
+                return false;
+            }
+
+            return true;    
+        }
 
         private bool RequireLoadCurrency(GridStamp Grid)
         {

@@ -626,6 +626,18 @@ namespace QuantumHangar
             T.Start();
         }
 
+        public static void AdminHangarEnable(Hangar Plugin, CommandContext context)
+        {
+            Plugin.Config.PluginEnabled = true;
+            context.Respond("Enabled Hangar");
+        }
+
+        public static void AdminHangarDisable(Hangar Plugin, CommandContext context)
+        {
+            Plugin.Config.PluginEnabled = false;
+            context.Respond("Disabled Hangar");
+        }
+
     }
 
 
@@ -703,6 +715,20 @@ namespace QuantumHangar
             Commands.AdminSaveAll(Plugin, Context);
         }
 
+        [Command("Enable", "Enables the plugin")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Enable()
+        {
+            Commands.AdminSaveAll(Plugin, Context);
+        }
+
+        [Command("Disable", "Disables the pluigin")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Disable()
+        {
+            Commands.AdminSaveAll(Plugin, Context);
+        }
+
     }
 
 
@@ -775,6 +801,20 @@ namespace QuantumHangar
         [Command("SaveAll", "Saves Everygrid in the server to players hangars")]
         [Permission(MyPromoteLevel.Admin)]
         public void SaveAll()
+        {
+            Commands.AdminSaveAll(Plugin, Context);
+        }
+
+        [Command("Enable", "Enables the plugin")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Enable()
+        {
+            Commands.AdminSaveAll(Plugin, Context);
+        }
+
+        [Command("Disable", "Disables the pluigin")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Disable()
         {
             Commands.AdminSaveAll(Plugin, Context);
         }
