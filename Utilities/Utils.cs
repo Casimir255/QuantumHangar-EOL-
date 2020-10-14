@@ -152,7 +152,7 @@ namespace QuantumHangar
         }
 
 
-        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
+        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, Vector3D GridSaveLocation, bool force = false)
         {
             string path = Path.Combine(FolderPath, GridName + ".sbc");
 
@@ -211,7 +211,7 @@ namespace QuantumHangar
                     {
                         foreach (var shipBlueprint in shipBlueprints)
                         {
-                            if (!LoadShipBlueprint(shipBlueprint, Player.PositionComp.GetPosition(), true, chat, Plugin))
+                            if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, true, chat, Plugin))
                             {
                                 Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                                 return false;
@@ -242,7 +242,7 @@ namespace QuantumHangar
             return false;
         }
 
-        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint, Vector3D playerPosition, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
+        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint, Vector3D TargetLocation, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
             var grids = shipBlueprint.CubeGrids;
 
@@ -273,7 +273,7 @@ namespace QuantumHangar
 
 
             ParallelSpawner Spawner = new ParallelSpawner(grids, chat);
-            return Spawner.Start(keepOriginalLocation, playerPosition);
+            return Spawner.Start(keepOriginalLocation, TargetLocation);
         }
 
 

@@ -2512,8 +2512,8 @@ namespace QuantumHangar.Utilities
         }
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
-
-            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, true))
+            
+            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, Grid.GridSavePosition, true))
             {
 
                 chat.Respond("Load Complete!");

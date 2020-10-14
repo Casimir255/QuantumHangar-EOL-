@@ -26,6 +26,7 @@ namespace QuantumHangar
 {
     public class ParallelSpawner
     {
+
         //Rexxars spicy ParallelSpawner
         private readonly int _maxCount;
         private readonly MyObjectBuilder_CubeGrid[] _grids;
@@ -81,8 +82,10 @@ namespace QuantumHangar
             if (keepOriginalLocation)
             {
                 var sphere = FindBoundingSphere(_grids);
+                sphere.Center = Target;
                 List<MyEntity> entities = new List<MyEntity>();
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
+
 
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
@@ -98,7 +101,7 @@ namespace QuantumHangar
 
                 if (PotentialGrids)
                 {
-                    var pos = FindPastePosition(sphere.Center);
+                    var pos = FindPastePosition(Target);
                     if (!pos.HasValue)
                     {
                         _Response.Respond("No free spawning zone found! Stopping load!");
@@ -114,6 +117,10 @@ namespace QuantumHangar
                     {
                         return true;
                     }
+                }
+                else
+                {
+                    return true;
                 }
             }
 
@@ -141,17 +148,15 @@ namespace QuantumHangar
             return true;
         }
 
-        private Vector3D? FindPastePosition(Vector3D playerPosition)
+        private Vector3D? FindPastePosition(Vector3D Target)
         {
 
             BoundingSphereD sphere = FindBoundingSphere(_grids);
-
+            sphere.Center = Target;
             /* 
              * Now we know the radius that can house all grids which will now be 
              * used to determine the perfect place to paste the grids to. 
              */
-
-
 
             return MyEntities.FindFreePlace(sphere.Center, (float)sphere.Radius, 60, 8, 1.5f);
         }
