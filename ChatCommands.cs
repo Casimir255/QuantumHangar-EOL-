@@ -719,14 +719,14 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void Enable()
         {
-            Commands.AdminSaveAll(Plugin, Context);
+            Commands.AdminHangarEnable(Plugin, Context);
         }
 
         [Command("Disable", "Disables the pluigin")]
         [Permission(MyPromoteLevel.Admin)]
         public void Disable()
         {
-            Commands.AdminSaveAll(Plugin, Context);
+            Commands.AdminHangarDisable(Plugin, Context);
         }
 
     }
@@ -809,14 +809,14 @@ namespace QuantumHangar
         [Permission(MyPromoteLevel.Admin)]
         public void Enable()
         {
-            Commands.AdminSaveAll(Plugin, Context);
+            Commands.AdminHangarEnable(Plugin, Context);
         }
 
         [Command("Disable", "Disables the pluigin")]
         [Permission(MyPromoteLevel.Admin)]
         public void Disable()
         {
-            Commands.AdminSaveAll(Plugin, Context);
+            Commands.AdminHangarDisable(Plugin, Context);
         }
 
     }
