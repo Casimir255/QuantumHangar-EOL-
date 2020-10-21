@@ -131,7 +131,11 @@ namespace QuantumHangar.Utilities
         public void SaveGrid()
         {
 
-            if (!InitilizeCharacter()
+
+
+
+            if (!IsServerSaving()
+                || !InitilizeCharacter()
                 || !CheckZoneRestrictions(true)
                 || !CheckGravity()
                 || CheckEnemyDistance()
@@ -188,7 +192,8 @@ namespace QuantumHangar.Utilities
             //Log.Info("Player Path: " + path);
 
 
-            if (!InitilizeCharacter()
+            if (!IsServerSaving()
+                || !InitilizeCharacter()
                 || !CheckZoneRestrictions(false)
                 || !CheckGravity()
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
@@ -971,6 +976,17 @@ namespace QuantumHangar.Utilities
             }
         }
 
+        private bool IsServerSaving()
+        {
+            bool Saving = MySession.Static.IsSaveInProgress; ;
+            if (Saving)
+            {
+                chat.Respond("Server has a save in progress... Please wait!");
+                return false;
+            }
+
+            return true;    
+        }
 
         private bool RequireLoadCurrency(GridStamp Grid)
         {
@@ -1114,7 +1130,6 @@ namespace QuantumHangar.Utilities
                         chat.Respond("A GPS has been added to your HUD");
                         string Name = Grid.GridName + " Spawn Location";
                         Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-
                         PositionFlag = true;
                     }
 
@@ -1358,12 +1373,14 @@ namespace QuantumHangar.Utilities
                 TimeStamp Old = Data.Timer;
                 //There is a time limit!
                 TimeSpan Subtracted = DateTime.Now.Subtract(Old.OldTime);
+                TimeSpan WaitTimeSpawn = new TimeSpan(0, (int)Plugin.Config.WaitTime, 0);
+                TimeSpan Remainder = WaitTimeSpawn - Subtracted;
                 //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
                 if (Subtracted.TotalMinutes <= Plugin.Config.WaitTime)
                 {
-                    int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Subtracted);
-                    Chat.Respond("You have " + RemainingTime + " mins before you can perform this action!", Context);
+                    //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
+                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Remainder);
+                    Chat.Respond("You have " + Timeformat + "  before you can perform this action!", Context);
                     return false;
                 }
                 else
@@ -1395,14 +1412,16 @@ namespace QuantumHangar.Utilities
                     if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId)
                         continue;
 
+
                     MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
                     if (PlayersFaction != null && TargetPlayerFaction != null)
                     {
                         if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
                             continue;
 
+                        //Neutrals count as allies not friends for some reason
                         MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                        if (Relation == MyRelationsBetweenFactions.Friends)
+                        if (Relation == MyRelationsBetweenFactions.Neutral || Relation == MyRelationsBetweenFactions.Friends)
                             continue;
                     }
 
@@ -1424,34 +1443,61 @@ namespace QuantumHangar.Utilities
             {
                 BoundingSphereD SpawnSphere = new BoundingSphereD(Position, Plugin.Config.GridDistanceCheck);
 
-                List<MyCubeGrid> Grids = MyEntities.GetEntitiesInSphere(ref SpawnSphere).OfType<MyCubeGrid>().ToList();
-                foreach(var Grid in Grids)
+                List<MyEntity> entities = new List<MyEntity>();
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref SpawnSphere, entities);
+
+
+
+                //This is looping through all grids in the specified range. If we find an enemy, we need to break and return/deny spawning
+                foreach(MyEntity G in entities)
                 {
+                    if (!(G is MyCubeGrid))
+                        continue;
+
+                    MyCubeGrid Grid = G as MyCubeGrid;
+
                     if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Plugin.Config.GridCheckMinBlock)
                         continue;
 
-                    long BiggestIdentityID = Grid.BigOwners[0];
-                    if (BiggestIdentityID == Context.Player.IdentityId)
+                    
+
+                    if (Grid.BigOwners.Contains(Context.Player.IdentityId))
                         continue;
 
-                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(BiggestIdentityID);
 
-                    if (PlayersFaction != null && TargetPlayerFaction != null)
+
+                    //if the player isnt big owner, we need to scan for faction mates
+                    bool FoundAlly = true;
+                    foreach(long Owner in Grid.BigOwners)
                     {
-                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
-                            continue;
+                        MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(Owner);
+                        if (PlayersFaction != null && TargetPlayerFaction != null)
+                        {
+                            if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                                continue;
 
-                        MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                        if (Relation == MyRelationsBetweenFactions.Friends)
-                            continue;
+                            MyRelationsBetweenFactions Relation = MySession.Static.Factions.GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
+                            if (Relation == MyRelationsBetweenFactions.Enemies)
+                            {
+                                FoundAlly = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            FoundAlly = false;
+                            break;
+                        }
                     }
 
 
-                    Hangar.Debug(Grid.DisplayName + ":" + BiggestIdentityID);
-                    //Stop loop
-                    Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
-                    EnemyFoundFlag = true;
-                    break;
+                    if (!FoundAlly)
+                    {
+                        //Stop loop
+                        Chat.Respond("Unable to load grid! Enemy within " + Plugin.Config.GridDistanceCheck + "m!", Context);
+                        EnemyFoundFlag = true;
+                        break;
+                    }
                 }
             }
 
@@ -2466,8 +2512,8 @@ namespace QuantumHangar.Utilities
         }
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
-
-            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, true))
+            
+            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, Grid.GridSavePosition, true))
             {
 
                 chat.Respond("Load Complete!");
