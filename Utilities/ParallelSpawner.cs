@@ -404,12 +404,10 @@ namespace QuantumHangar
             //Update each grid in the array
             Parallel.For(0, AllGrids.Length, j =>
             {
-                MatrixD newWorldMatrix;
                 if (AllGrids[j].PositionAndOrientation.HasValue)
                 {
                     MatrixD matrix3 = AllGrids[j].PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
-                    newWorldMatrix = matrix3 * worldMatrix;
-                    AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(newWorldMatrix);
+                    AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(matrix3 * worldMatrix);
                 }
                 else
                 {
@@ -471,22 +469,10 @@ namespace QuantumHangar
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(90));
                 else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Down)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Forward, MathHelper.ToRadians(180));
-
-                if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Right)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(90));
-                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Left)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(-90));
-                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Backward)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Up, MathHelper.ToRadians(180));
-
-                if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Forward)
+                else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Forward)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
                 else if (referenceBlock.BlockOrientation.Up == Base6Directions.Direction.Backward)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
-                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Up)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(90));
-                else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Down)
-                    resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
             }
 
 
