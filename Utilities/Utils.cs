@@ -207,37 +207,18 @@ namespace QuantumHangar
                     }
 
                     //If the configs have keep originial position on, we dont want to align this to gravity.
-                    if (keepOriginalLocation)
+
+                    foreach (var shipBlueprint in shipBlueprints)
                     {
-                        foreach (var shipBlueprint in shipBlueprints)
+                        if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, Player.PositionComp.GetPosition(), true, chat, Plugin))
                         {
-                            if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, true, chat, Plugin))
-                            {
-                                Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
-                                return false;
-                            }
+                            Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
+                            return false;
                         }
-
-                        File.Delete(path);
-                        return true;
                     }
-                    else
-                    {
 
-                        foreach (var shipBlueprint in shipBlueprints)
-                        {
-                            var grids = shipBlueprint.CubeGrids;
-                            ParallelSpawner Spawner = new ParallelSpawner(grids, chat, true);
-                            if (!Spawner.Start(false, Player.PositionComp.GetPosition()))
-                            {
-                                Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
-                                return false;
-                            }
-                        }
-
-                        File.Delete(path);
-                        return true;
-                    }
+                    File.Delete(path);
+                    return true;
                 }
             }
             catch (Exception ex)
@@ -249,7 +230,7 @@ namespace QuantumHangar
             return false;
         }
 
-        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint, Vector3D TargetLocation, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
+        private bool LoadShipBlueprint(MyObjectBuilder_ShipBlueprintDefinition shipBlueprint, Vector3D GridSaveLocation, Vector3D PlayerLocation, bool keepOriginalLocation, Chat chat, Hangar Plugin, bool force = false)
         {
             var grids = shipBlueprint.CubeGrids;
 
@@ -274,12 +255,19 @@ namespace QuantumHangar
                 Log.Fatal(e);
             }
 
-            //For loading in the same location
-            
+            Vector3D TargetLocation;
+            bool AlignToGravity = false;
+            if (keepOriginalLocation)
+            {
+                TargetLocation = GridSaveLocation;
+            }
+            else
+            {
+                AlignToGravity = true;
+                TargetLocation = PlayerLocation;
+            }
 
-
-
-            ParallelSpawner Spawner = new ParallelSpawner(grids, chat);
+            ParallelSpawner Spawner = new ParallelSpawner(grids, chat, AlignToGravity);
             return Spawner.Start(keepOriginalLocation, TargetLocation);
         }
 
