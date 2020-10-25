@@ -34,21 +34,38 @@ namespace QuantumHangar
         private readonly HashSet<IMyCubeGrid> _spawned;
         private readonly Chat _Response;
         private static int Timeout = 6000;
-        public bool LoadingInGravity = false;
+        public bool _AlignToGravity = false;
 
-        public ParallelSpawner(MyObjectBuilder_CubeGrid[] grids, Chat chat, Action<HashSet<IMyCubeGrid>> callback = null)
+        public ParallelSpawner(MyObjectBuilder_CubeGrid[] grids, Chat chat, bool AlignToGravity = false, Action<HashSet<IMyCubeGrid>> callback = null)
         {
             _grids = grids;
             _maxCount = grids.Length;
             _callback = callback;
             _spawned = new HashSet<IMyCubeGrid>();
             _Response = chat;
+            _AlignToGravity = AlignToGravity;
         }
 
         public bool Start(bool LoadInOriginalPosition, Vector3D Target)
         {
+            if (_grids.Length == 0)
+            {
+                //Simple grid/objectbuilder null check. If there are no gridys then why continue?
+                return true;
+            }
+
+
             MyEntities.RemapObjectBuilderCollection(_grids);
-            EnableRequiredItemsOnLoad(_grids);
+
+
+            if (_AlignToGravity)
+            {
+                EnableRequiredItemsOnLoad(_grids);
+                CalculateGridPosition(Target);
+            }
+
+
+            
 
             Task<bool> Spawn = GameEvents.InvokeAsync<bool, Vector3D, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition, Target);
             if (Spawn.Wait(Timeout))
@@ -254,12 +271,15 @@ namespace QuantumHangar
 
         }
 
+
+
+        /*  Align to gravity code.
+         * 
+         * 
+         */
+
         private void EnableRequiredItemsOnLoad(MyObjectBuilder_CubeGrid[] _grid)
         {
-            if (!LoadingInGravity)
-                return;
-
-
             for (int i = 0; i < _grid.Count(); i++)
             {
                 _grid[i].LinearVelocity = new SerializableVector3();
@@ -290,24 +310,8 @@ namespace QuantumHangar
 
         }
 
-    }
 
-    public class AlignToGravity
-    {
-        private readonly MyObjectBuilder_ShipBlueprintDefinition[] _ShipBlueprints;
-        private readonly Vector3D _PlayerPosition;
-        private readonly Chat chat;
-
-        public AlignToGravity(MyObjectBuilder_ShipBlueprintDefinition[] ShipBlueprints, Vector3D PlayerPosition, Chat Context)
-        {
-            _ShipBlueprints = ShipBlueprints;
-            _PlayerPosition = PlayerPosition;
-
-            //Command context is for giving chat messages on grid spawning. You can remove this
-            chat = Context;
-        }
-
-        private bool CalculateGridPosition()
+        private void CalculateGridPosition(Vector3D Target)
         {
 
             List<MyObjectBuilder_CubeGrid> TotalGrids = new List<MyObjectBuilder_CubeGrid>();
@@ -315,35 +319,20 @@ namespace QuantumHangar
             Vector3D forwardVector = Vector3D.Zero;
 
 
-
-
-            //Get all cockpit blkocks on the grid
-            foreach (var shipBlueprint in _ShipBlueprints)
-            {
-                TotalGrids.AddRange(shipBlueprint.CubeGrids.ToList());
-            }
-
-            MyObjectBuilder_CubeGrid[] array = TotalGrids.ToArray();
-            if (array.Length == 0)
-            {
-                //Simple grid/objectbuilder null check. If there are no gridys then why continue?
-                return false;
-            }
-            Hangar.Debug("Total Grids to be pasted: " + array.Count());
+            Hangar.Debug("Total Grids to be pasted: " + _grids.Count());
 
             //Attempt to get gravity/Artificial gravity to align the grids to
-            Vector3D position = _PlayerPosition;
+
 
             //Here you can adjust the offset from the surface and rotation.
             //Unfortunatley we move the grid again after this to find a free space around the character. Perhaps later i can incorporate that into
             //LordTylus's existing grid checkplament method
-            float gravityOffset = 0f;
             float gravityRotation = 0f;
 
-            Vector3 gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(position);
+            Vector3 gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target);
             if (gravityDirectionalVector == Vector3.Zero)
             {
-                gravityDirectionalVector = MyGravityProviderSystem.CalculateArtificialGravityInPoint(position);
+                gravityDirectionalVector = MyGravityProviderSystem.CalculateArtificialGravityInPoint(Target);
             }
             Vector3D upDirectionalVector;
             if (gravityDirectionalVector != Vector3.Zero)
@@ -351,7 +340,7 @@ namespace QuantumHangar
                 Hangar.Debug("Attempting to correct grid orientation!");
                 gravityDirectionalVector.Normalize();
                 upDirectionalVector = -gravityDirectionalVector;
-                position += gravityDirectionalVector * gravityOffset;
+
                 if (forwardVector == Vector3D.Zero)
                 {
                     forwardVector = Vector3D.CalculatePerpendicularVector(gravityDirectionalVector);
@@ -372,13 +361,13 @@ namespace QuantumHangar
                 upDirectionalVector = Vector3D.CalculatePerpendicularVector(-forwardVector);
             }
 
-            return BeginAlignToGravity(array, forwardVector, upDirectionalVector);
+            BeginAlignToGravity(_grids, Target, forwardVector, upDirectionalVector);
         }
 
-        private bool BeginAlignToGravity(MyObjectBuilder_CubeGrid[] AllGrids, Vector3D forwardVector, Vector3D upVector)
+        private void BeginAlignToGravity(MyObjectBuilder_CubeGrid[] AllGrids, Vector3D Target, Vector3D forwardVector, Vector3D upVector)
         {
             //Create WorldMatrix
-            MatrixD worldMatrix = MatrixD.CreateWorld(_PlayerPosition, forwardVector, upVector);
+            MatrixD worldMatrix = MatrixD.CreateWorld(Target, forwardVector, upVector);
 
             int num = 0;
             MatrixD referenceMatrix = MatrixD.Identity;
@@ -414,16 +403,6 @@ namespace QuantumHangar
                     AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
                 }
             });
-
-
-            /* Where do we want to paste the grids? Lets find out. based from the character/position */
-
-
-            //Use Rexxars spciy spaghetti code for parallel spawning of ALL grids
-            ParallelSpawner spawner = new ParallelSpawner(AllGrids, chat);
-            spawner.LoadingInGravity = true;
-            //Return completeted
-            return spawner.Start(false, _PlayerPosition);
         }
 
         private MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
@@ -479,16 +458,8 @@ namespace QuantumHangar
 
             return resultMatrix;
         }
-
-
-        //Start grid spawning
-        public bool Start()
-        {
-            //Return bool whether it was a success or not
-            return CalculateGridPosition();
-        }
-
     }
+
 
     public class Chat
     {

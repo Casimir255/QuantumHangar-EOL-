@@ -223,13 +223,20 @@ namespace QuantumHangar
                     }
                     else
                     {
-                        AlignToGravity GravityAligner = new AlignToGravity(shipBlueprints, Player.PositionComp.GetPosition(), chat);
-                        if (GravityAligner.Start())
+
+                        foreach (var shipBlueprint in shipBlueprints)
                         {
-                            File.Delete(path);
-                            return true;
+                            var grids = shipBlueprint.CubeGrids;
+                            ParallelSpawner Spawner = new ParallelSpawner(grids, chat, true);
+                            if (!Spawner.Start(false, Player.PositionComp.GetPosition()))
+                            {
+                                Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
+                                return false;
+                            }
                         }
 
+                        File.Delete(path);
+                        return true;
                     }
                 }
             }
