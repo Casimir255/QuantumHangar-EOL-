@@ -87,6 +87,7 @@ namespace QuantumHangar
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
 
 
+
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
@@ -108,15 +109,8 @@ namespace QuantumHangar
                         return false;
                     }
 
-                    if (!UpdateGridsPosition(pos.Value))
-                    {
-                        _Response.Respond("The File to be imported does not seem to be compatible with the server!");
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                    UpdateGridsPosition(pos.Value);
+                    return true;
                 }
                 else
                 {
@@ -152,13 +146,12 @@ namespace QuantumHangar
         {
 
             BoundingSphereD sphere = FindBoundingSphere(_grids);
-            sphere.Center = Target;
             /* 
              * Now we know the radius that can house all grids which will now be 
              * used to determine the perfect place to paste the grids to. 
              */
 
-            return MyEntities.FindFreePlace(sphere.Center, (float)sphere.Radius, 60, 8, 1.5f);
+            return MyEntities.FindFreePlaceCustom(Target, (float)sphere.Radius, 90, 10, 1.5f, 5);
         }
 
         private static BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
@@ -464,10 +457,11 @@ namespace QuantumHangar
             if (referenceBlock == null)
             {
                 referenceBlock = cubeGrid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>().FirstOrDefault();
-
-
-
             }
+
+
+
+
 
             if (referenceBlock != null)
             {
@@ -494,6 +488,8 @@ namespace QuantumHangar
                 else if (referenceBlock.BlockOrientation.Forward == Base6Directions.Direction.Down)
                     resultMatrix *= MatrixD.CreateFromAxisAngle(Vector3D.Left, MathHelper.ToRadians(-90));
             }
+
+
 
             return resultMatrix;
         }
