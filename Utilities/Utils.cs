@@ -137,22 +137,11 @@ namespace QuantumHangar
             builderDefinition.ShipBlueprints = new MyObjectBuilder_ShipBlueprintDefinition[] { definition };
 
 
-            foreach (MyObjectBuilder_CubeGrid grid in definition.CubeGrids)
-            {
-                if (MyAPIGateway.Entities.TryGetEntityById(grid.EntityId, out IMyEntity entity))
-                {
-                    entity.Close();
-                }
-            }
-
-
-            Log.Warn(path);
-
             return MyObjectBuilderSerializer.SerializeXML(path, false, builderDefinition);
         }
 
 
-        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, Vector3D GridSaveLocation, bool force = false)
+        public bool LoadGrid(string GridName, MyCharacter Player, long TargetPlayerID, bool keepOriginalLocation, Chat chat, Hangar Plugin, Vector3D GridSaveLocation, bool force = false, bool Admin = false)
         {
             string path = Path.Combine(FolderPath, GridName + ".sbc");
 
@@ -210,7 +199,14 @@ namespace QuantumHangar
 
                     foreach (var shipBlueprint in shipBlueprints)
                     {
-                        if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, Player.PositionComp.GetPosition(), true, chat, Plugin))
+                        Vector3D TargetSpawnPos = Vector3D.Zero;
+                        if (Player != null)
+                        {
+                            TargetSpawnPos = Player.PositionComp.GetPosition();
+                        }
+
+
+                        if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, TargetSpawnPos, keepOriginalLocation, chat, Plugin))
                         {
                             Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                             return false;
@@ -442,14 +438,30 @@ namespace QuantumHangar
 
         public bool SaveGrids(List<MyCubeGrid> grids, string GridName, Hangar Plugin)
         {
-
-
-
-
             List<MyObjectBuilder_CubeGrid> objectBuilders = new List<MyObjectBuilder_CubeGrid>();
 
             foreach (MyCubeGrid grid in grids)
             {
+                /* Remove characters from cockpits */
+
+                Action P = delegate
+                {
+
+                    foreach (var blck in grid.GetFatBlocks().OfType<MyCockpit>())
+                    {
+                        if (blck.Pilot != null)
+                        {
+                            blck.RemovePilot();
+                        }
+                    }
+
+                };
+
+                Task KickPlayers = GameEvents.InvokeActionAsync(P);
+                KickPlayers.Wait(5000);
+
+
+
                 /* What else should it be? LOL? */
                 if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
                     throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
@@ -458,20 +470,7 @@ namespace QuantumHangar
             }
 
 
-            try
-            {
-                MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
 
-                if (Plugin.GridBackup != null)
-                {
-                    Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { objectBuilders, IDentity.IdentityId });
-                    Log.Warn("Successfully BackedUp grid!");
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Fatal(e);
-            }
 
 
             try
@@ -482,6 +481,22 @@ namespace QuantumHangar
 
                 //Log.Info("SavedDir: " + pathForPlayer);
                 bool saved = SaveGridToFile(GridSavePath, GridName, objectBuilders);
+
+                try
+                {
+                    
+                    MyIdentity IDentity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID));
+
+                    if (Plugin.GridBackup != null)
+                    {
+                        Plugin.GridBackup.GetType().GetMethod("BackupGridsManuallyWithBuilders", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null).Invoke(Plugin.GridBackup, new object[] { objectBuilders, IDentity.IdentityId });
+                        Log.Warn("Successfully BackedUp grid!");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Fatal(e);
+                }
 
                 if (saved)
                 {
@@ -1115,6 +1130,8 @@ namespace QuantumHangar
 
         public static void SendGps(Vector3D Position, string name, long EntityID, double Miniutes = 5)
         {
+
+
             MyGps myGps = new MyGps();
             myGps.ShowOnHud = true;
             myGps.Coords = Position;
@@ -1136,7 +1153,7 @@ namespace QuantumHangar
                 result.GridName = GridName;
 
 
-                bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName));
+                bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
 
                 Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
 
@@ -1148,7 +1165,7 @@ namespace QuantumHangar
                     while (!NameCheckDone)
                     {
 
-                        if (Data.Grids.Any(x => x.GridName.Equals(GridName + "[" + a + "]")))
+                        if (Data.Grids.Any(x => x.GridName.Equals(GridName + "[" + a + "]", StringComparison.CurrentCultureIgnoreCase)))
                         {
                             a++;
                         }

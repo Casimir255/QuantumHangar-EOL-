@@ -59,7 +59,10 @@ namespace QuantumHangar.Utilities
             chat = new Chat(Context, Admin);
             _Admin = Admin;
 
-            PlayerSteamID = Context.Player.SteamUserId;
+            if (Context.Player != null)
+            {
+                PlayerSteamID = Context.Player.SteamUserId;
+            }
 
             //Sanity distance check (Incase user fucks it up)
             if (Plugin.Config.LoadRadius <= 1)
@@ -754,32 +757,17 @@ namespace QuantumHangar.Utilities
             if (!Plugin.Config.PluginEnabled)
                 return;
 
-            if (Context.Player == null)
-            {
-                chat.Respond("You cant load grids via console");
-                return;
-            }
 
-
-
-            MyIdentity NewPlayer = ((MyPlayer)Context.Player).Identity;
-            myCharacter = NewPlayer.Character;
-
-
+            LoadFromSavePosition = true;
 
             if (Utils.AdminTryGetPlayerSteamID(NameOrID, chat, out ulong SteamID))
             {
 
                 Methods = new GridMethods(SteamID, Plugin.Config.FolderDirectory, this);
                 PlayerHangarPath = Methods.FolderPath;
+                TargetIdentity = MySession.Static.Players.TryGetIdentityId(SteamID);
 
 
-                var executingPlayer = ((MyPlayer)Context.Player).Identity;
-                if (executingPlayer.Character == null)
-                {
-                    chat.Respond("Player has no character to spawn the grid close to!");
-                    return;
-                }
 
                 PlayerInfo Data = new PlayerInfo();
                 //Get PlayerInfo from file
@@ -794,7 +782,6 @@ namespace QuantumHangar.Utilities
                 }
 
                 var playerPosition = Vector3D.Zero;
-                playerPosition = executingPlayer.Character.PositionComp.GetPosition();
 
                 int result = 0;
 
@@ -811,7 +798,7 @@ namespace QuantumHangar.Utilities
                 if (Data.Grids != null && result > 0 && result <= Data.Grids.Count)
                 {
                     GridStamp Grid = Data.Grids[result - 1];
-
+                   
                     //string path = Path.Combine(IDPath, Grid.GridName + ".sbc");
                     PlayerSteamID = SteamID;
                     if (!LoadGridFile(Grid.GridName, Data, Grid, true))
@@ -1070,7 +1057,7 @@ namespace QuantumHangar.Utilities
             }
         }
 
-        private bool LoadFromOriginalPositionCheck(GridStamp Grid)
+        private bool LoadFromOriginalPositionCheck(GridStamp Grid, bool Admin = false)
         {
             //Need to get grid position (for legacy check. Old grids will have grid position of zero. When they re-save the position will be updated)
             bool LegacyLoadGrid = false;
@@ -1086,26 +1073,30 @@ namespace QuantumHangar.Utilities
                 return true;
             }
 
-            bool PositionFlag = false;
+            bool PositionFlag = true;
             switch (Plugin.Config.LoadType)
             {
                 case LoadType.ForceLoadMearPlayer:
-                    PositionFlag = true;
+                    LoadFromSavePosition = false;
                     break;
 
 
                 case LoadType.ForceLoadNearOriginalPosition:
                     //Legacy check
                     LoadFromSavePosition = true;
-                    Log.Info("Grid is force load from originial position");
 
                     if (LegacyLoadGrid)
                     {
                         LoadFromSavePosition = false;
                         chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                        PositionFlag = true;
                         break;
                     }
+
+                    if (Admin)
+                    {
+                        return true;
+                    }
+                        
 
                     if (Plugin.Config.RequireLoadRadius)
                     {
@@ -1119,10 +1110,6 @@ namespace QuantumHangar.Utilities
                             Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
                             PositionFlag = false;
                         }
-                        else
-                        {
-                            PositionFlag = true;
-                        }
                     }
                     else
                     {
@@ -1130,7 +1117,6 @@ namespace QuantumHangar.Utilities
                         chat.Respond("A GPS has been added to your HUD");
                         string Name = Grid.GridName + " Spawn Location";
                         Utils.SendGps(Grid.GridSavePosition, Name, myIdentity.IdentityId);
-                        PositionFlag = true;
                     }
 
                     break;
@@ -1143,7 +1129,6 @@ namespace QuantumHangar.Utilities
                         {
                             LoadFromSavePosition = false;
                             chat.Respond("This grid has been saved in a previous version of Hangar. It will be loaded near your player");
-                            PositionFlag = true;
                             break;
                         }
 
@@ -1162,8 +1147,6 @@ namespace QuantumHangar.Utilities
                             }
                         }
                     }
-
-                    PositionFlag = true;
                     break;
             }
             return PositionFlag;
@@ -1409,7 +1392,7 @@ namespace QuantumHangar.Utilities
                 //Check enemy location! If under limit return!
                 foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
                 {
-                    if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId)
+                    if (OnlinePlayer.Identity.IdentityId == Context.Player.IdentityId || MySession.Static.IsUserAdmin(OnlinePlayer.Id.SteamId))
                         continue;
 
 
@@ -2513,7 +2496,7 @@ namespace QuantumHangar.Utilities
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
             
-            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, Grid.GridSavePosition, true))
+            if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, Grid.GridSavePosition, true, admin))
             {
 
                 chat.Respond("Load Complete!");
@@ -2527,6 +2510,7 @@ namespace QuantumHangar.Utilities
                     stamp.PlayerID = myIdentity.IdentityId;
                     Data.Timer = stamp;
                 }
+
 
                 FileSaver.Save(Path.Combine(PlayerHangarPath, "PlayerInfo.json"), Data);
                 //File.WriteAllText(Path.Combine(IDPath, "PlayerInfo.json"), JsonConvert.SerializeObject(Data));

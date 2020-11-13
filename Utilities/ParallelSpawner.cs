@@ -10,6 +10,7 @@ using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -98,19 +99,31 @@ namespace QuantumHangar
             //This has to be ran on the main game thread!
             if (keepOriginalLocation)
             {
-                var sphere = FindBoundingSphere(_grids);
-                sphere.Center = Target;
+                var BoundingBox = FindBoundingBox(_grids);
+
+               
+
+                //sphere.Center = Target;
                 List<MyEntity> entities = new List<MyEntity>();
-                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
+                MyGamePruningStructure.GetAllEntitiesInOBB(ref BoundingBox, entities);
 
+               
+                Hangar.Debug(BoundingBox.ToString());
 
-
+                Hangar.Debug(entities.Count.ToString());
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
-                    if (entity is MyCubeGrid)
+                    if (entity is MyCubeGrid )
                     {
                         PotentialGrids = true;
+
+                        BoundingBox Box = entity.PositionComp.LocalAABB;
+                        ContainmentType Type = BoundingBox.Contains(ref Box);
+                        
+                       Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
+                        
+
                         _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
                         break;
                     }
@@ -181,7 +194,7 @@ namespace QuantumHangar
             {
 
                 var gridSphere = grid.CalculateBoundingSphere();
-
+                
                 /* If this is the first run, we use the center of that grid, and its radius as it is */
                 if (vector == null)
                 {
@@ -214,6 +227,19 @@ namespace QuantumHangar
             });
             return new BoundingSphereD(vector.Value, radius);
         }
+
+        private static MyOrientedBoundingBoxD FindBoundingBox(MyObjectBuilder_CubeGrid[] grids)
+        {
+            BoundingBox First = grids[0].CalculateBoundingBox();
+            Parallel.ForEach(grids, grid =>
+            {
+                var GridBox = grid.CalculateBoundingBox();
+                First.Include(ref GridBox);
+            });
+
+            return new MyOrientedBoundingBoxD(First, grids[0].PositionAndOrientation.Value.GetMatrix());
+        }
+
 
         private bool UpdateGridsPosition(Vector3D newPosition)
         {
