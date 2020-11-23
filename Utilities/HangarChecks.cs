@@ -169,7 +169,7 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            Log.Warn("Checking for exsisting grids in hangar!");
+            //Log.Warn("Checking for exsisting grids in hangar!");
             //Check for existing grids in hangar!
             CheckForExistingGrids(Data, ref result);
 
@@ -298,7 +298,7 @@ namespace QuantumHangar.Utilities
                             return;
                         }
 
-                        string path = Path.Combine(PlayerHangarPath, grid.GridName + ".sbc");
+                        string path = Path.Combine(PlayerHangarPath, grid.GridName);
                         if (!LoadGridFile(path, Data, grid))
                         {
                             return;
@@ -316,7 +316,7 @@ namespace QuantumHangar.Utilities
                 || !Methods.LoadInfoFile(out PlayerInfo Data))
                 return;
 
-            Log.Warn(Data.Grids.Count);
+            //Log.Warn(Data.Grids.Count);
 
 
 
@@ -1616,7 +1616,7 @@ namespace QuantumHangar.Utilities
                 return;
             }
 
-            Log.Warn("Checking Grid Name");
+            //Log.Warn("Checking Grid Name");
             Utils.FormatGridName(Data, result);
         }
 
@@ -2495,14 +2495,10 @@ namespace QuantumHangar.Utilities
         }
         private bool LoadGridFile(string GridName, PlayerInfo Data, GridStamp Grid, bool admin = false)
         {
-            
             if (Methods.LoadGrid(GridName, myCharacter, TargetIdentity, LoadFromSavePosition, chat, Plugin, Grid.GridSavePosition, true, admin))
             {
-
                 chat.Respond("Load Complete!");
                 Data.Grids.Remove(Grid);
-
-
                 if (!admin)
                 {
                     TimeStamp stamp = new TimeStamp();

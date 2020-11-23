@@ -264,6 +264,7 @@ namespace QuantumHangar
             }
 
             ParallelSpawner Spawner = new ParallelSpawner(grids, chat, AlignToGravity);
+            Log.Info("Attempting Grid Spawning @" + TargetLocation.ToString());
             return Spawner.Start(keepOriginalLocation, TargetLocation);
         }
 
@@ -1155,7 +1156,7 @@ namespace QuantumHangar
 
                 bool Test = Data.Grids.Any(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
 
-                Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
+               // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
 
                 if (Test)
                 {
