@@ -11,6 +11,11 @@ using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using QuantumHangar.Utils;
+using Sandbox.Game.Entities.Character;
+using VRage.Game;
+using VRage.Game.ModAPI;
+using Sandbox.Game.World;
 
 namespace QuantumHangar
 {
@@ -43,75 +48,38 @@ namespace QuantumHangar
 
     public class FileSaver
     {
+        //A regex invalidCharCollection
+        private static Regex InvalidNameScanner = new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))));
+
         public static void Save(string dir, object data)
         {
-    
-                /*
-                string illegal = "\"M\"\\a/ry/ h**ad:>> a\\/:*?\"| li*tt|le|| la\"mb.?";
-                string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-                Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
-                illegal = r.Replace(illegal, "");
-                */
 
-                //FileInfo file = new FileInfo(dir);
-
-                var p = Task.Run(() => FileSaveTask(dir,data));
-
-                //File.WriteAllText(dir, JsonConvert.SerializeObject(data));
+            //All methods calling this should still actually be in another thread... So we dont need to call it again.
+            FileSaveTask(dir, data);
         }
 
         private static void FileSaveTask(string dir, object data)
         {
             try
             {
-
-
                 File.WriteAllText(dir, JsonConvert.SerializeObject(data));
-
-
-            }catch(Exception e)
-            {
-                Hangar.Debug("Unable to save file @" + dir, e, Hangar.ErrorType.Trace);
             }
-
-
+            catch (Exception e)
+            {
+                //Hangar.Debug("Unable to save file @" + dir, e, Hangar.ErrorType.Trace);
+            }
         }
 
-        protected static bool IsFileLocked(FileInfo file)
-        {
-            try
-            {
-                using (FileStream stream = file.Open(FileMode.Open, FileAccess.Write, FileShare.None))
-                {
-                    stream.Close();
-                }
-            }
-            catch (IOException)
-            {
-                //the file is unavailable because it is:
-                //still being written to
-                //or being processed by another thread
-                //or does not exist (has already been processed)
-                return true;
-            }
-
-            //file is not locked
-            return false;
-        }
 
         public static string CheckInvalidCharacters(string filename)
         {
             //This will get any invalid file names and remove those characters
-
-            string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
-            return r.Replace(filename, "");
-
+            return InvalidNameScanner.Replace(filename, "");
         }
     }
 
 
-    
+
 
     [ProtoContract]
     public class Message
@@ -201,7 +169,8 @@ namespace QuantumHangar
 
     }
 
-    public class Accounts{
+    public class Accounts
+    {
 
         public Dictionary<ulong, long> PlayerAccounts = new Dictionary<ulong, long>();
     }
@@ -211,16 +180,10 @@ namespace QuantumHangar
     {
         public List<GridsForSale> GridDefinition = new List<GridsForSale>();
         public List<MarketList> List = new List<MarketList>();
-       
+
     }
 
-    public class CrossServerMessage
-    {
-        public CrossServer.MessageType Type;
-        public List<GridsForSale> GridDefinition = new List<GridsForSale>();
-        public List<MarketList> List = new List<MarketList>();
-        public List<PlayerAccount> BalanceUpdate = new List<PlayerAccount>();
-    }
+
 
     public class PublicOffers
     {
@@ -267,13 +230,7 @@ namespace QuantumHangar
         public DateTime OldTime;
     }
 
-    public class PlayerInfo
-    {
-        public List<GridStamp> Grids = new List<GridStamp>();
-        public TimeStamp Timer;
-        public List<GridStamp> GridBackups = new List<GridStamp>();
 
-    }
 
     public class GridStamp
     {
@@ -297,7 +254,7 @@ namespace QuantumHangar
         public float GridBuiltPercent = 0;
         public long JumpDistance = 0;
         public int NumberOfGrids = 0;
-        public Vector3D GridSavePosition = new Vector3D(0,0,0);
+        public Vector3D GridSavePosition = new Vector3D(0, 0, 0);
 
 
         //Server blocklimits Block
@@ -307,14 +264,255 @@ namespace QuantumHangar
         //Grid Stored Materials
         public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
 
+
+        [JsonIgnore]
+        private Settings Config { get { return Hangar.Config; } }
+
+        public GridStamp(List<MyCubeGrid> Grids)
+        {
+
+            float DisassembleRatio = 0;
+            double EstimatedValue = 0;
+
+            BlockTypeCount.Add("Reactors", 0);
+            BlockTypeCount.Add("Turrets", 0);
+            BlockTypeCount.Add("StaticGuns", 0);
+            BlockTypeCount.Add("Refineries", 0);
+            BlockTypeCount.Add("Assemblers", 0);
+
+            foreach (MyCubeGrid SingleGrid in Grids)
+            {
+                if (SingleGrid.GridSizeEnum == MyCubeSize.Large)
+                {
+                    if (SingleGrid.IsStatic)
+                    {
+                        StaticGrids += 1;
+                        EstimatedValue += SingleGrid.BlocksCount * Config.StaticGridMarketMultiplier;
+                    }
+                    else
+                    {
+                        LargeGrids += 1;
+                        EstimatedValue += SingleGrid.BlocksCount * Config.LargeGridMarketMultiplier;
+                    }
+                }
+                else
+                {
+                    SmallGrids += 1;
+                    EstimatedValue += SingleGrid.BlocksCount * Config.SmallGridMarketMultiplier;
+                }
+
+
+                foreach (MyCubeBlock SingleBlock in SingleGrid.GetFatBlocks())
+                {
+                    var Block = (IMyCubeBlock)SingleBlock;
+
+
+                    if (SingleBlock.BuiltBy != 0)
+                    {
+                        UpdatePCUCounter(SingleBlock.BuiltBy, SingleBlock.BlockDefinition.PCU);
+                    }
+
+                    if (Block as IMyLargeTurretBase != null)
+                    {
+                        BlockTypeCount["Turrets"] += 1;
+                    }
+                    if (Block as IMySmallGatlingGun != null)
+                    {
+                        BlockTypeCount["Turrets"] += 1;
+                    }
+
+                    if (Block as IMyGunBaseUser != null)
+                    {
+                        BlockTypeCount["StaticGuns"] += 1;
+                    }
+
+                    if (Block as IMyRefinery != null)
+                    {
+                        BlockTypeCount["Refineries"] += 1;
+                    }
+                    if (Block as IMyAssembler != null)
+                    {
+                        BlockTypeCount["Assemblers"] += 1;
+                    }
+
+
+                    //Main.Debug("Block:" + Block.BlockDefinition + " ratio: " + Block.BlockDefinition.);
+                    DisassembleRatio += SingleBlock.BlockDefinition.DeformationRatio;
+                   NumberofBlocks += 1;
+                }
+
+                BlockTypeCount["Reactors"] += SingleGrid.NumberOfReactors;
+                NumberOfGrids += 1;
+                GridMass += SingleGrid.Mass;
+                GridPCU += SingleGrid.BlocksPCU;
+            }
+
+            //Get Total Build Percent
+            GridBuiltPercent = DisassembleRatio / NumberofBlocks;
+            MarketValue = EstimatedValue;
+        }
+
+        public GridStamp() { }
+
+        public void UpdateBiggestGrid(MyCubeGrid BiggestGrid)
+        {
+            GridName = BiggestGrid.DisplayName;
+
+            GridID = BiggestGrid.EntityId;
+            GridSavePosition = BiggestGrid.PositionComp.GetPosition();
+        }
+
+        public bool CheckGridLimits(Chat Response, MyIdentity TargetIdentity)
+        {
+            //No need to check limits
+            if (Config.OnLoadTransfer)
+                return true;
+
+            if (ShipPCU.Count == 0)
+            {
+                MyBlockLimits blockLimits = TargetIdentity.BlockLimits;
+
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    //Hangar.Debug("PCU Server limits is 0!");
+                    return true;
+                }
+
+                //Main.Debug("PCU Limit from Server:"+a.PCU);
+                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
+                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                //Hangar.Debug("Current PCU: " + CurrentPcu);
+
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+
+                int pcu = MaxPcu - CurrentPcu;
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= GridPCU)
+                {
+                    int Need = GridPCU - (MaxPcu - CurrentPcu);
+                    Response.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!");
+                    return false;
+                }
+
+                return true;
+            }
+
+
+            foreach (KeyValuePair<long, int> Player in ShipPCU)
+            {
+
+                MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
+                if (Identity == null)
+                {
+                    continue;
+                }
+
+
+                MyBlockLimits blockLimits = Identity.BlockLimits;
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    //Hangar.Debug("PCU Server limits is 0!");
+                    continue;
+                }
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+                int pcu = MaxPcu - CurrentPcu;
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= Player.Value)
+                {
+                    int Need = Player.Value - (MaxPcu - CurrentPcu);
+                    Response.Respond("PCU limit reached! " + Identity.DisplayName + " needs an additional " + Need + " PCU to load this grid!");
+                    return false;
+                }
+
+            }
+
+            return true;
+        }
+
+        
+
+        public void UpdatePCUCounter(long Player, int Amount)
+        {
+            if (ShipPCU.ContainsKey(Player))
+            {
+                ShipPCU[Player] += Amount;
+            }
+            else
+            {
+                ShipPCU.Add(Player, Amount);
+            }
+        }
+
     }
 
-    public class Result
+    public class GridResult
     {
-        public List<MyCubeGrid> grids = new List<MyCubeGrid>();
-        public MyCubeGrid biggestGrid;
-        public bool GetGrids;
+        public List<MyCubeGrid> Grids = new List<MyCubeGrid>();
+        public MyCubeGrid BiggestGrid;
         public string GridName;
+        public long BiggestOwner;
 
+        public static Settings Config { get { return Hangar.Config; } }
+
+        public bool GetGrids(Chat Response, MyCharacter character, string GridNameOREntityID = null)
+        {
+            List<MyCubeGrid> FoundGrids = GridUtilities.FindGridList(GridNameOREntityID, character);
+
+            if (Grids == null || Grids.Count == 0)
+            {
+                Response.Respond("No grids found. Check your viewing angle or make sure you spelled right!");
+                return false;
+            }
+
+            Grids = FoundGrids;
+
+            int BlockCount = 0;
+            foreach (var grid in FoundGrids)
+            {
+                if (BlockCount < grid.BlocksCount)
+                {
+                    BiggestGrid = grid;
+                    BlockCount = grid.BlocksCount;
+                }
+            }
+
+            if (BiggestGrid == null)
+            {
+                Response.Respond("Grid incompatible!");
+                return false;
+            }
+
+
+            if (BiggestGrid.BigOwners.Count == 0)
+                BiggestOwner = 0;
+            else
+                BiggestOwner = BiggestGrid.BigOwners[0];
+
+            return true;
+        }
+
+        public GridStamp GenerateGridStamp()
+        {
+            GridStamp Stamp = new GridStamp(Grids);
+            Stamp.UpdateBiggestGrid(BiggestGrid);
+            return Stamp;
+        }
+
+
+        
     }
 }

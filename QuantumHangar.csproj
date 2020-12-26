@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
@@ -31,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -43,14 +45,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChatCommands.cs" />
-    <Compile Include="Comms.cs" />
     <Compile Include="Hangar.cs" />
+    <Compile Include="HangarChecks\Admin.cs" />
+    <Compile Include="HangarChecks\FactionHangar.cs" />
+    <Compile Include="HangarChecks\Player.cs" />
+    <Compile Include="HangarChecks\PlayerHangar.cs" />
     <Compile Include="Properties\Debug.cs" />
-    <Compile Include="Utilities\AutoHangar.cs" />
     <Compile Include="Utilities\GameEvents.cs" />
-    <Compile Include="Utilities\GridMarket.cs" />
-    <Compile Include="Utilities\HangarChecks.cs" />
     <Compile Include="Utilities\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Patcher.cs" />
@@ -60,6 +61,10 @@
       <DependentUpon>UserControlInterface.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utilities\Utils.cs" />
+    <Compile Include="Utils\CharacterUtilities.cs" />
+    <Compile Include="Utils\FileUtilities.cs" />
+    <Compile Include="Utils\GridUtilities.cs" />
+    <Compile Include="Utils\PluginDependencies.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="HavokWrapper">
@@ -162,6 +167,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Commands\" />
+    <Folder Include="HangarMarket\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

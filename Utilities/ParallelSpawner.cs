@@ -107,10 +107,7 @@ namespace QuantumHangar
                 List<MyEntity> entities = new List<MyEntity>();
                 MyGamePruningStructure.GetAllEntitiesInOBB(ref BoundingBox, entities);
 
-               
-                Hangar.Debug(BoundingBox.ToString());
-
-                Hangar.Debug(entities.Count.ToString());
+              
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
@@ -121,7 +118,7 @@ namespace QuantumHangar
                         BoundingBox Box = entity.PositionComp.LocalAABB;
                         ContainmentType Type = BoundingBox.Contains(ref Box);
                         
-                       Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
+                       //Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
                         
 
                         _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
@@ -181,7 +178,7 @@ namespace QuantumHangar
              * used to determine the perfect place to paste the grids to. 
              */
 
-            return MyEntities.FindFreePlaceCustom(Target, (float)sphere.Radius, 90, 10, 1.5f, 5);
+            return MyEntities.FindFreePlaceCustom(Target, (float)sphere.Radius, 90, 10, 1.5f, 10);
         }
 
         private static BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
@@ -192,13 +189,11 @@ namespace QuantumHangar
 
             Parallel.ForEach(grids, grid =>
             {
-
                 var gridSphere = grid.CalculateBoundingSphere();
                 
                 /* If this is the first run, we use the center of that grid, and its radius as it is */
                 if (vector == null)
                 {
-
                     vector = gridSphere.Center;
                     radius = gridSphere.Radius;
                     return;
@@ -345,7 +340,7 @@ namespace QuantumHangar
             Vector3D forwardVector = Vector3D.Zero;
 
 
-            Hangar.Debug("Total Grids to be pasted: " + _grids.Count());
+            //Hangar.Debug("Total Grids to be pasted: " + _grids.Count());
 
             //Attempt to get gravity/Artificial gravity to align the grids to
 
@@ -363,7 +358,7 @@ namespace QuantumHangar
             Vector3D upDirectionalVector;
             if (gravityDirectionalVector != Vector3.Zero)
             {
-                Hangar.Debug("Attempting to correct grid orientation!");
+                //Hangar.Debug("Attempting to correct grid orientation!");
                 gravityDirectionalVector.Normalize();
                 upDirectionalVector = -gravityDirectionalVector;
 

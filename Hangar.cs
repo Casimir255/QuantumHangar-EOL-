@@ -29,32 +29,24 @@ using QuantumHangar.Utilities;
 using Torch.Managers.PatchManager;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
 using VRageMath;
+using QuantumHangar.Utils;
 
 namespace QuantumHangar
 {
     public class Hangar : TorchPluginBase, IWpfPlugin
     {
-        private static readonly Logger Log = LogManager.GetLogger("QuantumHangar");
-
-
-        public Settings Config => _config?.Data;
-        public static Persistent<Settings> _config;
-
-
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        public static Settings Config => _config?.Data;
+        private static Persistent<Settings> _config;
         public Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
-        public static string Dir;
-        public static MultiplayerManagerBase MP;
-        public static TorchSessionManager TorchSession;
-
-        private static bool EnableDebug = true;
-        public static bool IsRunning = false;
 
 
-        private bool ServerRunning;
-        public static MethodInfo CheckFuture;
-        public ITorchPlugin GridBackup;
+        private static string PluginFolderDir { get{ return Config.FolderDirectory; } }
 
-        public GridMarket Market;
+        public TorchSessionManager TorchSession { get; private set; }
+        public static bool ServerRunning { get; private set; }
+
+        //public static GridMarket Market;
 
         //Used to compare times
         public DateTime AutoHangarStamp;
@@ -74,8 +66,7 @@ namespace QuantumHangar
 
 
         public UserControl _control;
-        public UserControl GetControl() => _control ?? (_control = new UserControlInterface(this));
-        public static ChatManagerServer ChatManager;
+        public UserControl GetControl() => _control ?? (_control = new UserControlInterface());
 
 
         public override void Init(ITorchBase torch)
@@ -103,26 +94,16 @@ namespace QuantumHangar
 
             if (Config.GridMarketEnabled)
             {
-                Market = new GridMarket(StoragePath);
-                Market.InitilizeGridMarket();
+                //Market = new GridMarket(StoragePath);
+                //Market.InitilizeGridMarket();
             }
             else
             {
-                Debug("Starting plugin WITHOUT the Hangar Market!", null, ErrorType.Warn);
+                Log.Info("Starting plugin WITHOUT the Hangar Market!");
             }
 
 
-            try
-            {
 
-            }
-            catch (Exception e)
-            {
-                Log.Info("Unable to load grid market files! " + e);
-            }
-
-            EnableDebug = Config.AdvancedDebug;
-            Dir = Config.FolderDirectory;
 
 
             PatchManager manager = DependencyProviderExtensions.GetManager<PatchManager>(Torch.Managers);
@@ -139,22 +120,11 @@ namespace QuantumHangar
             switch (state)
             {
                 case TorchSessionState.Loaded:
-                    IsRunning = true;
 
-                    
-
-                    MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
-                    ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
+                    //MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
+                    //ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
                     PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
-
-
-                    BlockLimiterConnection(Plugins);
-                    GridBackupConnection(Plugins);
-
-                    if (Config.GridMarketEnabled)
-                    {
-                        Market.InitilizeComms(ChatManager, MP);
-                    }
+                    PluginDependencies.InitPluginDependencies(Plugins);
 
                     AutoHangarStamp = DateTime.Now;
                     break;
@@ -170,154 +140,17 @@ namespace QuantumHangar
 
 
 
-        public override void Update()
-        {
-            //Optional how often to check
-            if (TickCounter > 1000)
-            {
-                if (Config.PluginEnabled && AutoHangarStamp.AddMinutes(30) < DateTime.Now)
-                {
-                    //Run checks
-
-                    if (Config.AutoHangarGrids)
-                    {
-                        AutoHangar Auto = new AutoHangar(this);
-                        Auto.RunAutoHangar();
-                    }
-
-
-                    if (Config.GridMarketEnabled && Config.AutosellHangarGrids && Market.IsHostServer)
-                    {
-                        AutoHangar Auto = new AutoHangar(this, Market);
-                        Auto.RunAutoSell();
-                    }
-
-                    AutoHangarStamp = DateTime.Now;
-                }
-
-                if (Config.PluginEnabled && AutoVoxelStamp.AddMinutes(2.5) < DateTime.Now && Config.HangarGridsFallenInPlanet)
-                {
-                    Debug("Getting grids in voxels!!");
-                    AutoHangar Auto = new AutoHangar(this);
-
-                    Auto.RunAutoHangarUnderPlanet();
-                    AutoVoxelStamp = DateTime.Now;
-                }
-
-                TickCounter = 0;
-            }
-            TickCounter++;
-        }
-
-        private void BlockLimiterConnection(PluginManager Plugins)
-        {
-            //Guid for BlockLimiter:
-            Guid BlockLimiterGUID = new Guid("11fca5c4-01b6-4fc3-a215-602e2325be2b");
-            Plugins.Plugins.TryGetValue(BlockLimiterGUID, out ITorchPlugin BlockLimiterT);
-
-            if (BlockLimiterT != null)
-            {
-                Hangar.Debug("Plugin: " + BlockLimiterT.Name + " " + BlockLimiterT.Version + " is installed!");
-                try
-                {
-                    //Grab refrence to TorchPluginBase class in the plugin
-                    Type Class = BlockLimiterT.GetType();
-
-                    //Grab simple MethoInfo when using BlockLimiter
-                    CheckFuture = Class.GetMethod("CheckLimits_future");
-
-
-                    //Example Method call
-                    //object value = CandAddMethod.Invoke(Class, new object[] { grid });
-                    //Convert to value return type
-                    Log.Info("BlockLimiter Reference added to PCU-Transferrer for limit checks.");
-
-                }
-                catch (Exception e)
-                {
-                    Log.Warn(e, "Could not connect to Blocklimiter Plugin.");
-                }
-            }
-        }
-
-
-        private void GridBackupConnection(PluginManager Plugins)
-        {
-            Guid GridBackupGUID = new Guid("75e99032-f0eb-4c0d-8710-999808ed970c");
-            Plugins.Plugins.TryGetValue(GridBackupGUID, out ITorchPlugin BlockLimiterT);
-
-            if (BlockLimiterT != null)
-            {
-                Hangar.Debug("Plugin: " + BlockLimiterT.Name + " " + BlockLimiterT.Version + " is installed!");
-                try
-                {
-                    //Grab refrence to TorchPluginBase class in the plugin
-                    GridBackup = BlockLimiterT;
-
-
-                    if(GridBackup != null)
-                    {
-                        Log.Debug("Successfully attached to GridBackup!");
-                    }
-
-
-                    //Example Method call
-                    //object value = CandAddMethod.Invoke(Class, new object[] { grid });
-                    //Convert to value return type
-                    Log.Info("GridBackup Reference added to backup grids upon hangar save!");
-
-                }
-                catch (Exception e)
-                {
-                    Log.Warn(e, "Could not connect to GridBackup Plugin.");
-                }
-            }
-        }
-
         public void PluginDispose()
         {
+            /*
+
             //Un register events
             if (Config.GridMarketEnabled && Market != null)
             {
                 Market.Dispose();
             }
-        }
 
-
-        public static void Debug(string message, Exception e = null, ErrorType error = ErrorType.Debug)
-        {
-
-            if (e != null)
-            {
-                if (error == ErrorType.Debug)
-                {
-                    Log.Debug(e, message);
-                }
-                else if (error == ErrorType.Fatal)
-                {
-                    Log.Fatal(e, message);
-                }
-                else if (error == ErrorType.Warn)
-                {
-                    Log.Warn(e, message);
-                }
-                else
-                {
-                    Log.Trace(e, message);
-                }
-
-            }
-            else
-            {
-                if (!EnableDebug)
-                {
-                    return;
-                }
-
-                Log.Info(message);
-
-            }
-
+            */
         }
     }
 
