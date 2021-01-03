@@ -29,9 +29,9 @@ namespace QuantumHangar
 
     public enum LoadType
     {
-        ForceLoadMearPlayer,
+        ForceLoadNearPlayer,
         Optional,
-        ForceLoadNearOriginalPosition
+        ForceLoadOriginalPosition
 
     }
 
@@ -470,27 +470,13 @@ namespace QuantumHangar
 
         public bool GetGrids(Chat Response, MyCharacter character, string GridNameOREntityID = null)
         {
-            List<MyCubeGrid> FoundGrids = GridUtilities.FindGridList(GridNameOREntityID, character);
-
-            if (Grids == null || Grids.Count == 0)
+            if (!GridUtilities.FindGridList(GridNameOREntityID, character, out Grids))
             {
                 Response.Respond("No grids found. Check your viewing angle or make sure you spelled right!");
                 return false;
             }
 
-            Grids = FoundGrids;
-
-            int BlockCount = 0;
-            foreach (var grid in FoundGrids)
-            {
-                if (BlockCount < grid.BlocksCount)
-                {
-                    BiggestGrid = grid;
-                    BlockCount = grid.BlocksCount;
-                }
-            }
-
-            if (BiggestGrid == null)
+            if (!GridUtilities.BiggestGrid(Grids, out BiggestGrid))
             {
                 Response.Respond("Grid incompatible!");
                 return false;
@@ -502,6 +488,9 @@ namespace QuantumHangar
             else
                 BiggestOwner = BiggestGrid.BigOwners[0];
 
+
+
+            GridName = BiggestGrid.DisplayName;
             return true;
         }
 

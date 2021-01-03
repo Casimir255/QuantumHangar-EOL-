@@ -72,7 +72,7 @@ namespace QuantumHangar
         public CostType HangarLoadCostType { get => _HangarLoadCostType; set => SetValue(ref _HangarLoadCostType, value); }
 
 
-        private LoadType _LoadType = LoadType.ForceLoadMearPlayer;
+        private LoadType _LoadType = LoadType.ForceLoadNearPlayer;
         public LoadType LoadType { get => _LoadType; set => SetValue(ref _LoadType, value); }
 
 

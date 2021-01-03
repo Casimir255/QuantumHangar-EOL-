@@ -14,7 +14,7 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -45,12 +45,16 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandSystem.cs" />
+    <Compile Include="Commands\HangarCommands.cs" />
     <Compile Include="Hangar.cs" />
     <Compile Include="HangarChecks\Admin.cs" />
     <Compile Include="HangarChecks\FactionHangar.cs" />
-    <Compile Include="HangarChecks\Player.cs" />
+    <Compile Include="HangarChecks\PlayerChecks.cs" />
     <Compile Include="HangarChecks\PlayerHangar.cs" />
     <Compile Include="Properties\Debug.cs" />
+    <Compile Include="Serialization\GridSerializer.cs" />
+    <Compile Include="Serialization\JsonSerializer.cs" />
     <Compile Include="Utilities\GameEvents.cs" />
     <Compile Include="Utilities\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -169,7 +173,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Commands\" />
     <Folder Include="HangarMarket\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

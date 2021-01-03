@@ -46,7 +46,7 @@ namespace QuantumHangar.Utils
         }
 
 
-        private static bool SaveGridToFile(string Path, string Name, List<MyObjectBuilder_CubeGrid> GridBuilders)
+        private static bool SaveGridToFile(string Path, string Name, IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders)
         {
 
             MyObjectBuilder_ShipBlueprintDefinition definition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ShipBlueprintDefinition>();
@@ -120,7 +120,7 @@ namespace QuantumHangar.Utils
                     {
                         if (!LoadShipBlueprint(shipBlueprint, GridSaveLocation, PlayerPosition, keepOriginalLocation, chat))
                         {
-                            Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
+                            //Hangar.Debug("Error Loading ShipBlueprints from File '" + path + "'");
                             return false;
                         }
                     }
@@ -230,7 +230,7 @@ namespace QuantumHangar.Utils
             }
             catch (Exception e)
             {
-                Hangar.Debug("Saving Grid Failed!", e, Hangar.ErrorType.Fatal);
+                //Hangar.Debug("Saving Grid Failed!", e, Hangar.ErrorType.Fatal);
                 return false;
             }
         }
@@ -255,15 +255,13 @@ namespace QuantumHangar.Utils
         }
 
 
-        public static List<MyCubeGrid> FindGridList(string gridNameOrEntityId, MyCharacter character)
+        public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> Grids)
         {
 
-            List<MyCubeGrid> grids = new List<MyCubeGrid>();
+            Grids = new List<MyCubeGrid>();
 
             if (gridNameOrEntityId == null && character == null)
-                return new List<MyCubeGrid>();
-
-
+                return false;
 
             if (Config.EnableSubGrids)
             {
@@ -279,8 +277,38 @@ namespace QuantumHangar.Utils
                 else
                     groups = GridFinder.FindGridGroup(gridNameOrEntityId);
 
-                if (groups.Count() > 1)
-                    return null;
+                //Should only get one group
+                if (groups.Count > 1)
+                    return false;
+
+                Log.Warn("E");
+
+                foreach (var group in groups)
+                {
+                    foreach (var node in group.Nodes)
+                    {
+                        MyCubeGrid Grid = node.NodeData;
+
+                        if (Grid.Physics == null || Grid.IsPreview || Grid.MarkedForClose)
+                            continue;
+
+                        Grids.Add(Grid);
+                    }
+                }
+
+            }
+            else
+            {
+                ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups;
+
+                if (gridNameOrEntityId == null)
+                    groups = GridFinder.FindLookAtGridGroupMechanical(character);
+                else
+                    groups = GridFinder.FindGridGroupMechanical(gridNameOrEntityId);
+
+                //Should only get one group
+                if (groups.Count > 1)
+                    return false;
 
 
                 foreach (var group in groups)
@@ -289,141 +317,28 @@ namespace QuantumHangar.Utils
                     {
                         MyCubeGrid Grid = node.NodeData;
 
-                        if (Grid.Physics == null)
+                        if (Grid.Physics == null || Grid.IsPreview || Grid.MarkedForClose)
                             continue;
 
-                        grids.Add(Grid);
+                        Grids.Add(Grid);
                     }
                 }
 
-
-                Action RunGameActions = new Action(delegate { });
-                int ActionCount = 0;
-                for (int i = 0; i < grids.Count(); i++)
-                {
-                    if (Config.AutoDisconnectGearConnectors && !grids[i].BigOwners.Contains(character.GetPlayerIdentityId()))
-                    {
-                        //This disabels enemy grids that have clamped on
-                        Action ResetBlocks = new Action(delegate
-                        {
-                            foreach (MyLandingGear gear in grids[i].GetFatBlocks<MyLandingGear>())
-                            {
-                                gear.AutoLock = false;
-                                gear.RequestLock(false);
-                            }
-                        });
-
-                        RunGameActions += ResetBlocks;
-                        ActionCount++;
-                    }
-                    else if (Config.AutoDisconnectGearConnectors && grids[i].BigOwners.Contains(character.GetPlayerIdentityId()))
-                    {
-                        //This will check to see 
-                        Action ResetBlocks = new Action(delegate
-                        {
-                            foreach (MyLandingGear gear in grids[i].GetFatBlocks<MyLandingGear>())
-                            {
-                                IMyEntity Entity = gear.GetAttachedEntity();
-                                if (Entity == null || Entity.EntityId == 0)
-                                {
-                                    continue;
-                                }
-
-
-                                //Should prevent entity attachments with voxels
-                                if (!(Entity is MyCubeGrid))
-                                {
-                                    //If grid is attacted to voxel or something
-                                    gear.AutoLock = false;
-                                    gear.RequestLock(false);
-
-                                    continue;
-                                }
-
-                                MyCubeGrid attactedGrid = (MyCubeGrid)Entity;
-
-                                //If the attaced grid is enemy
-                                if (!attactedGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
-                                {
-                                    gear.AutoLock = false;
-                                    gear.RequestLock(false);
-
-                                }
-                            }
-                        });
-
-                        RunGameActions += ResetBlocks;
-                        ActionCount++;
-                    }
-                }
-
-
-                if (ActionCount > 0)
-                {
-                    Task Bool = GameEvents.InvokeActionAsync(RunGameActions);
-                    if (!Bool.Wait(ActionCount*100))
-                        return null;
-                }
-
-
-                for (int i = 0; i < grids.Count(); i++)
-                {
-                    if (!grids[i].BigOwners.Contains(character.GetPlayerIdentityId()))
-                    {
-                        grids.RemoveAt(i);
-                    }
-                }
             }
-            else
+
+
+            if (Grids == null || Grids.Count == 0)
             {
-
-                ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups;
-
-                if (gridNameOrEntityId == null)
-                    groups = GridFinder.FindLookAtGridGroupMechanical(character);
-                else
-                    groups = GridFinder.FindGridGroupMechanical(gridNameOrEntityId);
-
-
-                if (groups.Count > 1)
-                    return null;
-
-
-
-                Action ResetBlocks = new Action(delegate
-                {
-                    foreach (var group in groups)
-                    {
-                        foreach (var node in group.Nodes)
-                        {
-
-                            MyCubeGrid grid = node.NodeData;
-
-
-                            foreach (MyLandingGear gear in grid.GetFatBlocks<MyLandingGear>())
-                            {
-                                gear.AutoLock = false;
-                                gear.RequestLock(false);
-                            }
-
-
-                            if (grid.Physics == null)
-                                continue;
-
-                            grids.Add(grid);
-                        }
-                    }
-                });
-
-                Task Bool = GameEvents.InvokeActionAsync(ResetBlocks);
-                if (!Bool.Wait(1000))
-                    return null;
-
-
+                return false;
             }
 
-            return grids;
+
+
+
+
+            return true;
         }
+
         private static void PrepareGridForSave(MyObjectBuilder_ShipBlueprintDefinition GridDefinition)
         {
             
@@ -467,6 +382,12 @@ namespace QuantumHangar.Utils
             }
         }
 
+
+
+
+
+
+
         public static void FormatGridName(PlayerHangar Data, GridStamp result)
         {
             try
@@ -487,7 +408,7 @@ namespace QuantumHangar.Utils
                         }
                         else
                         {
-                            Hangar.Debug("Name check done! " + a);
+                            //Hangar.Debug("Name check done! " + a);
                             NameCheckDone = true;
                             break;
                         }
@@ -503,12 +424,19 @@ namespace QuantumHangar.Utils
             }
         }
 
+        public static bool BiggestGrid(List<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
+        {
+            BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
+            return BiggestGrid != null;
+        }
+
+
     }
 
     public static class GridFinder
     {
         //Thanks LordTylus, I was too lazy to create my own little utils
-
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
 
         public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
@@ -689,9 +617,11 @@ namespace QuantumHangar.Utils
             return groups;
         }
 
-        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindLookAtGridGroup(IMyCharacter controlledEntity)
+        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindLookAtGridGroup(MyCharacter controlledEntity)
         {
 
+
+            Log.Error("E!");
             const float range = 5000;
             Matrix worldMatrix;
             Vector3D startPosition;
@@ -699,37 +629,33 @@ namespace QuantumHangar.Utils
 
             worldMatrix = controlledEntity.GetHeadMatrix(true, true, false); // dead center of player cross hairs, or the direction the player is looking with ALT.
             startPosition = worldMatrix.Translation + worldMatrix.Forward * 0.5f;
-            endPosition = worldMatrix.Translation + worldMatrix.Forward * (range + 0.5f);
+            endPosition = worldMatrix.Translation + worldMatrix.Forward * (range);
 
             var list = new Dictionary<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group, double>();
             var ray = new RayD(startPosition, worldMatrix.Forward);
 
+            Log.Error("F!");
+
             foreach (var group in MyCubeGridGroups.Static.Physical.Groups)
             {
-
                 foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
                 {
-
-                    IMyCubeGrid cubeGrid = groupNodes.NodeData;
-
+                    Log.Error("G!");
+                    MyCubeGrid cubeGrid = groupNodes.NodeData;
                     if (cubeGrid != null)
                     {
-
                         if (cubeGrid.Physics == null)
                             continue;
 
                         // check if the ray comes anywhere near the Grid before continuing.    
-                        if (ray.Intersects(cubeGrid.WorldAABB).HasValue)
+                        if (ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue)
                         {
-
+                            Log.Error("H!");
                             Vector3I? hit = cubeGrid.RayCastBlocks(startPosition, endPosition);
-
                             if (hit.HasValue)
                             {
-
+                                Log.Error("Found grid!");
                                 double distance = (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length();
-
-
                                 if (list.TryGetValue(group, out double oldDistance))
                                 {
 
@@ -752,6 +678,9 @@ namespace QuantumHangar.Utils
             }
 
             ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
+
+            Log.Error(list.Count);
+
 
             if (list.Count == 0)
                 return bag;

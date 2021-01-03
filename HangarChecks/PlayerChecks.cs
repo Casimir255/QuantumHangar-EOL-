@@ -1,4 +1,5 @@
 ﻿using NLog;
+using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
@@ -18,7 +19,7 @@ namespace QuantumHangar.HangarChecks
 {
 
     //This is when a normal player runs hangar commands
-    public class Player
+    public class PlayerChecks
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Chat Chat;
@@ -36,7 +37,7 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public Player(CommandContext Context)
+        public PlayerChecks(CommandContext Context)
         {
             Chat = new Chat(Context);
             SteamID = Context.Player.SteamUserId;
@@ -48,43 +49,64 @@ namespace QuantumHangar.HangarChecks
         private bool PerformMainChecks(bool IsSaving)
         {
             if (!Config.PluginEnabled)
+            {
+                Chat.Respond("Plugin is not enabled!");
                 return false;
-
+            }
+               
 
             if (PlayerHangar.IsServerSaving(Chat))
+            {
+                Chat.Respond("Server is saving or is paused!");
                 return false;
+            }
+                
 
             if (!CheckZoneRestrictions(IsSaving))
+            {
+                Chat.Respond("You are not in the right zone!");
                 return false;
+            }
+                
 
             if (!CheckGravity())
+            {
+                Chat.Respond("Unable to perform this action in gravity!");
                 return false;
-
+            }
+                
 
             PlayersHanger = new PlayerHangar(SteamID, Chat);
 
-
             if (!PlayersHanger.CheckPlayerTimeStamp())
+            {
+                Chat.Respond("Command cooldown is still in affect!");
                 return false;
+            }
+                
 
-            if (CheckEnemyDistance(LoadingAtSave, SpawnPosition))
+
+            /*
+            if (CheckEnemyDistance(LoadingAtSave, PlayerPosition))
                 return false;
-
-
-
-
+            */
 
             return true;
         }
 
         public void SaveGrid()
         {
+
             if (!PerformMainChecks(true))
                 return;
+
 
             if (!PlayersHanger.CheckHanagarLimits())
                 return;
 
+               
+
+          
             GridResult Result = new GridResult();
 
             //Gets grids player is looking at
@@ -105,13 +127,16 @@ namespace QuantumHangar.HangarChecks
             if (!RequireSaveCurrency(result))
                 return;
             */
-
+            
             GridUtilities.FormatGridName(PlayersHanger, GridData);
 
+           
             GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
 
-            if (GridUtils.SaveGrids(Result, GridData))
+            
+            if (PlayersHanger.SaveGridsToFile(Result))
             {
+               
                 PlayersHanger.SaveGridStamp(GridData, IdentityID);
                 Chat.Respond("Save Complete!");
             }
@@ -122,6 +147,52 @@ namespace QuantumHangar.HangarChecks
             }
 
         }
+
+
+        public void ListGrids()
+        {
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
+            PlayersHanger.ListAllGrids();
+        }
+
+        public void LoadGrid(int ID)
+        {
+            Log.Info("A");
+            if (!PerformMainChecks(false))
+                return;
+
+            Log.Info("B");
+            if(ID-1 >= PlayersHanger.SelectedPlayerFile.Grids.Count || ID < 1)
+            {
+                Chat.Respond("Invalid Index! Grid doent exsist in that slot!");
+                return;
+            }
+
+            Log.Info("C");
+            if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
+            {
+                Log.Error("Loading grid failed!");
+            }
+                
+
+            Log.Info("C");
+            PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
+            Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition);
+
+
+            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition);
+            Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
+            if(Spawner.Start(KeepOriginalPosition, SpawnPos))
+            {
+                Chat.Respond("Spawning Complete!");
+                PlayersHanger.RemoveGridStamp(Stamp);
+            }
+
+
+
+
+        }
+
 
        
 
@@ -348,6 +419,48 @@ namespace QuantumHangar.HangarChecks
 
         }
 
+        private Vector3D DetermineSpawnPosition(Vector3D GridPosition, Vector3D CharacterPosition, out bool KeepOriginalPosition,  bool PlayersSpawnNearPlayer = false)
+        {
+            //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
+            if (Config.LoadType == LoadType.ForceLoadOriginalPosition)
+            {
+                if (GridPosition == Vector3D.Zero)
+                {
+                    Log.Info("Grid position is empty!");
+                    KeepOriginalPosition = false;
+                    return CharacterPosition;
+                }
+
+                Log.Info("Loading from grid save position!");
+                KeepOriginalPosition = true;
+                return GridPosition;
+            }
+            else if (Config.LoadType == LoadType.ForceLoadNearPlayer)
+            {
+                if (CharacterPosition == Vector3D.Zero)
+                {
+                    KeepOriginalPosition = true;
+                    return GridPosition;
+                }
+
+                KeepOriginalPosition = false;
+                return CharacterPosition;
+            }
+            else
+            {
+                if (PlayersSpawnNearPlayer)
+                {
+                    KeepOriginalPosition = false;
+                    return CharacterPosition;
+                }
+                else
+                {
+
+                    KeepOriginalPosition = true;
+                    return GridPosition;
+                }
+            }
+        }
 
 
     }

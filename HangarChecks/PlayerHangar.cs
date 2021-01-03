@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.Serialization;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
@@ -15,10 +16,16 @@ namespace QuantumHangar.HangarChecks
     //This is for all users. Doesnt matter who is invoking it. (Admin or different)
     public class PlayerHangar
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private Chat Chat;
         public readonly PlayerInfo SelectedPlayerFile;
         private int MaxHangarSlots = 5;
         private bool IsAdminCalling = false;
+        private readonly ulong SteamID;
+        private readonly long IdentityID;
+
+
+        public string PlayersFolderPath { get; private set; }
 
 
         private static Settings Config { get { return Hangar.Config; } }
@@ -26,9 +33,15 @@ namespace QuantumHangar.HangarChecks
 
         public PlayerHangar(ulong SteamID, Chat Respond, bool IsAdminCalling = false)
         {
+            this.SteamID = SteamID;
+            this.IdentityID = MySession.Static.Players.TryGetIdentityId(SteamID);
+
             this.IsAdminCalling = IsAdminCalling;
             Chat = Respond;
             SelectedPlayerFile = new PlayerInfo();
+
+
+            PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
             SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
             GetMaxHangarSlot(SteamID);
         }
@@ -103,10 +116,10 @@ namespace QuantumHangar.HangarChecks
             if (MySession.Static.IsSaveInProgress)
             {
                 Chat.Respond("Server has a save in progress... Please wait!");
-                return false;
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         public bool CheckPlayerTimeStamp()
@@ -308,6 +321,75 @@ namespace QuantumHangar.HangarChecks
             SelectedPlayerFile.SaveFile();
         }
 
+        public void RemoveGridStamp(GridStamp Stamp)
+        {
+            TimeStamp stamp = new TimeStamp();
+            stamp.OldTime = DateTime.Now;
+            stamp.PlayerID = IdentityID;
+
+
+            
+
+            SelectedPlayerFile.Grids.Remove(Stamp);
+            SelectedPlayerFile.Timer = stamp;
+
+            try
+            {
+                File.Delete(Path.Combine(PlayersFolderPath, Stamp.GridName + ".sbc"));
+                SelectedPlayerFile.SaveFile();
+            }catch(Exception ex)
+            {
+                Log.Error(ex);
+            }
+        }
+
+
+        public bool SaveGridsToFile(GridResult Grids)
+        {
+            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, Grids.GridName);
+        }
+
+
+
+
+
+        public void ListAllGrids()
+        {
+            if (SelectedPlayerFile.Grids.Count == 0)
+            {
+                Chat.Respond("You have no grids in your hangar!");
+                return;
+            }
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+            int count = 1;
+            foreach (var grid in SelectedPlayerFile.Grids)
+            {
+                sb.AppendLine(" [" + count + "] - " + grid.GridName);
+                count++;
+            }
+
+            Chat.Respond(sb.ToString());
+        }
+
+        public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
+        {
+
+            Stamp = SelectedPlayerFile.GetGrid(ID);
+            string GridPath = Path.Combine(PlayersFolderPath, Stamp.GridName + ".sbc");
+
+            Log.Warn("Attempting to load grid @" + GridPath);
+            if (!GridSerializer.LoadGrid(GridPath, out Grids))
+                return false;
+
+
+            GridSerializer.TransferGridOwnership(Grids, IdentityID);
+
+            return true;
+        }
+
 
 
 
@@ -434,6 +516,10 @@ namespace QuantumHangar.HangarChecks
             return FoundIndex.HasValue;
         }
 
+        public GridStamp GetGrid(int ID)
+        {
+            return Grids[ID-1];
+        }
 
         public void SaveFile()
         {

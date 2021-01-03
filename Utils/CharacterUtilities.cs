@@ -47,7 +47,7 @@ namespace QuantumHangar.Utils
                 }
 
                 MyBankingSystem.ChangeBalance(IdentityID, BalanceAdjuster);
-                Hangar.Debug("Player " + IdentityID + " account has been updated! ");
+                //Hangar.Debug("Player " + IdentityID + " account has been updated! ");
 
                 return true;
             }
@@ -69,15 +69,15 @@ namespace QuantumHangar.Utils
             try
             {
                 //PlayerId Player = new MyPlayer.PlayerId(steamID);
-                Hangar.Debug("SteamID: " + steamID);
+                //Hangar.Debug("SteamID: " + steamID);
                 long IdentityID = MySession.Static.Players.TryGetIdentityId(steamID);
-                Hangar.Debug("IdentityID: " + IdentityID);
+                //Hangar.Debug("IdentityID: " + IdentityID);
                 balance = MyBankingSystem.GetBalance(IdentityID);
                 return true;
             }
             catch (Exception e)
             {
-                Hangar.Debug("Unkown keen player error!", e, Hangar.ErrorType.Fatal);
+                //Hangar.Debug("Unkown keen player error!", e, Hangar.ErrorType.Fatal);
                 balance = 0;
                 return false;
             }
@@ -122,7 +122,7 @@ namespace QuantumHangar.Utils
             if (!SteamID.HasValue)
             {
                 chat.Respond("Invalid player format! Check logs for more details!");
-                Hangar.Debug("Player " + NameOrSteamID + " dosnt exist on the server!");
+                //Hangar.Debug("Player " + NameOrSteamID + " dosnt exist on the server!");
                 PSteamID = 0;
                 return false;
             }
