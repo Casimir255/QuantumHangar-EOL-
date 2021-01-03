@@ -13,7 +13,7 @@ using VRage.Game.ModAPI;
 
 namespace QuantumHangar.HangarChecks
 {
-    //This is for all users. Doesnt matter who is invoking it. (Admin or different)
+    //This is for all users. Doesnt matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
     public class PlayerHangar
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
@@ -403,6 +403,8 @@ namespace QuantumHangar.HangarChecks
     [JsonObject(MemberSerialization.OptIn)]
     public class PlayerInfo
     {
+        //This is the players info file. Should contain methods for finding grids/checking timers 
+
         [JsonProperty]  public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty]  public TimeStamp Timer;
 
@@ -414,17 +416,11 @@ namespace QuantumHangar.HangarChecks
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        private int _TotalBlocks = 0;
-        private int _TotalPCU = 0;
-        private int _StaticGrids = 0;
-        private int _LargeGrids = 0;
-        private int _SmallGrids = 0;
-
-        public int TotalBlocks { get { return _TotalBlocks; } }
-        public int TotalPCU { get { return _TotalPCU; } }
-        public int StaticGrids { get { return _StaticGrids; } }
-        public int LargeGrids { get { return _LargeGrids; } }
-        public int SmallGrids { get { return _SmallGrids; } }
+        public int TotalBlocks { get; private set; } = 0;
+        public int TotalPCU { get; private set; } = 0;
+        public int StaticGrids { get; private set; } = 0;
+        public int LargeGrids { get; private set; } = 0;
+        public int SmallGrids { get; private set; } = 0;
 
         private Settings Config { get { return Hangar.Config;  } }
 
@@ -461,12 +457,12 @@ namespace QuantumHangar.HangarChecks
             //Accumulate Grid Data
             foreach (GridStamp Grid in Grids)
             {
-                _TotalBlocks += Grid.NumberofBlocks;
-                _TotalPCU += Grid.GridPCU;
+                TotalBlocks += Grid.NumberofBlocks;
+                TotalPCU += Grid.GridPCU;
 
-                _StaticGrids += Grid.StaticGrids;
-                _LargeGrids += Grid.LargeGrids;
-                _SmallGrids += Grid.SmallGrids;
+                StaticGrids += Grid.StaticGrids;
+                LargeGrids += Grid.LargeGrids;
+                SmallGrids += Grid.SmallGrids;
             }
         }
 

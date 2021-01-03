@@ -38,7 +38,6 @@ namespace QuantumHangar.Commands
             PlayerChecks User = new PlayerChecks(Context);
             CommandSystem.RunTask(delegate { User.LoadGrid(ID); });
         }
-
     }
 
     public static class PlayerHangarCommands

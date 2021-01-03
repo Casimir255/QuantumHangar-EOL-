@@ -102,17 +102,15 @@ namespace QuantumHangar.Serialization
             {
                 if (MyObjectBuilderSerializer.DeserializeXML(Path, out MyObjectBuilder_Definitions Def))
                 {
-                    Log.Warn("DEFA");
                     if (!TryGetGridsFromDefinition(Def, out Grids))
                         return false;
 
-                    Log.Warn("DEFA");
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to deserialize grid: " + Path + " from file! Is this a shipblueprint?");
+                Log.Error(ex, "Failed to deserialize grid: " + Path + " from file! Is this even an sbc?");
             }
 
             return false;
@@ -122,6 +120,7 @@ namespace QuantumHangar.Serialization
 
         private static bool TryGetGridsFromDefinition(MyObjectBuilder_Definitions Definition, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
         {
+            //Should be able to load shipdef and prefabs that people load/drag in
             Grids = new List<MyObjectBuilder_CubeGrid>();
             if (Definition.Prefabs != null && Definition.Prefabs.Count() != 0)
             {
@@ -129,8 +128,6 @@ namespace QuantumHangar.Serialization
                 {
                     Grids = Grids.Concat(prefab.CubeGrids);
                 }
-
-                Log.Info("Count: " + Grids.Count());
                 return true;
             }
             else if (Definition.ShipBlueprints != null && Definition.ShipBlueprints.Count() != 0)
@@ -140,7 +137,6 @@ namespace QuantumHangar.Serialization
 
                     Grids = Grids.Concat(shipBlueprint.CubeGrids);
                 }
-                Log.Info("Count: " + Grids.Count());
                 return true;
             }
             else

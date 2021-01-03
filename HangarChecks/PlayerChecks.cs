@@ -105,8 +105,6 @@ namespace QuantumHangar.HangarChecks
                 return;
 
                
-
-          
             GridResult Result = new GridResult();
 
             //Gets grids player is looking at
@@ -157,25 +155,21 @@ namespace QuantumHangar.HangarChecks
 
         public void LoadGrid(int ID)
         {
-            Log.Info("A");
             if (!PerformMainChecks(false))
                 return;
 
-            Log.Info("B");
             if(ID-1 >= PlayersHanger.SelectedPlayerFile.Grids.Count || ID < 1)
             {
                 Chat.Respond("Invalid Index! Grid doent exsist in that slot!");
                 return;
             }
 
-            Log.Info("C");
             if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
             {
                 Log.Error("Loading grid failed!");
             }
                 
 
-            Log.Info("C");
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition);
 
