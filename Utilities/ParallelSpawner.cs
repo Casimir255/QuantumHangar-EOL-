@@ -301,24 +301,24 @@ namespace QuantumHangar
 
         private void EnableRequiredItemsOnLoad(IEnumerable<MyObjectBuilder_CubeGrid> _grid)
         {
-            for (int i = 0; i < _grid.Count(); i++)
+            foreach(var grid in _grid)
             {
-                _grid.ElementAt(i).LinearVelocity = new SerializableVector3();
-                _grid.ElementAt(i).AngularVelocity = new SerializableVector3();
+                grid.LinearVelocity = new SerializableVector3();
+                grid.AngularVelocity = new SerializableVector3();
 
                 int counter = 0;
-                foreach (MyObjectBuilder_Thrust Block in _grid.ElementAt(i).CubeBlocks.OfType<MyObjectBuilder_Thrust>())
+                foreach (MyObjectBuilder_Thrust Block in grid.CubeBlocks.OfType<MyObjectBuilder_Thrust>())
                 {
                     counter++;
                     Block.Enabled = true;
                 }
 
-                foreach (MyObjectBuilder_Reactor Block in _grid.ElementAt(i).CubeBlocks.OfType<MyObjectBuilder_Reactor>())
+                foreach (MyObjectBuilder_Reactor Block in grid.CubeBlocks.OfType<MyObjectBuilder_Reactor>())
                 {
                     Block.Enabled = true;
                 }
 
-                foreach (MyObjectBuilder_BatteryBlock Block in _grid.ElementAt(i).CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
+                foreach (MyObjectBuilder_BatteryBlock Block in grid.CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
                 {
                     Block.Enabled = true;
                     Block.SemiautoEnabled = true;
@@ -326,7 +326,7 @@ namespace QuantumHangar
                     Block.ChargeMode = 0;
                 }
 
-                _grid.ElementAt(i).DampenersEnabled = true;
+                grid.DampenersEnabled = true;
             }
 
         }
@@ -395,33 +395,32 @@ namespace QuantumHangar
             MatrixD rotationMatrix = MatrixD.Identity;
 
             //Find biggest grid and get their postion matrix
-            Parallel.For(0, AllGrids.Count(), i =>
+            Parallel.ForEach(AllGrids, grid =>
             {
                 //Option to clone the BP
                 //array[i] = (MyObjectBuilder_CubeGrid)TotalGrids[i].Clone();
-                if (AllGrids.ElementAt(i).CubeBlocks.Count > num)
+                if (grid.CubeBlocks.Count > num)
                 {
-                    num = AllGrids.ElementAt(i).CubeBlocks.Count;
-                    referenceMatrix = AllGrids.ElementAt(i).PositionAndOrientation.Value.GetMatrix();
-                    rotationMatrix = FindRotationMatrix(AllGrids.ElementAt(i));
+                    num = grid.CubeBlocks.Count;
+                    referenceMatrix = grid.PositionAndOrientation.Value.GetMatrix();
+                    rotationMatrix = FindRotationMatrix(grid);
                 }
-
             });
 
             //Huh? (Keen does this so i guess i will too) My guess so it can create large entities
             MyEntities.IgnoreMemoryLimits = true;
 
             //Update each grid in the array
-            Parallel.For(0, AllGrids.Count(), j =>
+            Parallel.ForEach(AllGrids, grid =>
             {
-                if (AllGrids.ElementAt(j).PositionAndOrientation.HasValue)
+                if (grid.PositionAndOrientation.HasValue)
                 {
-                    MatrixD matrix3 = AllGrids.ElementAt(j).PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
-                    AllGrids.ElementAt(j).PositionAndOrientation = new MyPositionAndOrientation(matrix3 * worldMatrix);
+                    MatrixD matrix3 = grid.PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
+                    grid.PositionAndOrientation = new MyPositionAndOrientation(matrix3 * worldMatrix);
                 }
                 else
                 {
-                    AllGrids.ElementAt(j).PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
+                    grid.PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
                 }
             });
         }

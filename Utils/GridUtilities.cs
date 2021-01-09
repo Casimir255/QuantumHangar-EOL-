@@ -272,7 +272,7 @@ namespace QuantumHangar.Utils
 
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> groups;
 
-                if (gridNameOrEntityId == null)
+                if (String.IsNullOrEmpty(gridNameOrEntityId))
                     groups = GridFinder.FindLookAtGridGroup(character);
                 else
                     groups = GridFinder.FindGridGroup(gridNameOrEntityId);
@@ -280,8 +280,6 @@ namespace QuantumHangar.Utils
                 //Should only get one group
                 if (groups.Count > 1)
                     return false;
-
-                Log.Warn("E");
 
                 foreach (var group in groups)
                 {
@@ -428,6 +426,24 @@ namespace QuantumHangar.Utils
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
             return BiggestGrid != null;
+        }
+
+
+        public static bool ValidateGridOwnership(IEnumerable<MyCubeGrid> grids, long IdentityID, Chat chat)
+        {
+            foreach(var grid in grids)
+            {
+                
+
+                if (!grid.BigOwners.Contains(IdentityID))
+                {
+                    chat.Respond("You are not the owner of " + grid.DisplayName);
+                    return false;
+                }
+                    
+            }
+
+            return true;
         }
 
 
@@ -620,8 +636,6 @@ namespace QuantumHangar.Utils
         public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindLookAtGridGroup(MyCharacter controlledEntity)
         {
 
-
-            Log.Error("E!");
             const float range = 5000;
             Matrix worldMatrix;
             Vector3D startPosition;
@@ -634,13 +648,11 @@ namespace QuantumHangar.Utils
             var list = new Dictionary<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group, double>();
             var ray = new RayD(startPosition, worldMatrix.Forward);
 
-            Log.Error("F!");
-
             foreach (var group in MyCubeGridGroups.Static.Physical.Groups)
             {
                 foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
                 {
-                    Log.Error("G!");
+                    
                     MyCubeGrid cubeGrid = groupNodes.NodeData;
                     if (cubeGrid != null)
                     {
@@ -650,11 +662,9 @@ namespace QuantumHangar.Utils
                         // check if the ray comes anywhere near the Grid before continuing.    
                         if (ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue)
                         {
-                            Log.Error("H!");
                             Vector3I? hit = cubeGrid.RayCastBlocks(startPosition, endPosition);
                             if (hit.HasValue)
                             {
-                                Log.Error("Found grid!");
                                 double distance = (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length();
                                 if (list.TryGetValue(group, out double oldDistance))
                                 {
@@ -678,8 +688,6 @@ namespace QuantumHangar.Utils
             }
 
             ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
-
-            Log.Error(list.Count);
 
 
             if (list.Count == 0)

@@ -354,6 +354,13 @@ namespace QuantumHangar
 
         public GridStamp() { }
 
+        public GridStamp(string file) {
+            GridName = Path.GetFileNameWithoutExtension(file);
+            ForceSpawnNearPlayer = true;
+            GridSavePosition = Vector3D.Zero;
+        }
+
+
         public void UpdateBiggestGrid(MyCubeGrid BiggestGrid)
         {
             GridName = BiggestGrid.DisplayName;
@@ -465,6 +472,15 @@ namespace QuantumHangar
         public MyCubeGrid BiggestGrid;
         public string GridName;
         public long BiggestOwner;
+        public ulong OwnerSteamID;
+
+        private bool IsAdmin = false;
+        public GridResult(bool Admin = false)
+        {
+            IsAdmin = Admin;
+        }
+
+
 
         public static Settings Config { get { return Hangar.Config; } }
 
@@ -483,11 +499,24 @@ namespace QuantumHangar
             }
 
 
+            if (!IsAdmin && !BiggestGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
+            {
+                Response.Respond("You are not the owner of the biggest grid!");
+                return false;
+            }
+                
+
             if (BiggestGrid.BigOwners.Count == 0)
                 BiggestOwner = 0;
             else
                 BiggestOwner = BiggestGrid.BigOwners[0];
 
+
+            if(!GetOwner(BiggestOwner, out OwnerSteamID))
+            {
+                Response.Respond("Unable to get owners SteamID");
+                return false;
+            }
 
 
             GridName = BiggestGrid.DisplayName;
@@ -502,6 +531,20 @@ namespace QuantumHangar
         }
 
 
-        
+        public bool GetOwner(long BiggestOwner, out ulong SteamID)
+        {
+            SteamID = 0;
+            if (MySession.Static.Players.IdentityIsNpc(BiggestOwner))
+                return false;
+
+            SteamID = MySession.Static.Players.TryGetSteamId(BiggestOwner);
+            if (SteamID == 0)
+                return false;
+
+
+            return true;
+        }
+
+
     }
 }

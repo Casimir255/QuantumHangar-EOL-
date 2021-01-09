@@ -1,6 +1,8 @@
 ﻿using NLog;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utilities;
+using QuantumHangar.Utils;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using System;
 using System.Collections.Generic;
@@ -15,12 +17,10 @@ namespace QuantumHangar.Serialization
 {
     public static class GridSerializer
     {
-
-
         private static Settings Config { get { return Hangar.Config; } }
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public static bool SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName)
+        public static bool SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName, long OwnerIdentity)
         {
             Task<IEnumerable<MyObjectBuilder_CubeGrid>> GridTask = GameEvents.InvokeAsync<IEnumerable<MyCubeGrid>, IEnumerable<MyObjectBuilder_CubeGrid>>(GetObjectBuilders, Grids);
             if (!GridTask.Wait(5000))
@@ -30,7 +30,9 @@ namespace QuantumHangar.Serialization
             else
             {
                 CloseAllGrids(Grids);
+                ClearAllAttachments(GridTask.Result);
                 SaveGridToFile(Path, GridName, GridTask.Result);
+                PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
                 return true;
             }
         }
@@ -63,6 +65,42 @@ namespace QuantumHangar.Serialization
 
             return Return;
         }
+
+        public static void ClearAllAttachments(IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        {
+            if (Config.EnableSubGrids)
+                return;
+
+            foreach(var grid in Grids)
+            {
+                foreach(var block in grid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>())
+                {
+                    block.AutoLock = false;
+                    block.IsLocked = false;
+
+                    block.MasterToSlave = null;
+                    block.GearPivotPosition = null;
+                    block.OtherPivot = null;
+
+                    block.AttachedEntityId = null;
+                    block.LockMode = SpaceEngineers.Game.ModAPI.Ingame.LandingGearMode.Unlocked;
+
+                }
+
+
+                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_ShipConnector>())
+                {
+
+                    block.ConnectedEntityId = 0L;
+                    block.MasterToSlaveTransform = null;
+                    block.MasterToSlaveGrid = null;
+                    block.IsMaster = true;
+                }
+            }
+
+        }
+
+
 
 
         private static bool SaveGridToFile(string SavePath, string GridName, IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders)

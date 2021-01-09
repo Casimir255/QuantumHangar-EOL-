@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NLog;
 using QuantumHangar.Serialization;
+using QuantumHangar.Utils;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
@@ -309,15 +310,18 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public void SaveGridStamp(GridStamp Stamp, long IdentityID)
+        public void SaveGridStamp(GridStamp Stamp, long IdentityID, bool Admin = false)
         {
-            TimeStamp stamp = new TimeStamp();
-            stamp.OldTime = DateTime.Now;
-            stamp.PlayerID = IdentityID;
+            if (!Admin)
+            {
+                TimeStamp stamp = new TimeStamp();
+                stamp.OldTime = DateTime.Now;
+                SelectedPlayerFile.Timer = stamp;
+            }
+
+           
 
             SelectedPlayerFile.Grids.Add(Stamp);
-            SelectedPlayerFile.Timer = stamp;
-
             SelectedPlayerFile.SaveFile();
         }
 
@@ -346,7 +350,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool SaveGridsToFile(GridResult Grids)
         {
-            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, Grids.GridName);
+            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, Grids.GridName, IdentityID);
         }
 
 
@@ -357,13 +361,21 @@ namespace QuantumHangar.HangarChecks
         {
             if (SelectedPlayerFile.Grids.Count == 0)
             {
-                Chat.Respond("You have no grids in your hangar!");
+                if(IsAdminCalling)
+                    Chat.Respond("There are no grids in this players hangar!");
+                else 
+                    Chat.Respond("You have no grids in your hangar!");
+
                 return;
             }
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+            if (IsAdminCalling)
+                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+            else
+                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+
             int count = 1;
             foreach (var grid in SelectedPlayerFile.Grids)
             {
@@ -376,6 +388,14 @@ namespace QuantumHangar.HangarChecks
 
         public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
         {
+            Grids = null;
+            Stamp = null;
+            if (ID - 1 >= SelectedPlayerFile.Grids.Count || ID < 1)
+            {
+                Chat.Respond("Invalid Index! Grid doent exsist in that slot!");
+                return false;
+            }
+
 
             Stamp = SelectedPlayerFile.GetGrid(ID);
             string GridPath = Path.Combine(PlayersFolderPath, Stamp.GridName + ".sbc");
@@ -384,12 +404,48 @@ namespace QuantumHangar.HangarChecks
             if (!GridSerializer.LoadGrid(GridPath, out Grids))
                 return false;
 
-
+            PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             GridSerializer.TransferGridOwnership(Grids, IdentityID);
 
             return true;
         }
 
+
+        public void UpdateHangar()
+        {
+            IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc" );
+
+            //Scan for new grids
+
+            List<GridStamp> NewGrids = new List<GridStamp>();
+            int AddedGrids = 0;
+            foreach(var file in myFiles)
+            {
+                if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(file)))
+                    continue;
+
+                AddedGrids++;
+                GridStamp Stamp = new GridStamp(file);
+                NewGrids.Add(Stamp);
+            }
+
+            int RemovedGrids = 0;
+            for(int i = SelectedPlayerFile.Grids.Count -1; i >= 0; i--)
+            {
+                if (!myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
+                {
+                    RemovedGrids++;
+                    SelectedPlayerFile.Grids.RemoveAt(i);
+                }
+            }
+
+            SelectedPlayerFile.Grids.AddRange(NewGrids);
+            SelectedPlayerFile.SaveFile();
+
+            Chat.Respond("Removed " + RemovedGrids + " grids and added " + AddedGrids + " new grids to hangar");
+
+
+        }
 
 
 
@@ -521,6 +577,8 @@ namespace QuantumHangar.HangarChecks
         {
             FileSaver.Save(FilePath, this);
         }
+
+
 
         
 

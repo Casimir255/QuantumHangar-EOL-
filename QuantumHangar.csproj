@@ -46,9 +46,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\CommandSystem.cs" />
+    <Compile Include="Commands\HangarAdminCommands.cs" />
     <Compile Include="Commands\HangarCommands.cs" />
     <Compile Include="Hangar.cs" />
-    <Compile Include="HangarChecks\Admin.cs" />
+    <Compile Include="HangarChecks\AdminChecks.cs" />
     <Compile Include="HangarChecks\FactionHangar.cs" />
     <Compile Include="HangarChecks\PlayerChecks.cs" />
     <Compile Include="HangarChecks\PlayerHangar.cs" />

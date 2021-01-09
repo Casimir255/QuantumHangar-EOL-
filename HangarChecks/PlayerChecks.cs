@@ -111,12 +111,19 @@ namespace QuantumHangar.HangarChecks
             if (!Result.GetGrids(Chat, UserCharacter))
                 return;
 
+            Log.Info("A");
             //Calculates incoming grids data
             GridStamp GridData = Result.GenerateGridStamp();
 
+            Log.Info("B");
             //Checks for single and all slot block and grid limits
             if (!PlayersHanger.ExtensiveLimitChecker(GridData))
                 return;
+
+            Log.Info("C");
+            if (!CheckEnemyDistance(Config.LoadType, PlayerPosition))
+                return;
+
 
 
             //Check For Price
@@ -125,13 +132,13 @@ namespace QuantumHangar.HangarChecks
             if (!RequireSaveCurrency(result))
                 return;
             */
-            
+            Log.Info("D");
             GridUtilities.FormatGridName(PlayersHanger, GridData);
 
-           
+            Log.Info("E");
             GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
 
-            
+            Log.Info("F");
             if (PlayersHanger.SaveGridsToFile(Result))
             {
                
@@ -158,17 +165,14 @@ namespace QuantumHangar.HangarChecks
             if (!PerformMainChecks(false))
                 return;
 
-            if(ID-1 >= PlayersHanger.SelectedPlayerFile.Grids.Count || ID < 1)
-            {
-                Chat.Respond("Invalid Index! Grid doent exsist in that slot!");
-                return;
-            }
-
             if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
             {
                 Log.Error("Loading grid failed!");
             }
-                
+
+
+            if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition))
+                return;
 
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition);
@@ -180,6 +184,10 @@ namespace QuantumHangar.HangarChecks
             {
                 Chat.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);
+            }
+            else
+            {
+                Chat.Respond("An error occured while spawning the grid!");
             }
 
 
@@ -311,9 +319,9 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        private bool CheckEnemyDistance(bool LoadingAtSavePoint = false, Vector3D Position = new Vector3D())
+        private bool CheckEnemyDistance(LoadType LoadingAtSavePoint, Vector3D Position = new Vector3D())
         {
-            if (!LoadingAtSavePoint)
+            if (LoadingAtSavePoint == LoadType.ForceLoadNearPlayer)
             {
                 Position = PlayerPosition;
             }
@@ -323,13 +331,18 @@ namespace QuantumHangar.HangarChecks
             if (Config.DistanceCheck > 0)
             {
                 //Check enemy location! If under limit return!
-                foreach (MyPlayer OnlinePlayer in MySession.Static.Players.GetOnlinePlayers())
+                foreach (MyCharacter OnlinePlayer in MyEntities.GetEntities().OfType<MyCharacter>())
                 {
-                    if (OnlinePlayer.Identity.IdentityId == IdentityID || MySession.Static.IsUserAdmin(OnlinePlayer.Id.SteamId))
+                    if (OnlinePlayer == null || OnlinePlayer.MarkedForClose)
+                        continue;
+
+                    long PlayerID = OnlinePlayer.GetPlayerIdentityId();
+                    if (PlayerID == IdentityID)
                         continue;
 
 
-                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(OnlinePlayer.Identity.IdentityId);
+
+                    MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(PlayerID);
                     if (PlayersFaction != null && TargetPlayerFaction != null)
                     {
                         if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
@@ -341,12 +354,12 @@ namespace QuantumHangar.HangarChecks
                             continue;
                     }
 
-                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) == 0)
+                    if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) == 0)
                     {
                         continue;
                     }
 
-                    if (Vector3D.Distance(Position, OnlinePlayer.GetPosition()) <= Config.DistanceCheck)
+                    if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) <= Config.DistanceCheck)
                     {
                         Chat.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
                         EnemyFoundFlag = true;
@@ -367,6 +380,9 @@ namespace QuantumHangar.HangarChecks
                 //This is looping through all grids in the specified range. If we find an enemy, we need to break and return/deny spawning
                 foreach (MyCubeGrid Grid in entities.OfType<MyCubeGrid>())
                 {
+                    if (Grid == null || Grid.MarkedForClose)
+                        continue;
+
                     if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Config.GridCheckMinBlock)
                         continue;
 
@@ -409,7 +425,7 @@ namespace QuantumHangar.HangarChecks
                     }
                 }
             }
-            return EnemyFoundFlag;
+            return !EnemyFoundFlag;
 
         }
 
