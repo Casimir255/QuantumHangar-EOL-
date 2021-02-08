@@ -38,7 +38,7 @@ namespace QuantumHangar
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
-        public Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
+        public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
 
 
         private static string PluginFolderDir { get{ return Config.FolderDirectory; } }
@@ -72,7 +72,12 @@ namespace QuantumHangar
         public override void Init(ITorchBase torch)
         {
 
-            
+
+            Settings S = new Settings();
+
+
+
+
             base.Init(torch);
             //Grab Settings
             string path = Path.Combine(StoragePath, "QuantumHangar.cfg");
@@ -116,7 +121,6 @@ namespace QuantumHangar
 
         private void SessionChanged(ITorchSession session, TorchSessionState state)
         {
-            ServerRunning = state == TorchSessionState.Loaded;
             switch (state)
             {
                 case TorchSessionState.Loaded:
@@ -125,12 +129,13 @@ namespace QuantumHangar
                     //ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
                     PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
                     PluginDependencies.InitPluginDependencies(Plugins);
-
+                    ServerRunning = true;
                     AutoHangarStamp = DateTime.Now;
                     break;
 
-
+                    
                 case TorchSessionState.Unloading:
+                    ServerRunning = false;
                     PluginDispose();
                     break;
 

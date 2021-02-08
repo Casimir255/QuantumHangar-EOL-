@@ -4,6 +4,8 @@ using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Cube;
+using SpaceEngineers.Game.Entities.Blocks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,7 +32,7 @@ namespace QuantumHangar.Serialization
             else
             {
                 CloseAllGrids(Grids);
-                ClearAllAttachments(GridTask.Result);
+                //ClearAllAttachments(GridTask.Result);
                 SaveGridToFile(Path, GridName, GridTask.Result);
                 PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
                 return true;
@@ -41,6 +43,9 @@ namespace QuantumHangar.Serialization
         {
             foreach (var blck in Grid.GetFatBlocks().OfType<MyCockpit>())
             {
+
+                
+
                 if (blck.Pilot != null)
                 {
                     blck.RequestRemovePilot();
@@ -51,10 +56,16 @@ namespace QuantumHangar.Serialization
 
         private static IEnumerable<MyObjectBuilder_CubeGrid> GetObjectBuilders(IEnumerable<MyCubeGrid> Grids)
         {
+
+
+
             List<MyObjectBuilder_CubeGrid> Return = new List<MyObjectBuilder_CubeGrid>();
 
             foreach (MyCubeGrid grid in Grids)
             {
+
+                
+
                 RemoveCharacters(grid);
 
                 if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
@@ -66,38 +77,26 @@ namespace QuantumHangar.Serialization
             return Return;
         }
 
-        public static void ClearAllAttachments(IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        public static void ResetGear(IEnumerable<MyObjectBuilder_CubeGrid> Grids)
         {
-            if (Config.EnableSubGrids)
-                return;
-
-            foreach(var grid in Grids)
+            foreach (var grid in Grids)
             {
-                foreach(var block in grid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>())
+                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>())
                 {
-                    block.AutoLock = false;
-                    block.IsLocked = false;
+                    //No sense and relocking something that is already off
+                    if (!block.Enabled)
+                        continue;
 
+                    block.IsLocked = false;
+                    block.AutoLock = true;
+                    block.FirstLockAttempt = false;
+                    block.AttachedEntityId = null;
                     block.MasterToSlave = null;
                     block.GearPivotPosition = null;
                     block.OtherPivot = null;
-
-                    block.AttachedEntityId = null;
                     block.LockMode = SpaceEngineers.Game.ModAPI.Ingame.LandingGearMode.Unlocked;
-
-                }
-
-
-                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_ShipConnector>())
-                {
-
-                    block.ConnectedEntityId = 0L;
-                    block.MasterToSlaveTransform = null;
-                    block.MasterToSlaveGrid = null;
-                    block.IsMaster = true;
                 }
             }
-
         }
 
 
@@ -123,9 +122,18 @@ namespace QuantumHangar.Serialization
 
         public static void CloseAllGrids(IEnumerable<MyCubeGrid> Grids)
         {
-            Grids.ForEach(x => x.Close());
-        }
+            StringBuilder Builder = new StringBuilder();
+            Builder.AppendLine("Closing the following grids: ");
+            foreach (var Grid in Grids)
+            {
+                Builder.Append(Grid.DisplayName + ", ");
+                Grid.Close();
+            }
 
+            Builder.AppendLine("Reason: Was Hangared");
+
+            //Grids.ForEach(x => x.Close());
+        }
 
         public static bool LoadGrid(string Path, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
         {
@@ -138,11 +146,13 @@ namespace QuantumHangar.Serialization
 
             try
             {
+                
                 if (MyObjectBuilderSerializer.DeserializeXML(Path, out MyObjectBuilder_Definitions Def))
                 {
                     if (!TryGetGridsFromDefinition(Def, out Grids))
                         return false;
 
+                    ResetGear(Grids);
                     return true;
                 }
             }
@@ -172,7 +182,6 @@ namespace QuantumHangar.Serialization
             {
                 foreach (var shipBlueprint in Definition.ShipBlueprints)
                 {
-
                     Grids = Grids.Concat(shipBlueprint.CubeGrids);
                 }
                 return true;
@@ -183,6 +192,9 @@ namespace QuantumHangar.Serialization
                 return false;
             }
         }
+
+
+
 
 
 

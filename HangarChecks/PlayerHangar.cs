@@ -17,7 +17,7 @@ namespace QuantumHangar.HangarChecks
     //This is for all users. Doesnt matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
     public class PlayerHangar
     {
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
         private Chat Chat;
         public readonly PlayerInfo SelectedPlayerFile;
         private int MaxHangarSlots = 5;
@@ -170,7 +170,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (Stamp.GridPCU > Config.SingleMaxPCU)
                 {
-                    int remainder = Stamp.GridPCU - Config.SingleMaxBlocks;
+                    int remainder = Stamp.GridPCU - Config.SingleMaxPCU;
                     Chat.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPCU);
                     return false;
                 }
@@ -348,9 +348,9 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        public bool SaveGridsToFile(GridResult Grids)
+        public bool SaveGridsToFile(GridResult Grids, string FileName)
         {
-            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, Grids.GridName, IdentityID);
+            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, IdentityID);
         }
 
 

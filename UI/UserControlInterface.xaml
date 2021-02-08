@@ -373,7 +373,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
+
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Allow saving &amp; loading in gravity:" Grid.ColumnSpan="2" Margin="3"/>
                             <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding AllowInGravity}">(On/Off)</CheckBox>
 
@@ -386,47 +386,10 @@
                     </GroupBox>
 
 
+
+
+
                     
-
-
-                    <GroupBox>
-                        <GroupBox.Header>
-                            <TextBlock>
-                                        <Span FontWeight="Bold">Experimental Configs</Span>
-                                        <Span>(Experimental WIP Configs)</Span>
-                            </TextBlock>
-
-                        </GroupBox.Header>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130"/>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                          
-
-                            <TextBlock Grid.Column="0" Grid.Row ="2" Text="Create Temp-Safezone around grid:" Grid.ColumnSpan="2" Margin="3"/>
-
-                            
-                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="Disconnect Enemy Landing gear (Fixed): " Grid.ColumnSpan="2" Margin="3"/>
-                            <CheckBox Grid.Column="2" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoDisconnectGearConnectors}">(On/Off)</CheckBox>
-
-
-
-
-                        </Grid>
-
-
-                    </GroupBox>
 
 
                 </StackPanel>
@@ -464,9 +427,9 @@
                             <CheckBox Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0" IsChecked="{Binding DeleteRespawnPods}" IsEnabled="{Binding AutoHangarGrids}" ToolTip="This will instead delete respawn pods instead of sending them to the Hangar">
                                 Delete Respawn-Pods?
                             </CheckBox>
-                            
-                            
-                            
+
+
+
                             <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="1" Text="AutoHangar grids that fall into Planet (30% below):" Margin="3" ToolTip="Scans every 5min"/>
                             <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding HangarGridsFallenInPlanet}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
 
@@ -510,7 +473,7 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            
+
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Enter Playername:" Margin="3"/>
                             <TextBox x:Name="AutoHangarNameBox" Grid.Column="1" Grid.Row="0" Margin="3"/>
                             <Button Grid.Column="2" Grid.Row="0" Content="Add New" Margin="3" Click="AddNewBlacklistPlayer"/>
@@ -538,9 +501,9 @@
 
                 </StackPanel>
             </TabItem>
-            
 
-            <TabItem x:Name="MConfig" Header="Hangar Market">
+
+            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="False">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130"/>
@@ -817,8 +780,8 @@
                     </GroupBox>
                 </StackPanel>
             </TabItem>
-            
-            
+
+
             <TabItem x:Name="AConfig" Header="Debug">
 
                 <StackPanel>
@@ -861,7 +824,7 @@
 
 
             </TabItem>
-  
+
         </TabControl>
 
 

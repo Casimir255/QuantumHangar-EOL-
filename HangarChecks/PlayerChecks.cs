@@ -4,6 +4,7 @@ using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.GameSystems;
+using Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
@@ -111,35 +112,27 @@ namespace QuantumHangar.HangarChecks
             if (!Result.GetGrids(Chat, UserCharacter))
                 return;
 
-            Log.Info("A");
+            
             //Calculates incoming grids data
             GridStamp GridData = Result.GenerateGridStamp();
 
-            Log.Info("B");
+            
             //Checks for single and all slot block and grid limits
             if (!PlayersHanger.ExtensiveLimitChecker(GridData))
                 return;
 
-            Log.Info("C");
+            
             if (!CheckEnemyDistance(Config.LoadType, PlayerPosition))
                 return;
 
 
-
-            //Check For Price
-
-            /*
-            if (!RequireSaveCurrency(result))
+            if (!RequireSaveCurrency(Result))
                 return;
-            */
-            Log.Info("D");
+            
+           
             GridUtilities.FormatGridName(PlayersHanger, GridData);
-
-            Log.Info("E");
             GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
-
-            Log.Info("F");
-            if (PlayersHanger.SaveGridsToFile(Result))
+            if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
             {
                
                 PlayersHanger.SaveGridStamp(GridData, IdentityID);
@@ -153,6 +146,205 @@ namespace QuantumHangar.HangarChecks
 
         }
 
+        private bool RequireSaveCurrency(GridResult result)
+        {
+            //MyObjectBuilder_Definitions(MyParticlesManager)
+            if (!Config.RequireCurrency)
+            {
+                return true;
+            }
+            else
+            {
+                long SaveCost = 0;
+                switch (Config.HangarSaveCostType)
+                {
+                    case CostType.BlockCount:
+
+                        foreach (MyCubeGrid grid in result.Grids)
+                        {
+                            if (grid.GridSizeEnum == MyCubeSize.Large)
+                            {
+                                if (grid.IsStatic)
+                                {
+                                    //If grid is station
+                                    SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomStaticGridCurrency);
+                                }
+                                else
+                                {
+                                    //If grid is large grid
+                                    SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomLargeGridCurrency);
+                                }
+                            }
+                            else
+                            {
+                                //if its a small grid
+                                SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomSmallGridCurrency);
+                            }
+
+
+                        }
+
+                        //Multiply by 
+                        break;
+
+
+                    case CostType.Fixed:
+
+                        SaveCost = Convert.ToInt64(Config.CustomStaticGridCurrency);
+
+                        break;
+
+
+                    case CostType.PerGrid:
+
+                        foreach (MyCubeGrid grid in result.Grids)
+                        {
+                            if (grid.GridSizeEnum == MyCubeSize.Large)
+                            {
+                                if (grid.IsStatic)
+                                {
+                                    //If grid is station
+                                    SaveCost += Convert.ToInt64(Config.CustomStaticGridCurrency);
+                                }
+                                else
+                                {
+                                    //If grid is large grid
+                                    SaveCost += Convert.ToInt64(Config.CustomLargeGridCurrency);
+                                }
+                            }
+                            else
+                            {
+                                //if its a small grid
+                                SaveCost += Convert.ToInt64(Config.CustomSmallGridCurrency);
+                            }
+                        }
+
+                        break;
+                }
+
+                TryGetPlayerBalance(out long Balance);
+
+
+                if (Balance >= SaveCost)
+                {
+                    //Check command status!
+                    string command = result.BiggestGrid.DisplayName;
+                    var confirmationCooldownMap = Hangar.ConfirmationsMap;
+                    if (confirmationCooldownMap.TryGetValue(IdentityID, out CurrentCooldown confirmationCooldown))
+                    {
+                        if (!confirmationCooldown.CheckCommandStatus(command))
+                        {
+                            //Confirmed command! Update player balance!
+                            confirmationCooldownMap.Remove(IdentityID);
+                            Chat.Respond("Confirmed! Saving grid!");
+
+                            ChangeBalance(-1 * SaveCost);
+                            return true;
+                        }
+                        else
+                        {
+                            Chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                            confirmationCooldown.StartCooldown(command);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                        confirmationCooldown = new CurrentCooldown();
+                        confirmationCooldown.StartCooldown(command);
+                        confirmationCooldownMap.Add(IdentityID, confirmationCooldown);
+                        return false;
+                    }
+                }
+                else
+                {
+                    long Remaing = SaveCost - Balance;
+                    Chat.Respond("You need an additional " + Remaing + " SC to perform this action!");
+                    return false;
+                }
+            }
+        }
+
+        private bool RequireLoadCurrency(GridStamp Grid)
+        {
+            //MyObjectBuilder_Definitions(MyParticlesManager)
+            if (!Config.RequireCurrency)
+            {
+
+                return true;
+            }
+            else
+            {
+                long LoadCost = 0;
+                switch (Config.HangarLoadCostType)
+                {
+                    case CostType.BlockCount:
+                        //If grid is station
+                        LoadCost = Convert.ToInt64(Grid.NumberofBlocks * Config.LoadStaticGridCurrency);
+                        break;
+
+
+                    case CostType.Fixed:
+
+                        LoadCost = Convert.ToInt64(Config.LoadStaticGridCurrency);
+
+                        break;
+
+
+                    case CostType.PerGrid:
+
+                        LoadCost += Convert.ToInt64(Grid.StaticGrids * Config.LoadStaticGridCurrency);
+                        LoadCost += Convert.ToInt64(Grid.LargeGrids * Config.LoadLargeGridCurrency);
+                        LoadCost += Convert.ToInt64(Grid.SmallGrids * Config.LoadSmallGridCurrency);
+
+
+                        break;
+                }
+
+                TryGetPlayerBalance(out long Balance);
+
+
+                if (Balance >= LoadCost)
+                {
+                    //Check command status!
+                    string command = Grid.GridName;
+                    var confirmationCooldownMap = Hangar.ConfirmationsMap;
+                    if (confirmationCooldownMap.TryGetValue(IdentityID, out CurrentCooldown confirmationCooldown))
+                    {
+                        if (!confirmationCooldown.CheckCommandStatus(command))
+                        {
+                            //Confirmed command! Update player balance!
+                            confirmationCooldownMap.Remove(IdentityID);
+                            Chat.Respond("Confirmed! Loading grid!");
+
+                            ChangeBalance(-1 * LoadCost);
+                            return true;
+                        }
+                        else
+                        {
+                            Chat.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
+                            confirmationCooldown.StartCooldown(command);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Chat.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
+                        confirmationCooldown = new CurrentCooldown();
+                        confirmationCooldown.StartCooldown(command);
+                        confirmationCooldownMap.Add(IdentityID, confirmationCooldown);
+                        return false;
+                    }
+                }
+                else
+                {
+                    long Remaing = LoadCost - Balance;
+                    Chat.Respond("You need an additional " + Remaing + " SC to perform this action!");
+                    return false;
+                }
+            }
+        }
 
         public void ListGrids()
         {
@@ -172,6 +364,9 @@ namespace QuantumHangar.HangarChecks
 
 
             if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition))
+                return;
+
+            if (!RequireLoadCurrency(Stamp))
                 return;
 
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
@@ -470,6 +665,29 @@ namespace QuantumHangar.HangarChecks
                     return GridPosition;
                 }
             }
+        }
+
+        private bool TryGetPlayerBalance(out long balance)
+        {
+            try
+            {
+
+                
+                balance = MyBankingSystem.GetBalance(IdentityID);
+                return true;
+            }
+            catch (Exception e)
+            {
+                balance = 0;
+                return false;
+            }
+
+
+        }
+
+        private void ChangeBalance(long Amount)
+        {
+            MyBankingSystem.ChangeBalance(IdentityID, Amount);
         }
 
 

@@ -56,17 +56,19 @@ namespace QuantumHangar.HangarChecks
             GridResult Result = new GridResult(true);
 
 
-            Log.Warn("A");
+  
             //Gets grids player is looking at
             if (!Result.GetGrids(Chat, AdminUserCharacter, NameOrIdentity))
                 return;
 
-            Log.Warn("B");
             GridStamp stamp = Result.GenerateGridStamp();
-
+            
 
             PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat);
-            if (PlayersHanger.SaveGridsToFile(Result))
+
+
+            GridUtilities.FormatGridName(PlayersHanger, stamp);
+            if (PlayersHanger.SaveGridsToFile(Result, stamp.GridName))
             {
 
                 PlayersHanger.SaveGridStamp(stamp, Result.BiggestOwner, true);
@@ -79,7 +81,6 @@ namespace QuantumHangar.HangarChecks
             }
 
         }
-
 
         public void LoadGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
