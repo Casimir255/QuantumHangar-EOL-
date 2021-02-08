@@ -25,7 +25,7 @@ namespace QuantumHangar.HangarChecks
 
         private Vector3D AdminPlayerPosition;
         private MyCharacter AdminUserCharacter;
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AdminChecks));
         private readonly bool InConsole = false;
 
         public AdminChecks(CommandContext Context)
@@ -71,12 +71,12 @@ namespace QuantumHangar.HangarChecks
             if (PlayersHanger.SaveGridsToFile(Result, stamp.GridName))
             {
 
-                PlayersHanger.SaveGridStamp(stamp, Result.BiggestOwner, true);
-                Chat.Respond("Save Complete!");
+                PlayersHanger.SaveGridStamp(stamp, true);
+                Chat?.Respond("Save Complete!");
             }
             else
             {
-                Chat.Respond("Saved Failed!");
+                Chat?.Respond("Saved Failed!");
                 return;
             }
 
@@ -100,12 +100,12 @@ namespace QuantumHangar.HangarChecks
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !FromSavePos);
             if (Spawner.Start(FromSavePos, AdminPlayerPosition))
             {
-                Chat.Respond("Spawning Complete!");
+                Chat?.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);
             }
             else
             {
-                Chat.Respond("An error occured while spawning the grid!");
+                Chat?.Respond("An error occured while spawning the grid!");
             }
 
 
@@ -131,8 +131,7 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-
-        public static bool AdminTryGetPlayerSteamID(string NameOrSteamID, Chat chat, out ulong PSteamID)
+        public static bool AdminTryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {
             ulong? SteamID;
             if (UInt64.TryParse(NameOrSteamID, out ulong PlayerSteamID))
@@ -141,7 +140,7 @@ namespace QuantumHangar.HangarChecks
 
                 if (Identity == null)
                 {
-                    chat.Respond(NameOrSteamID + " doesnt exsist as an Identity!");
+                    Chat?.Respond(NameOrSteamID + " doesnt exsist as an Identity!");
                     PSteamID = 0;
                     return false;
                 }
@@ -160,7 +159,7 @@ namespace QuantumHangar.HangarChecks
                 catch (Exception e)
                 {
                     //Hangar.Debug("Player "+ NameOrID + " dosnt exist on the server!", e, Hangar.ErrorType.Warn);
-                    chat.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
+                    Chat?.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
                     PSteamID = 0;
                     return false;
                 }
@@ -168,7 +167,7 @@ namespace QuantumHangar.HangarChecks
 
             if (!SteamID.HasValue)
             {
-                chat.Respond(NameOrSteamID +" doest exist! Check logs for more details!");
+                Chat?.Respond(NameOrSteamID +" doest exist! Check logs for more details!");
                 PSteamID = 0;
                 return false;
             }

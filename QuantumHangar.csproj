@@ -45,6 +45,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoHangar\Autohangar.cs" />
     <Compile Include="Commands\CommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />
     <Compile Include="Commands\HangarCommands.cs" />
@@ -65,7 +66,6 @@
     <Compile Include="UI\UserControlInterface.xaml.cs">
       <DependentUpon>UserControlInterface.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Utilities\Utils.cs" />
     <Compile Include="Utils\CharacterUtilities.cs" />
     <Compile Include="Utils\FileUtilities.cs" />
     <Compile Include="Utils\GridUtilities.cs" />

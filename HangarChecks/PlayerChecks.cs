@@ -51,28 +51,28 @@ namespace QuantumHangar.HangarChecks
         {
             if (!Config.PluginEnabled)
             {
-                Chat.Respond("Plugin is not enabled!");
+                Chat?.Respond("Plugin is not enabled!");
                 return false;
             }
                
 
             if (PlayerHangar.IsServerSaving(Chat))
             {
-                Chat.Respond("Server is saving or is paused!");
+                Chat?.Respond("Server is saving or is paused!");
                 return false;
             }
                 
 
             if (!CheckZoneRestrictions(IsSaving))
             {
-                Chat.Respond("You are not in the right zone!");
+                Chat?.Respond("You are not in the right zone!");
                 return false;
             }
                 
 
             if (!CheckGravity())
             {
-                Chat.Respond("Unable to perform this action in gravity!");
+                Chat?.Respond("Unable to perform this action in gravity!");
                 return false;
             }
                 
@@ -81,7 +81,7 @@ namespace QuantumHangar.HangarChecks
 
             if (!PlayersHanger.CheckPlayerTimeStamp())
             {
-                Chat.Respond("Command cooldown is still in affect!");
+                Chat?.Respond("Command cooldown is still in affect!");
                 return false;
             }
                 
@@ -135,12 +135,12 @@ namespace QuantumHangar.HangarChecks
             if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
             {
                
-                PlayersHanger.SaveGridStamp(GridData, IdentityID);
-                Chat.Respond("Save Complete!");
+                PlayersHanger.SaveGridStamp(GridData);
+                Chat?.Respond("Save Complete!");
             }
             else
             {
-                Chat.Respond("Saved Failed!");
+                Chat?.Respond("Saved Failed!");
                 return;
             }
 
@@ -236,21 +236,21 @@ namespace QuantumHangar.HangarChecks
                         {
                             //Confirmed command! Update player balance!
                             confirmationCooldownMap.Remove(IdentityID);
-                            Chat.Respond("Confirmed! Saving grid!");
+                            Chat?.Respond("Confirmed! Saving grid!");
 
                             ChangeBalance(-1 * SaveCost);
                             return true;
                         }
                         else
                         {
-                            Chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                            Chat?.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
                             confirmationCooldown.StartCooldown(command);
                             return false;
                         }
                     }
                     else
                     {
-                        Chat.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
+                        Chat?.Respond("Saving this grid in your hangar will cost " + SaveCost + " SC. Run this command again within 30 secs to continue!");
                         confirmationCooldown = new CurrentCooldown();
                         confirmationCooldown.StartCooldown(command);
                         confirmationCooldownMap.Add(IdentityID, confirmationCooldown);
@@ -260,7 +260,7 @@ namespace QuantumHangar.HangarChecks
                 else
                 {
                     long Remaing = SaveCost - Balance;
-                    Chat.Respond("You need an additional " + Remaing + " SC to perform this action!");
+                    Chat?.Respond("You need an additional " + Remaing + " SC to perform this action!");
                     return false;
                 }
             }
@@ -316,21 +316,21 @@ namespace QuantumHangar.HangarChecks
                         {
                             //Confirmed command! Update player balance!
                             confirmationCooldownMap.Remove(IdentityID);
-                            Chat.Respond("Confirmed! Loading grid!");
+                            Chat?.Respond("Confirmed! Loading grid!");
 
                             ChangeBalance(-1 * LoadCost);
                             return true;
                         }
                         else
                         {
-                            Chat.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
+                            Chat?.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
                             confirmationCooldown.StartCooldown(command);
                             return false;
                         }
                     }
                     else
                     {
-                        Chat.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
+                        Chat?.Respond("Loading this grid will cost " + LoadCost + " SC. Run this command again within 30 secs to continue!");
                         confirmationCooldown = new CurrentCooldown();
                         confirmationCooldown.StartCooldown(command);
                         confirmationCooldownMap.Add(IdentityID, confirmationCooldown);
@@ -340,7 +340,7 @@ namespace QuantumHangar.HangarChecks
                 else
                 {
                     long Remaing = LoadCost - Balance;
-                    Chat.Respond("You need an additional " + Remaing + " SC to perform this action!");
+                    Chat?.Respond("You need an additional " + Remaing + " SC to perform this action!");
                     return false;
                 }
             }
@@ -377,12 +377,12 @@ namespace QuantumHangar.HangarChecks
             Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
             if(Spawner.Start(KeepOriginalPosition, SpawnPos))
             {
-                Chat.Respond("Spawning Complete!");
+                Chat?.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);
             }
             else
             {
-                Chat.Respond("An error occured while spawning the grid!");
+                Chat?.Respond("An error occured while spawning the grid!");
             }
 
 
@@ -416,13 +416,13 @@ namespace QuantumHangar.HangarChecks
 
                         if (IsSave && !Config.ZoneRestrictions[i].AllowSaving)
                         {
-                            Chat.Respond("You are not permitted to save grids in this zone");
+                            Chat?.Respond("You are not permitted to save grids in this zone");
                             return false;
                         }
 
                         if (!IsSave && !Config.ZoneRestrictions[i].AllowLoading)
                         {
-                            Chat.Respond("You are not permitted to load grids in this zone");
+                            Chat?.Respond("You are not permitted to load grids in this zone");
                             return false;
                         }
                         return true;
@@ -460,7 +460,7 @@ namespace QuantumHangar.HangarChecks
                 catch (Exception e)
                 {
 
-                    Chat.Respond("No areas found!");
+                    Chat?.Respond("No areas found!");
                     //Log.Warn(e, "No suitable zones found! (Possible Error)");
                     return false;
                 }
@@ -471,14 +471,14 @@ namespace QuantumHangar.HangarChecks
                 if (IsSave)
                 {
                     CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
-                    Chat.Respond("Nearest save area has been added to your HUD");
+                    Chat?.Respond("Nearest save area has been added to your HUD");
                     return false;
                 }
                 else
                 {
                     CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
                     //Chat chat = new Chat(Context);
-                    Chat.Respond("Nearest load area has been added to your HUD");
+                    Chat?.Respond("Nearest load area has been added to your HUD");
                     return false;
                 }
             }
@@ -491,7 +491,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (!Vector3D.IsZero(MyGravityProviderSystem.CalculateNaturalGravityInPoint(PlayerPosition)))
                 {
-                    Chat.Respond("Saving & Loading in gravity has been disabled!");
+                    Chat?.Respond("Saving & Loading in gravity has been disabled!");
                     return false;
                 }
             }
@@ -506,7 +506,7 @@ namespace QuantumHangar.HangarChecks
                 if (Gravity > Config.MaxGravityAmount)
                 {
                     //Log.Warn("Players gravity amount: " + Gravity);
-                    Chat.Respond("You are not permitted to Save/load in this gravity amount. Max amount: " + Config.MaxGravityAmount + "g");
+                    Chat?.Respond("You are not permitted to Save/load in this gravity amount. Max amount: " + Config.MaxGravityAmount + "g");
                     return false;
                 }
             }
@@ -556,7 +556,7 @@ namespace QuantumHangar.HangarChecks
 
                     if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) <= Config.DistanceCheck)
                     {
-                        Chat.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
+                        Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
                         EnemyFoundFlag = true;
                     }
                 }
@@ -614,7 +614,7 @@ namespace QuantumHangar.HangarChecks
                     if (!FoundAlly)
                     {
                         //Stop loop
-                        Chat.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
+                        Chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
                         EnemyFoundFlag = true;
                         break;
                     }

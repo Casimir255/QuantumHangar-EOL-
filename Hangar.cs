@@ -130,7 +130,8 @@ namespace QuantumHangar
                     PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
                     PluginDependencies.InitPluginDependencies(Plugins);
                     ServerRunning = true;
-                    AutoHangarStamp = DateTime.Now;
+                    AutoHangar Hangar = new AutoHangar();
+
                     break;
 
                     

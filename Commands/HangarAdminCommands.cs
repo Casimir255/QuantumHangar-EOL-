@@ -46,6 +46,13 @@ namespace QuantumHangar.Commands
             CommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); });
         }
 
+        [Command("autohangar", "Runs Autohangar")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void RunAutoHangar()
+        {
+            CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); });
+        }
+
     }
 
 
@@ -83,6 +90,13 @@ namespace QuantumHangar.Commands
         {
             AdminChecks User = new AdminChecks(Context);
             CommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); });
+        }
+
+        [Command("autohangar", "Runs Autohangar")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void RunAutoHangar()
+        {
+            CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); });
         }
 
     }

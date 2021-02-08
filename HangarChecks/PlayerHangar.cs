@@ -15,7 +15,7 @@ using VRage.Game.ModAPI;
 namespace QuantumHangar.HangarChecks
 {
     //This is for all users. Doesnt matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
-    public class PlayerHangar
+    public class PlayerHangar : IDisposable
     {
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
         private Chat Chat;
@@ -92,19 +92,19 @@ namespace QuantumHangar.HangarChecks
         {
             if(Index < 0)
             {
-                Chat.Respond("Please input a positive non-zero number");
+                Chat?.Respond("Please input a positive non-zero number");
                 return false;
             }
 
 
             if (Index > SelectedPlayerFile.Grids.Count && Index < MaxHangarSlots)
             {
-                Chat.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
+                Chat?.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
                 return false;
             }
             else if (Index > MaxHangarSlots)
             {
-                Chat.Respond("Invalid number! You only have a max of " + MaxHangarSlots + " slots!");
+                Chat?.Respond("Invalid number! You only have a max of " + MaxHangarSlots + " slots!");
                 return false;
             }
 
@@ -116,7 +116,7 @@ namespace QuantumHangar.HangarChecks
         {
             if (MySession.Static.IsSaveInProgress)
             {
-                Chat.Respond("Server has a save in progress... Please wait!");
+                Chat?.Respond("Server has a save in progress... Please wait!");
                 return true;
             }
 
@@ -138,7 +138,7 @@ namespace QuantumHangar.HangarChecks
                 {
                     //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
                     string Timeformat = string.Format("{0:mm}min & {0:ss}s", Remainder);
-                    Chat.Respond("You have " + Timeformat + "  before you can perform this action!");
+                    Chat?.Respond("You have " + Timeformat + "  before you can perform this action!");
                     return false;
                 }
                 else
@@ -161,7 +161,7 @@ namespace QuantumHangar.HangarChecks
                 if (Stamp.NumberofBlocks > Config.SingleMaxBlocks)
                 {
                     int remainder = Stamp.NumberofBlocks - Config.SingleMaxBlocks;
-                    Chat.Respond("Grid is " + remainder + " blocks over the max slot block limit! " + Stamp.NumberofBlocks + "/" + Config.SingleMaxBlocks);
+                    Chat?.Respond("Grid is " + remainder + " blocks over the max slot block limit! " + Stamp.NumberofBlocks + "/" + Config.SingleMaxBlocks);
                     return false;
                 }
             }
@@ -171,7 +171,7 @@ namespace QuantumHangar.HangarChecks
                 if (Stamp.GridPCU > Config.SingleMaxPCU)
                 {
                     int remainder = Stamp.GridPCU - Config.SingleMaxPCU;
-                    Chat.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPCU);
+                    Chat?.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPCU);
                     return false;
                 }
             }
@@ -181,7 +181,7 @@ namespace QuantumHangar.HangarChecks
                 if (Config.SingleMaxLargeGrids != 0 && Stamp.StaticGrids > Config.SingleMaxStaticGrids)
                 {
                     int remainder = Stamp.StaticGrids - Config.SingleMaxStaticGrids;
-                    Chat.Respond("You are " + remainder + " static grid over the hangar slot limit!");
+                    Chat?.Respond("You are " + remainder + " static grid over the hangar slot limit!");
                     return false;
                 }
             }
@@ -189,7 +189,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (Stamp.StaticGrids > 0)
                 {
-                    Chat.Respond("Saving Static Grids is disabled!");
+                    Chat?.Respond("Saving Static Grids is disabled!");
                     return false;
                 }
             }
@@ -200,7 +200,7 @@ namespace QuantumHangar.HangarChecks
                 {
                     int remainder = Stamp.LargeGrids - Config.SingleMaxLargeGrids;
 
-                    Chat.Respond("You are " + remainder + " large grids over the hangar slot limit!");
+                    Chat?.Respond("You are " + remainder + " large grids over the hangar slot limit!");
                     return false;
                 }
             }
@@ -208,7 +208,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (Stamp.LargeGrids > 0)
                 {
-                    Chat.Respond("Saving Large Grids is disabled!");
+                    Chat?.Respond("Saving Large Grids is disabled!");
                     return false;
                 }
             }
@@ -219,7 +219,7 @@ namespace QuantumHangar.HangarChecks
                 {
                     int remainder = Stamp.SmallGrids - Config.SingleMaxLargeGrids;
 
-                    Chat.Respond("You are " + remainder + " small grid over the hangar slot limit!");
+                    Chat?.Respond("You are " + remainder + " small grid over the hangar slot limit!");
                     return false;
                 }
             }
@@ -227,7 +227,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (Stamp.SmallGrids > 0)
                 {
-                    Chat.Respond("Saving Small Grids is disabled!");
+                    Chat?.Respond("Saving Small Grids is disabled!");
                     return false;
                 }
             }
@@ -254,7 +254,7 @@ namespace QuantumHangar.HangarChecks
             {
                 int remainder = TotalBlocks - Config.TotalMaxBlocks;
 
-                Chat.Respond("Grid is " + remainder + " blocks over the total hangar block limit! " + TotalBlocks + "/" + Config.TotalMaxBlocks);
+                Chat?.Respond("Grid is " + remainder + " blocks over the total hangar block limit! " + TotalBlocks + "/" + Config.TotalMaxBlocks);
                 return false;
             }
 
@@ -262,7 +262,7 @@ namespace QuantumHangar.HangarChecks
             {
 
                 int remainder = TotalPCU - Config.TotalMaxPCU;
-                Chat.Respond("Grid is " + remainder + " PCU over the total hangar PCU limit! " + TotalPCU + "/" + Config.TotalMaxPCU);
+                Chat?.Respond("Grid is " + remainder + " PCU over the total hangar PCU limit! " + TotalPCU + "/" + Config.TotalMaxPCU);
                 return false;
             }
 
@@ -271,7 +271,7 @@ namespace QuantumHangar.HangarChecks
             {
                 int remainder = StaticGrids - Config.TotalMaxStaticGrids;
 
-                Chat.Respond("You are " + remainder + " static grid over the total hangar limit!");
+                Chat?.Respond("You are " + remainder + " static grid over the total hangar limit!");
                 return false;
             }
 
@@ -280,7 +280,7 @@ namespace QuantumHangar.HangarChecks
             {
                 int remainder = LargeGrids - Config.TotalMaxLargeGrids;
 
-                Chat.Respond("You are " + remainder + " large grid over the total hangar limit!");
+                Chat?.Respond("You are " + remainder + " large grid over the total hangar limit!");
                 return false;
             }
 
@@ -289,7 +289,7 @@ namespace QuantumHangar.HangarChecks
             {
                 int remainder = LargeGrids - Config.TotalMaxSmallGrids;
 
-                Chat.Respond("You are " + remainder + " small grid over the total hangar limit!");
+                Chat?.Respond("You are " + remainder + " small grid over the total hangar limit!");
                 return false;
             }
 
@@ -300,7 +300,7 @@ namespace QuantumHangar.HangarChecks
         {
             if (SelectedPlayerFile.Grids.Count >= MaxHangarSlots)
             {
-                Chat.Respond("You have reached your hangar limit!");
+                Chat?.Respond("You have reached your hangar limit!");
                 return false;
             }
 
@@ -310,7 +310,7 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public void SaveGridStamp(GridStamp Stamp, long IdentityID, bool Admin = false)
+        public void SaveGridStamp(GridStamp Stamp, bool Admin = false, bool IgnoreSave = false)
         {
             if (!Admin)
             {
@@ -322,8 +322,19 @@ namespace QuantumHangar.HangarChecks
            
 
             SelectedPlayerFile.Grids.Add(Stamp);
+
+            if(!IgnoreSave)
+                SelectedPlayerFile.SaveFile();
+        }
+
+
+        public void SavePlayerFile()
+        {
             SelectedPlayerFile.SaveFile();
         }
+
+
+
 
         public void RemoveGridStamp(GridStamp Stamp)
         {
@@ -362,9 +373,9 @@ namespace QuantumHangar.HangarChecks
             if (SelectedPlayerFile.Grids.Count == 0)
             {
                 if(IsAdminCalling)
-                    Chat.Respond("There are no grids in this players hangar!");
+                    Chat?.Respond("There are no grids in this players hangar!");
                 else 
-                    Chat.Respond("You have no grids in your hangar!");
+                    Chat?.Respond("You have no grids in your hangar!");
 
                 return;
             }
@@ -383,7 +394,7 @@ namespace QuantumHangar.HangarChecks
                 count++;
             }
 
-            Chat.Respond(sb.ToString());
+            Chat?.Respond(sb.ToString());
         }
 
         public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
@@ -392,7 +403,7 @@ namespace QuantumHangar.HangarChecks
             Stamp = null;
             if (ID - 1 >= SelectedPlayerFile.Grids.Count || ID < 1)
             {
-                Chat.Respond("Invalid Index! Grid doent exsist in that slot!");
+                Chat?.Respond("Invalid Index! Grid doent exsist in that slot!");
                 return false;
             }
 
@@ -442,14 +453,17 @@ namespace QuantumHangar.HangarChecks
             SelectedPlayerFile.Grids.AddRange(NewGrids);
             SelectedPlayerFile.SaveFile();
 
-            Chat.Respond("Removed " + RemovedGrids + " grids and added " + AddedGrids + " new grids to hangar");
+            Chat?.Respond("Removed " + RemovedGrids + " grids and added " + AddedGrids + " new grids to hangar");
 
 
         }
 
+        
 
-
-
+        public void Dispose()
+        {
+            
+        }
     }
 
 
@@ -537,7 +551,7 @@ namespace QuantumHangar.HangarChecks
             {
                 //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
                 Response = string.Format("{0:mm}min & {0:ss}s", Remainder);
-                //Chat.Respond("You have " + Timeformat + "  before you can perform this action!", Context);
+                //Chat?.Respond("You have " + Timeformat + "  before you can perform this action!", Context);
                 return false;
             }
             else

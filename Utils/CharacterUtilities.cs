@@ -85,7 +85,7 @@ namespace QuantumHangar.Utils
 
         }
 
-        public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat chat, out ulong PSteamID)
+        public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {
             ulong? SteamID;
             if (UInt64.TryParse(NameOrSteamID, out ulong PlayerSteamID))
@@ -94,7 +94,7 @@ namespace QuantumHangar.Utils
 
                 if (Identity == null)
                 {
-                    chat.Respond(NameOrSteamID + " doesnt exsist as an Identity! Dafuq?");
+                    Chat?.Respond(NameOrSteamID + " doesnt exsist as an Identity! Dafuq?");
                     PSteamID = 0;
                     return false;
                 }
@@ -113,7 +113,7 @@ namespace QuantumHangar.Utils
                 catch (Exception e)
                 {
                     //Hangar.Debug("Player "+ NameOrID + " dosnt exist on the server!", e, Hangar.ErrorType.Warn);
-                    chat.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
+                    Chat?.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
                     PSteamID = 0;
                     return false;
                 }
@@ -121,7 +121,7 @@ namespace QuantumHangar.Utils
 
             if (!SteamID.HasValue)
             {
-                chat.Respond("Invalid player format! Check logs for more details!");
+                Chat?.Respond("Invalid player format! Check logs for more details!");
                 //Hangar.Debug("Player " + NameOrSteamID + " dosnt exist on the server!");
                 PSteamID = 0;
                 return false;

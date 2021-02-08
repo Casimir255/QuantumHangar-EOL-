@@ -15,6 +15,9 @@ namespace QuantumHangar.Commands
 
         public static void RunTask(Action Invoker)
         {
+            if (!Hangar.ServerRunning)
+                return;
+
             Task Run = new Task(Invoker);
             Run.Start();
         }

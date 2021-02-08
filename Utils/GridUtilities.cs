@@ -35,14 +35,14 @@ namespace QuantumHangar.Utils
 
         private readonly string FolderPath;
         private readonly ulong SteamID;
-        private readonly Chat chat;
+        private readonly Chat Chat;
 
         public GridUtilities(Chat Chat, ulong UserSteamID)
         {
             FolderPath = Path.Combine(Config.FolderDirectory, UserSteamID.ToString());
             Directory.CreateDirectory(FolderPath);
             SteamID = UserSteamID;
-            chat = Chat;
+            this.Chat = Chat;
         }
 
 
@@ -68,7 +68,7 @@ namespace QuantumHangar.Utils
 
             if (!File.Exists(path))
             {
-                chat.Respond("Grid doesnt exist! Admin should check logs for more information.");
+                Chat?.Respond("Grid doesnt exist! Admin should check logs for more information.");
                 Log.Fatal("Grid doesnt exsist @" + path);
                 return false;
             }
@@ -82,7 +82,7 @@ namespace QuantumHangar.Utils
                     {
 
                         Log.Warn("No ShipBlueprints in File '" + path + "'");
-                        chat.Respond("There arent any Grids in your file to import!");
+                        Chat?.Respond("There arent any Grids in your file to import!");
                         return false;
                     }
 
@@ -131,7 +131,7 @@ namespace QuantumHangar.Utils
             }
             catch (Exception ex)
             {
-                chat.Respond("This ship failed to load. Contact staff & Check logs!");
+                Chat?.Respond("This ship failed to load. Contact staff & Check logs!");
                 Log.Error(ex, "Failed to deserialize grid: " + path + " from file! Is this a shipblueprint?");
             }
 
@@ -145,7 +145,7 @@ namespace QuantumHangar.Utils
 
             if (grids == null || grids.Length == 0)
             {
-                chat.Respond("No grids in blueprint!");
+                Chat?.Respond("No grids in blueprint!");
                 return false;
             }
 
@@ -381,7 +381,88 @@ namespace QuantumHangar.Utils
         }
 
 
+        public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
+        {
 
+            ConcurrentBag<List<MyCubeGrid>> grids = new ConcurrentBag<List<MyCubeGrid>>();
+
+            if (includeConnectedGrids)
+            {
+
+                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
+                {
+
+                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
+
+                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                    {
+
+                        MyCubeGrid grid = groupNodes.NodeData;
+
+                        if (grid.MarkedForClose || grid.MarkedAsTrash)
+                            continue;
+
+                        gridList.Add(grid);
+                    }
+
+                    if (IsPlayerIdCorrect(playerId, gridList))
+                        grids.Add(gridList);
+                });
+
+            }
+            else
+            {
+
+                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
+                {
+
+                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
+
+                    foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
+                    {
+
+                        MyCubeGrid grid = groupNodes.NodeData;
+
+                        if (grid.MarkedForClose || grid.MarkedAsTrash)
+                            continue;
+
+                        gridList.Add(grid);
+                    }
+
+                    if (IsPlayerIdCorrect(playerId, gridList))
+                        grids.Add(gridList);
+                });
+            }
+
+            return grids;
+        }
+
+        private static bool IsPlayerIdCorrect(long playerId, List<MyCubeGrid> gridList)
+        {
+
+            MyCubeGrid biggestGrid = null;
+
+            foreach (var grid in gridList)
+                if (biggestGrid == null || biggestGrid.BlocksCount < grid.BlocksCount)
+                    biggestGrid = grid;
+
+            /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
+            if (biggestGrid == null)
+                return false;
+
+            bool hasOwners = biggestGrid.BigOwners.Count != 0;
+
+            if (!hasOwners)
+            {
+
+                if (playerId != 0L)
+                    return false;
+
+                return true;
+            }
+
+            return playerId == biggestGrid.BigOwners[0];
+        }
 
 
 
@@ -429,7 +510,7 @@ namespace QuantumHangar.Utils
         }
 
 
-        public static bool ValidateGridOwnership(IEnumerable<MyCubeGrid> grids, long IdentityID, Chat chat)
+        public static bool ValidateGridOwnership(IEnumerable<MyCubeGrid> grids, long IdentityID, Chat Chat)
         {
             foreach(var grid in grids)
             {
@@ -437,7 +518,7 @@ namespace QuantumHangar.Utils
 
                 if (!grid.BigOwners.Contains(IdentityID))
                 {
-                    chat.Respond("You are not the owner of " + grid.DisplayName);
+                    Chat?.Respond("You are not the owner of " + grid.DisplayName);
                     return false;
                 }
                     
@@ -473,7 +554,7 @@ namespace QuantumHangar.Utils
 
                         MyCubeGrid grid = groupNodes.NodeData;
 
-                        if (grid.Physics == null)
+                        if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
                             continue;
 
                         gridList.Add(grid);
@@ -497,7 +578,7 @@ namespace QuantumHangar.Utils
 
                         MyCubeGrid grid = groupNodes.NodeData;
 
-                        if (grid.Physics == null)
+                        if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
                             continue;
 
                         gridList.Add(grid);
@@ -619,7 +700,7 @@ namespace QuantumHangar.Utils
 
                     MyCubeGrid grid = groupNodes.NodeData;
 
-                    if (grid.Physics == null)
+                    if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
                         continue;
 
                     /* Gridname is wrong ignore */
@@ -656,7 +737,7 @@ namespace QuantumHangar.Utils
                     MyCubeGrid cubeGrid = groupNodes.NodeData;
                     if (cubeGrid != null)
                     {
-                        if (cubeGrid.Physics == null)
+                        if (cubeGrid.MarkedForClose || cubeGrid.MarkedAsTrash || !cubeGrid.InScene)
                             continue;
 
                         // check if the ray comes anywhere near the Grid before continuing.    
@@ -712,7 +793,7 @@ namespace QuantumHangar.Utils
 
                     MyCubeGrid grid = groupNodes.NodeData;
 
-                    if (grid.Physics == null)
+                    if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
                         continue;
 
                     /* Gridname is wrong ignore */
@@ -748,16 +829,16 @@ namespace QuantumHangar.Utils
                     foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
                     {
 
-                        IMyCubeGrid cubeGrid = groupNodes.NodeData;
+                        MyCubeGrid cubeGrid = groupNodes.NodeData;
 
                         if (cubeGrid != null)
                         {
 
-                            if (cubeGrid.Physics == null)
+                            if (cubeGrid.MarkedForClose || cubeGrid.MarkedAsTrash || !cubeGrid.InScene)
                                 continue;
 
                             // check if the ray comes anywhere near the Grid before continuing.    
-                            if (ray.Intersects(cubeGrid.WorldAABB).HasValue)
+                            if (ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue)
                             {
 
                                 Vector3I? hit = cubeGrid.RayCastBlocks(startPosition, endPosition);
