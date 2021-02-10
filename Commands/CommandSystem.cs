@@ -18,9 +18,6 @@ namespace QuantumHangar.Commands
         /* Need an action system/Queue*/
         private static ConcurrentDictionary<ulong, bool> Dictionary = new ConcurrentDictionary<ulong, bool>();
 
-
-
-
         public static void RunTask(Action Invoker, ulong? SteamID = null)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready)
@@ -53,8 +50,6 @@ namespace QuantumHangar.Commands
             Task Run = new Task(Invoker);
             Run.Start();
         }
-
-
 
         private static void RemoveAfterCompletion(ulong SteamID)
         {
