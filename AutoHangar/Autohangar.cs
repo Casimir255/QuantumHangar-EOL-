@@ -15,21 +15,20 @@ using VRage.Game;
 
 namespace QuantumHangar
 {
-    public class AutoHangar : IDisposable
+    public static class AutoHangar
     {
-        private Timer UpdateTimer = new Timer(1800000);
+        private static Timer UpdateTimer = new Timer(1800000);
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AutoHangar));
         public static Settings Config { get { return Hangar.Config; } }
 
 
-        public AutoHangar()
+        public static void StartAutoHangar()
         {
-
             UpdateTimer.Elapsed += UpdateTimer_Elapsed;
             UpdateTimer.Start();
         }
 
-        private void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if(Config.AutoHangarGrids)
                 RunAutoHangar();
@@ -228,7 +227,7 @@ namespace QuantumHangar
             Log.Warn("Finished Hangaring: " + GridCounter + " grids! Action took: " + ts.ToString());
         }
 
-        public void Dispose()
+        public static void Dispose()
         {
             UpdateTimer.Elapsed -= UpdateTimer_Elapsed;
             UpdateTimer.Stop();

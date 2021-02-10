@@ -67,12 +67,6 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-
-
-
-
-
-
         public bool ParseSelectedHangarInput(string GridNameOrNumber, out short SelectedIndex)
         {
             SelectedIndex = 0;
@@ -457,8 +451,6 @@ namespace QuantumHangar.HangarChecks
 
 
         }
-
-        
 
         public void Dispose()
         {
