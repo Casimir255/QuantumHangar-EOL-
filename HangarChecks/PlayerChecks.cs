@@ -24,7 +24,7 @@ namespace QuantumHangar.HangarChecks
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Chat Chat;
-        private readonly ulong SteamID;
+        public readonly ulong SteamID;
         private readonly long IdentityID;
         private readonly Vector3D PlayerPosition;
         private readonly MyCharacter UserCharacter;
@@ -627,7 +627,7 @@ namespace QuantumHangar.HangarChecks
         private Vector3D DetermineSpawnPosition(Vector3D GridPosition, Vector3D CharacterPosition, out bool KeepOriginalPosition,  bool PlayersSpawnNearPlayer = false)
         {
             //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
-            if (Config.LoadType == LoadType.ForceLoadOriginalPosition)
+            if (Config.LoadType == LoadType.ForceLoadNearOriginalPosition)
             {
                 if (GridPosition == Vector3D.Zero)
                 {

@@ -440,28 +440,19 @@ namespace QuantumHangar.Utils
         private static bool IsPlayerIdCorrect(long playerId, List<MyCubeGrid> gridList)
         {
 
-            MyCubeGrid biggestGrid = null;
+            MyCubeGrid Grid = null;
 
-            foreach (var grid in gridList)
-                if (biggestGrid == null || biggestGrid.BlocksCount < grid.BlocksCount)
-                    biggestGrid = grid;
+            BiggestGrid(gridList, out Grid);
+
 
             /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
-            if (biggestGrid == null)
+            if (Grid == null || Grid.BigOwners.Count == 0)
                 return false;
 
-            bool hasOwners = biggestGrid.BigOwners.Count != 0;
-
-            if (!hasOwners)
-            {
-
-                if (playerId != 0L)
-                    return false;
-
+            if (Grid.BigOwners.Contains(playerId))
                 return true;
-            }
 
-            return playerId == biggestGrid.BigOwners[0];
+            return false;
         }
 
 

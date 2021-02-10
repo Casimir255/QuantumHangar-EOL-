@@ -31,7 +31,7 @@ namespace QuantumHangar
     {
         ForceLoadNearPlayer,
         Optional,
-        ForceLoadOriginalPosition
+        ForceLoadNearOriginalPosition
 
     }
 

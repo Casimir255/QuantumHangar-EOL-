@@ -20,7 +20,7 @@ namespace QuantumHangar.Commands
         public void SaveGrid()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.SaveGrid(); });
+            CommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -28,7 +28,7 @@ namespace QuantumHangar.Commands
         public void ListGrids()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.ListGrids(); });
+            CommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
         }
 
         [Command("load", "Loads the specified grid by index number")]
@@ -36,7 +36,7 @@ namespace QuantumHangar.Commands
         public void Load(int ID)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.LoadGrid(ID); });
+            CommandSystem.RunTask(delegate { User.LoadGrid(ID); }, Context.Player?.SteamUserId);
         }
     }
 
@@ -49,7 +49,7 @@ namespace QuantumHangar.Commands
         public void SaveGrid()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.SaveGrid(); });
+            CommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -57,7 +57,7 @@ namespace QuantumHangar.Commands
         public void ListGrids()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.ListGrids(); });
+            CommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
         }
 
         [Command("load", "Loads the specified grid by index number")]
@@ -65,7 +65,7 @@ namespace QuantumHangar.Commands
         public void Load(int ID)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.LoadGrid(ID); });
+            CommandSystem.RunTask(delegate { User.LoadGrid(ID); }, Context.Player?.SteamUserId);
         }
     }
 
