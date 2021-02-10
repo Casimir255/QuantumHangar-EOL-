@@ -164,12 +164,12 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                           
 
 
-                            <RadioButton Grid.Row="0" Grid.Column="0" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadMearPlayer}">Force Near Player</RadioButton>
+
+                            <RadioButton Grid.Row="0" Grid.Column="0" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadNearPlayer}">Force Near Player</RadioButton>
                             <RadioButton  Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Optional}">Player's Choice</RadioButton>
-                            <RadioButton Grid.Row="0" Grid.Column="2" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadNearOriginalPosition}">Forced Original Position</RadioButton>
+                            <RadioButton Grid.Row="0" Grid.Column="2" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadOriginalPosition}">Forced Original Position</RadioButton>
 
                             <TextBlock Grid.Row="1" Grid.Column="0" Margin="3" VerticalAlignment="Center">Require Radius Check:</TextBlock>
                             <CheckBox Grid.Row="1" Grid.Column="0" Margin="3" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding RequireLoadRadius}"/>
@@ -373,7 +373,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
+
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Allow saving &amp; loading in gravity:" Grid.ColumnSpan="2" Margin="3"/>
                             <CheckBox Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding AllowInGravity}">(On/Off)</CheckBox>
 
@@ -386,47 +386,10 @@
                     </GroupBox>
 
 
+
+
+
                     
-
-
-                    <GroupBox>
-                        <GroupBox.Header>
-                            <TextBlock>
-                                        <Span FontWeight="Bold">Experimental Configs</Span>
-                                        <Span>(Experimental WIP Configs)</Span>
-                            </TextBlock>
-
-                        </GroupBox.Header>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130"/>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                          
-
-                            <TextBlock Grid.Column="0" Grid.Row ="2" Text="Create Temp-Safezone around grid:" Grid.ColumnSpan="2" Margin="3"/>
-
-                            
-                            <TextBlock Grid.Column="0" Grid.Row ="3" Text="Disconnect Enemy Landing gear (Fixed): " Grid.ColumnSpan="2" Margin="3"/>
-                            <CheckBox Grid.Column="2" Grid.Row="3" VerticalAlignment="Center" IsChecked="{Binding AutoDisconnectGearConnectors}">(On/Off)</CheckBox>
-
-
-
-
-                        </Grid>
-
-
-                    </GroupBox>
 
 
                 </StackPanel>
@@ -464,9 +427,9 @@
                             <CheckBox Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0" IsChecked="{Binding DeleteRespawnPods}" IsEnabled="{Binding AutoHangarGrids}" ToolTip="This will instead delete respawn pods instead of sending them to the Hangar">
                                 Delete Respawn-Pods?
                             </CheckBox>
-                            
-                            
-                            
+
+
+
                             <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="1" Text="AutoHangar grids that fall into Planet (30% below):" Margin="3" ToolTip="Scans every 5min"/>
                             <CheckBox Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding HangarGridsFallenInPlanet}" ToolTip="Scans every 5min">(On/Off)</CheckBox>
 
@@ -510,7 +473,7 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            
+
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Enter Playername:" Margin="3"/>
                             <TextBox x:Name="AutoHangarNameBox" Grid.Column="1" Grid.Row="0" Margin="3"/>
                             <Button Grid.Column="2" Grid.Row="0" Content="Add New" Margin="3" Click="AddNewBlacklistPlayer"/>
@@ -538,9 +501,9 @@
 
                 </StackPanel>
             </TabItem>
-            
 
-            <TabItem x:Name="MConfig" Header="Hangar Market">
+
+            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="False">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130"/>
@@ -766,9 +729,9 @@
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require Currency:" Margin="3" Grid.ColumnSpan="2"/>
                             <CheckBox x:Name="RequireCredits" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding RequireCurrency}">(On/Off)</CheckBox>
 
-                            <RadioButton x:Name="BlockCount" IsEnabled="{Binding RequireCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0" Checked="RadioButton_Checked">By BlockCount</RadioButton>
-                            <RadioButton x:Name="PerGrid" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0" Checked="RadioButton_Checked">Price Per Grid</RadioButton>
-                            <RadioButton x:Name="FixedPrice" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0" Checked="RadioButton_Checked">Fixed Price</RadioButton>
+                            <RadioButton x:Name="BlockCount" IsEnabled="{Binding RequireCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0" >By BlockCount</RadioButton>
+                            <RadioButton x:Name="PerGrid" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0" >Price Per Grid</RadioButton>
+                            <RadioButton x:Name="FixedPrice" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarSaveCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0" >Fixed Price</RadioButton>
                             <TextBox x:Name="StaticGBox" IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomStaticGridCurrency}" />
                             <TextBlock x:Name="StaticGText" Grid.Column="1" Grid.Row ="1" Text="Static Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
                             <TextBox x:Name="LargeGBox"  IsEnabled="{Binding RequireCurrency}" Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding CustomLargeGridCurrency}" />
@@ -803,9 +766,9 @@
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require Currency:" Margin="3" Grid.ColumnSpan="2"/>
                             <CheckBox  Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding RequireLoadCurrency}">(On/Off)</CheckBox>
 
-                            <RadioButton x:Name="BlockCountLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0" Checked="RadioButtonLoad_Checked">By BlockCount</RadioButton>
-                            <RadioButton x:Name="PerGridLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0" Checked="RadioButtonLoad_Checked">Price Per Grid</RadioButton>
-                            <RadioButton x:Name="FixedPriceLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0" Checked="RadioButtonLoad_Checked">Fixed Price</RadioButton>
+                            <RadioButton x:Name="BlockCountLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=BlockCount}" ToolTip=" (RequiredCurrency * Blocks) " Margin="80,0,0,0">By BlockCount</RadioButton>
+                            <RadioButton x:Name="PerGridLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=PerGrid}" HorizontalAlignment="Left" Margin="35,0,0,0">Price Per Grid</RadioButton>
+                            <RadioButton x:Name="FixedPriceLoad" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row ="0" VerticalAlignment="Center" GroupName="Econ" IsChecked="{Binding HangarLoadCostType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Fixed}" HorizontalAlignment="Left" Margin="135,0,0,0">Fixed Price</RadioButton>
                             <TextBox  x:Name="StaticLGBox" IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadStaticGridCurrency}" />
                             <TextBlock x:Name="StaticLGText" Grid.Column="1" Grid.Row ="1" Text="Static Grid Currency:" HorizontalAlignment="Right" Margin="3" Grid.ColumnSpan="1"/>
                             <TextBox x:Name="LargeLGBox"  IsEnabled="{Binding RequireLoadCurrency}" Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding LoadLargeGridCurrency}" />
@@ -817,8 +780,8 @@
                     </GroupBox>
                 </StackPanel>
             </TabItem>
-            
-            
+
+
             <TabItem x:Name="AConfig" Header="Debug">
 
                 <StackPanel>
@@ -861,7 +824,7 @@
 
 
             </TabItem>
-  
+
         </TabControl>
 
 

@@ -30,17 +30,17 @@ namespace QuantumHangar
 
         //Rexxars spicy ParallelSpawner
         private readonly int _maxCount;
-        private readonly MyObjectBuilder_CubeGrid[] _grids;
+        private readonly IEnumerable<MyObjectBuilder_CubeGrid> _grids;
         private readonly Action<HashSet<IMyCubeGrid>> _callback;
         private readonly HashSet<IMyCubeGrid> _spawned;
         private readonly Chat _Response;
         private static int Timeout = 6000;
         public bool _AlignToGravity = false;
 
-        public ParallelSpawner(MyObjectBuilder_CubeGrid[] grids, Chat chat, bool AlignToGravity = false, Action<HashSet<IMyCubeGrid>> callback = null)
+        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, bool AlignToGravity = false, Action<HashSet<IMyCubeGrid>> callback = null)
         {
             _grids = grids;
-            _maxCount = grids.Length;
+            _maxCount = grids.Count();
             _callback = callback;
             _spawned = new HashSet<IMyCubeGrid>();
             _Response = chat;
@@ -49,7 +49,7 @@ namespace QuantumHangar
 
         public bool Start(bool LoadInOriginalPosition, Vector3D Target)
         {
-            if (_grids.Length == 0)
+            if (_grids.Count() == 0)
             {
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
                 return true;
@@ -107,10 +107,7 @@ namespace QuantumHangar
                 List<MyEntity> entities = new List<MyEntity>();
                 MyGamePruningStructure.GetAllEntitiesInOBB(ref BoundingBox, entities);
 
-               
-                Hangar.Debug(BoundingBox.ToString());
-
-                Hangar.Debug(entities.Count.ToString());
+              
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
@@ -121,7 +118,7 @@ namespace QuantumHangar
                         BoundingBox Box = entity.PositionComp.LocalAABB;
                         ContainmentType Type = BoundingBox.Contains(ref Box);
                         
-                       Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
+                       //Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
                         
 
                         _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
@@ -181,10 +178,10 @@ namespace QuantumHangar
              * used to determine the perfect place to paste the grids to. 
              */
 
-            return MyEntities.FindFreePlaceCustom(Target, (float)sphere.Radius, 90, 10, 1.5f, 5);
+            return MyEntities.FindFreePlaceCustom(Target, (float)sphere.Radius, 90, 10, 1.5f, 10);
         }
 
-        private static BoundingSphereD FindBoundingSphere(MyObjectBuilder_CubeGrid[] grids)
+        private static BoundingSphereD FindBoundingSphere(IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
 
             Vector3? vector = null;
@@ -192,13 +189,11 @@ namespace QuantumHangar
 
             Parallel.ForEach(grids, grid =>
             {
-
                 var gridSphere = grid.CalculateBoundingSphere();
                 
                 /* If this is the first run, we use the center of that grid, and its radius as it is */
                 if (vector == null)
                 {
-
                     vector = gridSphere.Center;
                     radius = gridSphere.Radius;
                     return;
@@ -228,16 +223,16 @@ namespace QuantumHangar
             return new BoundingSphereD(vector.Value, radius);
         }
 
-        private static MyOrientedBoundingBoxD FindBoundingBox(MyObjectBuilder_CubeGrid[] grids)
+        private static MyOrientedBoundingBoxD FindBoundingBox(IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
-            BoundingBox First = grids[0].CalculateBoundingBox();
+            BoundingBox First = grids.First().CalculateBoundingBox();
             Parallel.ForEach(grids, grid =>
             {
                 var GridBox = grid.CalculateBoundingBox();
                 First.Include(ref GridBox);
             });
 
-            return new MyOrientedBoundingBoxD(First, grids[0].PositionAndOrientation.Value.GetMatrix());
+            return new MyOrientedBoundingBoxD(First, grids.First().PositionAndOrientation.Value.GetMatrix());
         }
 
 
@@ -304,26 +299,26 @@ namespace QuantumHangar
          * 
          */
 
-        private void EnableRequiredItemsOnLoad(MyObjectBuilder_CubeGrid[] _grid)
+        private void EnableRequiredItemsOnLoad(IEnumerable<MyObjectBuilder_CubeGrid> _grid)
         {
-            for (int i = 0; i < _grid.Count(); i++)
+            foreach(var grid in _grid)
             {
-                _grid[i].LinearVelocity = new SerializableVector3();
-                _grid[i].AngularVelocity = new SerializableVector3();
+                grid.LinearVelocity = new SerializableVector3();
+                grid.AngularVelocity = new SerializableVector3();
 
                 int counter = 0;
-                foreach (MyObjectBuilder_Thrust Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_Thrust>())
+                foreach (MyObjectBuilder_Thrust Block in grid.CubeBlocks.OfType<MyObjectBuilder_Thrust>())
                 {
                     counter++;
                     Block.Enabled = true;
                 }
 
-                foreach (MyObjectBuilder_Reactor Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_Reactor>())
+                foreach (MyObjectBuilder_Reactor Block in grid.CubeBlocks.OfType<MyObjectBuilder_Reactor>())
                 {
                     Block.Enabled = true;
                 }
 
-                foreach (MyObjectBuilder_BatteryBlock Block in _grid[i].CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
+                foreach (MyObjectBuilder_BatteryBlock Block in grid.CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
                 {
                     Block.Enabled = true;
                     Block.SemiautoEnabled = true;
@@ -331,7 +326,7 @@ namespace QuantumHangar
                     Block.ChargeMode = 0;
                 }
 
-                _grid[i].DampenersEnabled = true;
+                grid.DampenersEnabled = true;
             }
 
         }
@@ -345,7 +340,7 @@ namespace QuantumHangar
             Vector3D forwardVector = Vector3D.Zero;
 
 
-            Hangar.Debug("Total Grids to be pasted: " + _grids.Count());
+            //Hangar.Debug("Total Grids to be pasted: " + _grids.Count());
 
             //Attempt to get gravity/Artificial gravity to align the grids to
 
@@ -363,7 +358,7 @@ namespace QuantumHangar
             Vector3D upDirectionalVector;
             if (gravityDirectionalVector != Vector3.Zero)
             {
-                Hangar.Debug("Attempting to correct grid orientation!");
+                //Hangar.Debug("Attempting to correct grid orientation!");
                 gravityDirectionalVector.Normalize();
                 upDirectionalVector = -gravityDirectionalVector;
 
@@ -390,7 +385,7 @@ namespace QuantumHangar
             BeginAlignToGravity(_grids, Target, forwardVector, upDirectionalVector);
         }
 
-        private void BeginAlignToGravity(MyObjectBuilder_CubeGrid[] AllGrids, Vector3D Target, Vector3D forwardVector, Vector3D upVector)
+        private void BeginAlignToGravity(IEnumerable<MyObjectBuilder_CubeGrid> AllGrids, Vector3D Target, Vector3D forwardVector, Vector3D upVector)
         {
             //Create WorldMatrix
             MatrixD worldMatrix = MatrixD.CreateWorld(Target, forwardVector, upVector);
@@ -400,33 +395,32 @@ namespace QuantumHangar
             MatrixD rotationMatrix = MatrixD.Identity;
 
             //Find biggest grid and get their postion matrix
-            Parallel.For(0, AllGrids.Length, i =>
+            Parallel.ForEach(AllGrids, grid =>
             {
                 //Option to clone the BP
                 //array[i] = (MyObjectBuilder_CubeGrid)TotalGrids[i].Clone();
-                if (AllGrids[i].CubeBlocks.Count > num)
+                if (grid.CubeBlocks.Count > num)
                 {
-                    num = AllGrids[i].CubeBlocks.Count;
-                    referenceMatrix = AllGrids[i].PositionAndOrientation.Value.GetMatrix();
-                    rotationMatrix = FindRotationMatrix(AllGrids[i]);
+                    num = grid.CubeBlocks.Count;
+                    referenceMatrix = grid.PositionAndOrientation.Value.GetMatrix();
+                    rotationMatrix = FindRotationMatrix(grid);
                 }
-
             });
 
             //Huh? (Keen does this so i guess i will too) My guess so it can create large entities
             MyEntities.IgnoreMemoryLimits = true;
 
             //Update each grid in the array
-            Parallel.For(0, AllGrids.Length, j =>
+            Parallel.ForEach(AllGrids, grid =>
             {
-                if (AllGrids[j].PositionAndOrientation.HasValue)
+                if (grid.PositionAndOrientation.HasValue)
                 {
-                    MatrixD matrix3 = AllGrids[j].PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
-                    AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(matrix3 * worldMatrix);
+                    MatrixD matrix3 = grid.PositionAndOrientation.Value.GetMatrix() * MatrixD.Invert(referenceMatrix) * rotationMatrix;
+                    grid.PositionAndOrientation = new MyPositionAndOrientation(matrix3 * worldMatrix);
                 }
                 else
                 {
-                    AllGrids[j].PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
+                    grid.PositionAndOrientation = new MyPositionAndOrientation(worldMatrix);
                 }
             });
         }

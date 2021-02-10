@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NLog;
 using QuantumHangar.Utilities;
+using QuantumHangar.Utils;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
@@ -33,28 +34,25 @@ namespace QuantumHangar.UI
     {
         private static readonly Logger Log = LogManager.GetLogger("QuantumHangarUI");
         //private bool GridLoaded = false;
-        private Hangar Plugin { get; }
+        private static Settings Config { get { return Hangar.Config; } }
+       // private static GridMarket Market { get { return Hangar.Market; } }
 
 
 
         public UserControlInterface()
         {
-            InitializeComponent();
-        }
-
-        public UserControlInterface(Hangar plugin) : this()
-        {
-            Plugin = plugin;
-            DataContext = plugin.Config;
+            DataContext = Config;
 
             //plugin.PublicOffersAdded.CollectionChanged += PublicOffersAdded_CollectionChanged;
 
-            plugin.Config.PublicOffers.CollectionChanged += PublicOffers_CollectionChanged;
+            Config.PublicOffers.CollectionChanged += PublicOffers_CollectionChanged;
+
+            InitializeComponent();
         }
 
         private void PublicOffers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            Hangar.Debug(e.Action.ToString());
+            
             //Plugin.Config.RefreshModel();
             //throw new NotImplementedException();
         }
@@ -76,12 +74,15 @@ namespace QuantumHangar.UI
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
+
+            /*
+
             //Refresh list
             string[] subdirectoryEntries = null;
 
             try
             {
-                subdirectoryEntries = Directory.GetFiles(Plugin.Market.ServerOffersDir, "*.sbc");
+                subdirectoryEntries = Directory.GetFiles(Market.ServerOffersDir, "*.sbc");
             }
             catch (Exception b)
             {
@@ -98,18 +99,18 @@ namespace QuantumHangar.UI
             }
 
 
-            for(int i = 0; i< Plugin.Config.PublicOffers.Count; i++)
+            for(int i = 0; i< Config.PublicOffers.Count; i++)
             {
-                if (!FolderGrids.Contains(Plugin.Config.PublicOffers[i].Name))
+                if (!FolderGrids.Contains(Config.PublicOffers[i].Name))
                 {
-                    Plugin.Config.PublicOffers.RemoveAt(i);
+                    Config.PublicOffers.RemoveAt(i);
                 }
             }
 
 
             for(int i = 0; i < FolderGrids.Count(); i++)
             {
-                if(!Plugin.Config.PublicOffers.Any(x=> x.Name == FolderGrids[i])){
+                if(!Config.PublicOffers.Any(x=> x.Name == FolderGrids[i])){
 
                     string FileName = FolderGrids[i];
 
@@ -117,16 +118,18 @@ namespace QuantumHangar.UI
 
                     PublicOffers offer = new PublicOffers();
                     offer.Name = FileName;
-                    Plugin.Config.PublicOffers.Add(offer);
-                    Plugin.Config.RefreshModel();
+                    Config.PublicOffers.Add(offer);
+                    Config.RefreshModel();
                 }
             }
+
+            */
 
         }
 
         private void Imported_LostFocus(object sender, RoutedEventArgs e)
         {
-            Plugin.Config.RefreshModel();
+            Config.RefreshModel();
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
@@ -138,6 +141,9 @@ namespace QuantumHangar.UI
         private void UpdatePublicOffers()
         {
 
+
+            /*
+
             //Update all public offer market items!
             if(!Hangar.IsRunning)
             {
@@ -146,13 +152,15 @@ namespace QuantumHangar.UI
 
             //Need to remove existing ones
 
-            string PublicOfferPath = Plugin.Market.ServerOffersDir;
+            string PublicOfferPath = Market.ServerOffersDir;
 
             //Clear list
+
+
             GridMarket.PublicOfferseGridList.Clear();
 
 
-            foreach (PublicOffers offer in Plugin.Config.PublicOffers)
+            foreach (PublicOffers offer in Config.PublicOffers)
             {
                 if (offer.Forsale && (offer.Name != null || offer.Name != ""))
                 {
@@ -211,99 +219,26 @@ namespace QuantumHangar.UI
             Data.List = GridMarket.PublicOfferseGridList;
 
             //Write to file
-            FileSaver.Save(Plugin.Market.ServerMarketFileDir, Data);
+            FileSaver.Save(Market.ServerMarketFileDir, Data);
             //File.WriteAllText(Main.ServerMarketFileDir, JsonConvert.SerializeObject(Data));
             //This will force the market to update the market items
-        }
 
-        private void RadioButton_Checked(object sender, RoutedEventArgs e)
-        {
-            var button = sender as RadioButton;
-
-            if(button.Name == "FixedPrice")
-            {
-                StaticGBox.Visibility = Visibility.Visible;
-                StaticGText.Visibility = Visibility.Visible;
-                StaticGText.Text = "Fixed Price Amount:";
-
-                LargeGBox.Visibility = Visibility.Hidden;
-                LargeGText.Visibility = Visibility.Hidden;
-
-                SmallGBox.Visibility = Visibility.Hidden;
-                SmallGText.Visibility = Visibility.Hidden;
-
-
-            }
-            else
-            {
-                StaticGBox.Visibility = Visibility.Visible;
-                StaticGText.Visibility = Visibility.Visible;
-                StaticGText.Text = "Static Grid Currency:";
-
-                LargeGBox.Visibility = Visibility.Visible;
-                LargeGText.Visibility = Visibility.Visible;
-
-                SmallGBox.Visibility = Visibility.Visible;
-                SmallGText.Visibility = Visibility.Visible;
-            }
+            */
         }
 
 
-        private void RadioButtonLoad_Checked(object sender, RoutedEventArgs e)
-        {
-            var button = sender as RadioButton;
-
-            if (button.Name == "FixedPriceLoad")
-            {
-                StaticLGBox.Visibility = Visibility.Visible;
-                StaticLGText.Visibility = Visibility.Visible;
-                StaticLGText.Text = "Fixed Price Amount:";
-
-                LargeLGBox.Visibility = Visibility.Hidden;
-                LargeLGText.Visibility = Visibility.Hidden;
-
-                SmallLGBox.Visibility = Visibility.Hidden;
-                SmallLGText.Visibility = Visibility.Hidden;
-
-
-            }
-            else if (button.Name == "BlockCountLoad")
-            {
-                StaticLGBox.Visibility = Visibility.Visible;
-                StaticLGText.Visibility = Visibility.Visible;
-                StaticLGText.Text = "Price PerBlock Amount:";
-
-                LargeLGBox.Visibility = Visibility.Hidden;
-                LargeLGText.Visibility = Visibility.Hidden;
-
-                SmallLGBox.Visibility = Visibility.Hidden;
-                SmallLGText.Visibility = Visibility.Hidden;
-            }
-            else
-            {
-                StaticLGBox.Visibility = Visibility.Visible;
-                StaticLGText.Visibility = Visibility.Visible;
-                StaticLGText.Text = "Static Grid Currency:";
-
-                LargeLGBox.Visibility = Visibility.Visible;
-                LargeLGText.Visibility = Visibility.Visible;
-
-                SmallLGBox.Visibility = Visibility.Visible;
-                SmallLGText.Visibility = Visibility.Visible;
-            }
-        }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
 
-            Process.Start(Plugin.Market.ServerOffersDir);
+            //Process.Start(Market.ServerOffersDir);
         }
 
 
 
         private void AddNewGpsButton(object sender, RoutedEventArgs e)
         {
-            foreach (Match item in Regex.Matches(GpsTextBox.Text, Utils.m_ScanPattern))
+            foreach (Match item in Regex.Matches(GpsTextBox.Text, CharacterUtilities.m_ScanPattern))
             {
                 ZoneRestrictions r = new ZoneRestrictions();
 
@@ -337,11 +272,11 @@ namespace QuantumHangar.UI
                 r.AllowLoading = true;
                 r.AllowSaving = true;
 
-                Plugin.Config.ZoneRestrictions.Add(r);
+                Config.ZoneRestrictions.Add(r);
 
                 GpsTextBox.Text = "";
 
-                Plugin.Config.RefreshModel();
+                Config.RefreshModel();
 
                 return;
             }
@@ -352,15 +287,15 @@ namespace QuantumHangar.UI
             ZoneRestrictions selectedItem = (ZoneRestrictions)ZoneRestrictions.SelectedItem;
             if (selectedItem != null)
             {
-                Plugin.Config.ZoneRestrictions.Remove(selectedItem);
-                Plugin.Config.RefreshModel();
+                Config.ZoneRestrictions.Remove(selectedItem);
+                Config.RefreshModel();
 
             }
         }
 
         private void ZoneGridLostFocust(object sender, RoutedEventArgs e)
         {
-            Plugin.Config.RefreshModel();
+            Config.RefreshModel();
         }
 
 
@@ -371,12 +306,12 @@ namespace QuantumHangar.UI
         private void AddNewBlacklistPlayer(object sender, RoutedEventArgs e)
         {
             //Update all public offer market items!
-            if (!Hangar.IsRunning)
+            if (!Hangar.ServerRunning)
             {
                 HangarBlacklist b = new HangarBlacklist();
                 b.Name = AutoHangarNameBox.Text;
 
-                Plugin.Config.AutoHangarPlayerBlacklist.Add(b);
+                Config.AutoHangarPlayerBlacklist.Add(b);
             }
             else
             {
@@ -401,10 +336,10 @@ namespace QuantumHangar.UI
                 {
                     Log.Warn("Unable to find given character. Enter SteamID in manually");
                 }
-                Plugin.Config.AutoHangarPlayerBlacklist.Add(b);
+                Config.AutoHangarPlayerBlacklist.Add(b);
             }
             AutoHangarNameBox.Text = "";
-            Plugin.Config.RefreshModel();
+            Config.RefreshModel();
         }
 
         private void DeletePlayer(object sender, RoutedEventArgs e)
@@ -412,14 +347,14 @@ namespace QuantumHangar.UI
             HangarBlacklist selectedItem = (HangarBlacklist)AutoHangarBlacklist.SelectedItem;
             if (selectedItem != null)
             {
-                Plugin.Config.AutoHangarPlayerBlacklist.Remove(selectedItem);
-                Plugin.Config.RefreshModel();
+                Config.AutoHangarPlayerBlacklist.Remove(selectedItem);
+                Config.RefreshModel();
             }
         }
 
         private void PlayerBlacklistLostFocus(object sender, RoutedEventArgs e)
         {
-            Plugin.Config.RefreshModel();
+            Config.RefreshModel();
         }
     }
 
