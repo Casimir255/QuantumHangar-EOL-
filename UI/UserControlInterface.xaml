@@ -167,7 +167,7 @@
 
 
 
-                            <RadioButton Grid.Row="0" Grid.Column="0" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadNearPlayer}">Force Near Player</RadioButton>
+                            <RadioButton Grid.Row="0" Grid.Column="0" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadMearPlayer}">Force Near Player</RadioButton>
                             <RadioButton  Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=Optional}">Player's Choice</RadioButton>
                             <RadioButton Grid.Row="0" Grid.Column="2" Margin="3" VerticalAlignment="Center" IsChecked="{Binding LoadType, Converter={StaticResource enumBooleanConverter}, ConverterParameter=ForceLoadNearOriginalPosition}">Forced Original Position</RadioButton>
 

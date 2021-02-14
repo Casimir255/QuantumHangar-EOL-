@@ -33,7 +33,7 @@ namespace QuantumHangar.Commands
 
         [Command("load", "Loads the specified grid by index number")]
         [Permission(MyPromoteLevel.None)]
-        public void Load(int ID)
+        public void Load(int ID, bool LoadNearPlayer = true)
         {
             PlayerChecks User = new PlayerChecks(Context);
             CommandSystem.RunTask(delegate { User.LoadGrid(ID); }, Context.Player?.SteamUserId);

@@ -70,6 +70,7 @@
     </Compile>
     <Compile Include="Utils\CharacterUtilities.cs" />
     <Compile Include="Utils\FileUtilities.cs" />
+    <Compile Include="Utils\GridObjExtractor.cs" />
     <Compile Include="Utils\GridUtilities.cs" />
     <Compile Include="Utils\PluginDependencies.cs" />
   </ItemGroup>

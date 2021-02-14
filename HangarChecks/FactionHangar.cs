@@ -8,5 +8,8 @@ namespace QuantumHangar.HangarChecks
 {
     public class FactionHangar
     {
+
+
+
     }
 }

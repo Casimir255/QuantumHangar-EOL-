@@ -516,7 +516,7 @@ namespace QuantumHangar.HangarChecks
 
         private bool CheckEnemyDistance(LoadType LoadingAtSavePoint, Vector3D Position = new Vector3D())
         {
-            if (LoadingAtSavePoint == LoadType.ForceLoadNearPlayer)
+            if (LoadingAtSavePoint == LoadType.ForceLoadMearPlayer)
             {
                 Position = PlayerPosition;
             }
@@ -640,7 +640,7 @@ namespace QuantumHangar.HangarChecks
                 KeepOriginalPosition = true;
                 return GridPosition;
             }
-            else if (Config.LoadType == LoadType.ForceLoadNearPlayer)
+            else if (Config.LoadType == LoadType.ForceLoadMearPlayer)
             {
                 if (CharacterPosition == Vector3D.Zero)
                 {

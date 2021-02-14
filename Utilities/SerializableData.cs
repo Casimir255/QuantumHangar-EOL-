@@ -29,7 +29,7 @@ namespace QuantumHangar
 
     public enum LoadType
     {
-        ForceLoadNearPlayer,
+        ForceLoadMearPlayer,
         Optional,
         ForceLoadNearOriginalPosition
 

@@ -1,4 +1,6 @@
 ﻿using QuantumHangar.HangarChecks;
+using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,6 +100,28 @@ namespace QuantumHangar.Commands
         {
             CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); });
         }
+
+
+        [Command("exportgrid", "exportgrids to obj")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void GridExporter()
+        {
+            Chat chat = new Chat(Context);
+            GridResult Result = new GridResult(true);
+
+            //Gets grids player is looking at
+            if (!Result.GetGrids(chat, Context.Player.Character as MyCharacter))
+                return;
+
+            chat.Respond(Result.Grids.Count.ToString());
+            typeof(MyCubeGrid).GetMethod("ExportToObjFile", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).Invoke(null, new object[] { Result.Grids, true, false });
+
+            chat.Respond("Done!");
+
+            //GridStamp stamp = Result.GenerateGridStamp();
+
+        }
+
 
     }
 

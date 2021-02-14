@@ -91,9 +91,6 @@ namespace QuantumHangar
             }
         }
 
-
-
-
         private bool CalculateSafePositionAndSpawn(bool keepOriginalLocation, Vector3D Target)
         {
             //This has to be ran on the main game thread!
@@ -330,7 +327,6 @@ namespace QuantumHangar
             }
 
         }
-
 
         private void CalculateGridPosition(Vector3D Target)
         {
