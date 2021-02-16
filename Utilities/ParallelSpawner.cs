@@ -31,18 +31,18 @@ namespace QuantumHangar
         //Rexxars spicy ParallelSpawner
         private readonly int _maxCount;
         private readonly IEnumerable<MyObjectBuilder_CubeGrid> _grids;
-        private readonly Action<HashSet<IMyCubeGrid>> _callback;
-        private readonly HashSet<IMyCubeGrid> _spawned;
+        private readonly Action<HashSet<MyCubeGrid>> _callback;
+        private readonly HashSet<MyCubeGrid> _spawned;
         private readonly Chat _Response;
         private static int Timeout = 6000;
         public bool _AlignToGravity = false;
 
-        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, bool AlignToGravity = false, Action<HashSet<IMyCubeGrid>> callback = null)
+        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, bool AlignToGravity = false, Action<HashSet<MyCubeGrid>> callback = null)
         {
             _grids = grids;
             _maxCount = grids.Count();
             _callback = callback;
-            _spawned = new HashSet<IMyCubeGrid>();
+            _spawned = new HashSet<MyCubeGrid>();
             _Response = chat;
             _AlignToGravity = AlignToGravity;
         }
@@ -274,7 +274,7 @@ namespace QuantumHangar
 
         public void Increment(IMyEntity entity)
         {
-            var grid = (IMyCubeGrid)entity;
+            var grid = (MyCubeGrid)entity;
             _spawned.Add(grid);
 
             if (_spawned.Count < _maxCount)

@@ -399,7 +399,7 @@ namespace QuantumHangar.Utils
 
                         MyCubeGrid grid = groupNodes.NodeData;
 
-                        if (grid.MarkedForClose || grid.MarkedAsTrash)
+                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
                             continue;
 
                         gridList.Add(grid);
@@ -423,7 +423,7 @@ namespace QuantumHangar.Utils
 
                         MyCubeGrid grid = groupNodes.NodeData;
 
-                        if (grid.MarkedForClose || grid.MarkedAsTrash)
+                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
                             continue;
 
                         gridList.Add(grid);
@@ -494,7 +494,7 @@ namespace QuantumHangar.Utils
             }
         }
 
-        public static bool BiggestGrid(List<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
+        public static bool BiggestGrid(IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
             return BiggestGrid != null;

@@ -55,6 +55,13 @@ namespace QuantumHangar.Commands
             CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); });
         }
 
+        [Command("enable", "Enables Hangar")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Enable(bool SetPluginEnable)
+        {
+            Hangar.Config.PluginEnabled = SetPluginEnable;
+        }
+
     }
 
 
@@ -101,6 +108,7 @@ namespace QuantumHangar.Commands
             CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); });
         }
 
+        /*
 
         [Command("exportgrid", "exportgrids to obj")]
         [Permission(MyPromoteLevel.Admin)]
@@ -122,6 +130,14 @@ namespace QuantumHangar.Commands
 
         }
 
+        */
+
+        [Command("enable", "Enables Hangar")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void Enable(bool SetPluginEnable)
+        {
+            Hangar.Config.PluginEnabled = SetPluginEnable;
+        }
 
     }
 

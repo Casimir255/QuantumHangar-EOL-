@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Torch.Commands;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace QuantumHangar.HangarChecks
@@ -373,7 +374,7 @@ namespace QuantumHangar.HangarChecks
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition);
 
 
-            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition);
+            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition, SpawnedGridsSuccessful);
             Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
             if(Spawner.Start(KeepOriginalPosition, SpawnPos))
             {
@@ -388,6 +389,14 @@ namespace QuantumHangar.HangarChecks
 
 
 
+        }
+
+        private void SpawnedGridsSuccessful(HashSet<MyCubeGrid> Grids)
+        {
+            GridUtilities.BiggestGrid(Grids, out MyCubeGrid BiggestGrid);
+
+            if(BiggestGrid != null && IdentityID != 0)
+                CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
         }
 
 
