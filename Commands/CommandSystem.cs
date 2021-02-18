@@ -16,7 +16,7 @@ namespace QuantumHangar.Commands
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(CommandSystem));
 
         /* Need an action system/Queue*/
-        private static ConcurrentDictionary<ulong, bool> Dictionary = new ConcurrentDictionary<ulong, bool>();
+        private static ConcurrentDictionary<ulong, Task> Dictionary = new ConcurrentDictionary<ulong, Task>();
 
         public static void RunTask(Action Invoker, ulong? SteamID = null)
         {
@@ -24,31 +24,65 @@ namespace QuantumHangar.Commands
                 return;
 
 
-            if (SteamID.HasValue && Dictionary.ContainsKey(SteamID.Value))
+            if (SteamID.HasValue && SteamID.Value != 1 && Dictionary.TryGetValue(SteamID.Value, out Task RunningTask))
             {
-                ScriptedChatMsg A = new ScriptedChatMsg();
-                A.Author = "Hangar";
-                A.Target = MySession.Static.Players.TryGetIdentityId(SteamID.Value);
-                A.Text = "Your previous command has yet to finish! Please wait!";
-                A.Font = "Blue";
-                A.Color = VRageMath.Color.Yellow;
+                if (RunningTask.Status == TaskStatus.Running)
+                {
+                    ScriptedChatMsg A = new ScriptedChatMsg();
+                    A.Author = "Hangar";
+                    A.Target = MySession.Static.Players.TryGetIdentityId(SteamID.Value);
+                    A.Text = "Your previous command has yet to finish! Please wait!";
+                    A.Font = "Blue";
+                    A.Color = VRageMath.Color.Yellow;
 
-                MyMultiplayerBase.SendScriptedChatMessage(ref A);
+                    MyMultiplayerBase.SendScriptedChatMessage(ref A);
 
 
-                //Log.Warn("Aborted Action!");
+                    //Log.Warn("Aborted Action!");
+                    return;
+                }
+
+                Log.Error("Task is being removed! Status: " + RunningTask.Status + " Errors: " + RunningTask.Exception.Message);
+                Dictionary.TryRemove(SteamID.Value, out _);
+            }
+
+            if (!SteamID.HasValue)
+            {
+                Log.Info(" Running Admin command!");
+
+                try
+                {
+                    Invoker.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex);
+                }
                 return;
             }
 
-            if (SteamID.HasValue)
+
+            if (SteamID.Value != 1)
             {
-                Dictionary.TryAdd(SteamID.Value, true);
                 Action Completed = delegate { RemoveAfterCompletion(SteamID.Value); };
                 Invoker += Completed;
+                Task Run = new Task(Invoker);
+                Run.Start();
+
+                Dictionary.TryAdd(SteamID.Value, Run);
+                return;
             }
 
-            Task Run = new Task(Invoker);
-            Run.Start();
+            if (SteamID.Value == 1)
+            {
+                Log.Warn("PP");
+                Task Run = new Task(Invoker);
+                Run.Start();
+                return;
+            }
+
+
+
         }
 
         private static void RemoveAfterCompletion(ulong SteamID)

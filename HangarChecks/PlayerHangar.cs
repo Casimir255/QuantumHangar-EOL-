@@ -18,7 +18,7 @@ namespace QuantumHangar.HangarChecks
     public class PlayerHangar : IDisposable
     {
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
-        private Chat Chat;
+        private readonly Chat Chat;
         public readonly PlayerInfo SelectedPlayerFile;
         private int MaxHangarSlots = 5;
         private bool IsAdminCalling = false;
@@ -34,17 +34,26 @@ namespace QuantumHangar.HangarChecks
 
         public PlayerHangar(ulong SteamID, Chat Respond, bool IsAdminCalling = false)
         {
-            this.SteamID = SteamID;
-            this.IdentityID = MySession.Static.Players.TryGetIdentityId(SteamID);
+            try
+            {
 
-            this.IsAdminCalling = IsAdminCalling;
-            Chat = Respond;
-            SelectedPlayerFile = new PlayerInfo();
+                this.SteamID = SteamID;
+                this.IdentityID = MySession.Static.Players.TryGetIdentityId(SteamID);
+
+                this.IsAdminCalling = IsAdminCalling;
+                Chat = Respond;
+                SelectedPlayerFile = new PlayerInfo();
 
 
-            PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
-            SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
-            GetMaxHangarSlot(SteamID);
+                PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
+                SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
+                GetMaxHangarSlot(SteamID);
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+            }
         }
 
         private void GetMaxHangarSlot(ulong SteamID)
@@ -84,7 +93,7 @@ namespace QuantumHangar.HangarChecks
         }
         private bool IsInputValid(int Index)
         {
-            if(Index < 0)
+            if (Index < 0)
             {
                 Chat?.Respond("Please input a positive non-zero number");
                 return false;
@@ -313,11 +322,11 @@ namespace QuantumHangar.HangarChecks
                 SelectedPlayerFile.Timer = stamp;
             }
 
-           
+
 
             SelectedPlayerFile.Grids.Add(Stamp);
 
-            if(!IgnoreSave)
+            if (!IgnoreSave)
                 SelectedPlayerFile.SaveFile();
         }
 
@@ -330,25 +339,43 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public void RemoveGridStamp(GridStamp Stamp)
+        public bool RemoveGridStamp(GridStamp Stamp)
         {
-            TimeStamp stamp = new TimeStamp();
-            stamp.OldTime = DateTime.Now;
-            stamp.PlayerID = IdentityID;
+            int Index = SelectedPlayerFile.Grids.FindIndex(x => x == Stamp);
+            return RemoveStamp(Index);
+        }
 
 
-            
+        public bool RemoveGridStamp(int ID)
+        {
+            return RemoveStamp(ID - 1);
+        }
 
-            SelectedPlayerFile.Grids.Remove(Stamp);
-            SelectedPlayerFile.Timer = stamp;
+        private bool RemoveStamp(int ID)
+        {
+            if (!IsInputValid(ID))
+                return false;
+
+
+            if (!IsAdminCalling)
+            {
+                TimeStamp stamp = new TimeStamp();
+                stamp.OldTime = DateTime.Now;
+                stamp.PlayerID = IdentityID;
+                SelectedPlayerFile.Timer = stamp;
+            }
 
             try
             {
-                File.Delete(Path.Combine(PlayersFolderPath, Stamp.GridName + ".sbc"));
+                File.Delete(Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID].GridName + ".sbc"));
+                SelectedPlayerFile.Grids.RemoveAt(ID);
                 SelectedPlayerFile.SaveFile();
-            }catch(Exception ex)
+                return true;
+            }
+            catch (Exception ex)
             {
                 Log.Error(ex);
+                return false;
             }
         }
 
@@ -364,15 +391,18 @@ namespace QuantumHangar.HangarChecks
 
         public void ListAllGrids()
         {
+
             if (SelectedPlayerFile.Grids.Count == 0)
             {
-                if(IsAdminCalling)
-                    Chat?.Respond("There are no grids in this players hangar!");
-                else 
-                    Chat?.Respond("You have no grids in your hangar!");
+                if (IsAdminCalling)
+                    Chat.Respond("There are no grids in this players hangar!");
+                else
+                    Chat.Respond("You have no grids in your hangar!");
 
                 return;
             }
+
+
 
             var sb = new StringBuilder();
 
@@ -381,6 +411,7 @@ namespace QuantumHangar.HangarChecks
             else
                 sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
 
+
             int count = 1;
             foreach (var grid in SelectedPlayerFile.Grids)
             {
@@ -388,7 +419,13 @@ namespace QuantumHangar.HangarChecks
                 count++;
             }
 
-            Chat?.Respond(sb.ToString());
+
+
+
+            Chat.Respond(sb.ToString());
+
+            return;
+
         }
 
         public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
@@ -418,13 +455,13 @@ namespace QuantumHangar.HangarChecks
 
         public void UpdateHangar()
         {
-            IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc" );
+            IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
             //Scan for new grids
 
             List<GridStamp> NewGrids = new List<GridStamp>();
             int AddedGrids = 0;
-            foreach(var file in myFiles)
+            foreach (var file in myFiles)
             {
                 if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(file)))
                     continue;
@@ -435,7 +472,7 @@ namespace QuantumHangar.HangarChecks
             }
 
             int RemovedGrids = 0;
-            for(int i = SelectedPlayerFile.Grids.Count -1; i >= 0; i--)
+            for (int i = SelectedPlayerFile.Grids.Count - 1; i >= 0; i--)
             {
                 if (!myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
                 {
@@ -454,8 +491,9 @@ namespace QuantumHangar.HangarChecks
 
         public void Dispose()
         {
-            
+
         }
+
     }
 
 
@@ -467,8 +505,8 @@ namespace QuantumHangar.HangarChecks
     {
         //This is the players info file. Should contain methods for finding grids/checking timers 
 
-        [JsonProperty]  public List<GridStamp> Grids = new List<GridStamp>();
-        [JsonProperty]  public TimeStamp Timer;
+        [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
+        [JsonProperty] public TimeStamp Timer;
 
         //This can prob be removed
         [JsonProperty] public List<GridStamp> GridBackups = new List<GridStamp>();
@@ -484,7 +522,7 @@ namespace QuantumHangar.HangarChecks
         public int LargeGrids { get; private set; } = 0;
         public int SmallGrids { get; private set; } = 0;
 
-        private Settings Config { get { return Hangar.Config;  } }
+        private Settings Config { get { return Hangar.Config; } }
 
 
         public bool LoadFile(string FolderPath, ulong SteamID)
@@ -554,7 +592,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool ReachedHangarLimit(int MaxAmount)
         {
-            if(Grids.Count >= MaxAmount)
+            if (Grids.Count >= MaxAmount)
             {
                 return true;
             }
@@ -576,7 +614,7 @@ namespace QuantumHangar.HangarChecks
 
         public GridStamp GetGrid(int ID)
         {
-            return Grids[ID-1];
+            return Grids[ID - 1];
         }
 
         public void SaveFile()
@@ -586,7 +624,7 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        
+
 
     }
 

@@ -391,6 +391,12 @@ namespace QuantumHangar.HangarChecks
 
         }
 
+        public void RemoveGrid(int ID)
+        {
+            if (PlayersHanger.RemoveGridStamp(ID))
+                Chat.Respond("Successfully removed grid!");
+        }
+
         private void SpawnedGridsSuccessful(HashSet<MyCubeGrid> Grids)
         {
             GridUtilities.BiggestGrid(Grids, out MyCubeGrid BiggestGrid);
@@ -398,11 +404,6 @@ namespace QuantumHangar.HangarChecks
             if(BiggestGrid != null && IdentityID != 0)
                 CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
         }
-
-
-       
-
-
 
         private bool CheckZoneRestrictions(bool IsSave)
         {

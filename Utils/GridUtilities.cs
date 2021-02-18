@@ -260,7 +260,7 @@ namespace QuantumHangar.Utils
 
             Grids = new List<MyCubeGrid>();
 
-            if (gridNameOrEntityId == null && character == null)
+            if (string.IsNullOrEmpty(gridNameOrEntityId) && character == null)
                 return false;
 
             if (Config.EnableSubGrids)
@@ -299,7 +299,7 @@ namespace QuantumHangar.Utils
             {
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups;
 
-                if (gridNameOrEntityId == null)
+                if (string.IsNullOrEmpty(gridNameOrEntityId))
                     groups = GridFinder.FindLookAtGridGroupMechanical(character);
                 else
                     groups = GridFinder.FindGridGroupMechanical(gridNameOrEntityId);

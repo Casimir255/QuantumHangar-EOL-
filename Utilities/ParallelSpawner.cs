@@ -1,4 +1,5 @@
 ﻿using Havok;
+using NLog;
 using QuantumHangar.Utilities;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
@@ -481,7 +482,7 @@ namespace QuantumHangar
     {
         private CommandContext _context;
         private bool _mod;
-
+        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(Chat));
         //Simple chat class so i can control the colors easily
         public Chat(CommandContext context, bool Mod = false)
         {
@@ -494,9 +495,10 @@ namespace QuantumHangar
             if (_context == null)
                 return;
 
-
+            //Log.Warn(response+" Mod: "+ _mod);
             if (_mod)
             {
+                
                 //Should fix admin commands
                 _context.Respond(response);
             }
@@ -504,10 +506,6 @@ namespace QuantumHangar
             {
                 _context.Respond(response, Color.Yellow, "Hangar");
             }
-        }
-        public static void Respond(string response, CommandContext context)
-        {
-            context.Respond(response, Color.Yellow, "Hangar");
         }
     }
 }

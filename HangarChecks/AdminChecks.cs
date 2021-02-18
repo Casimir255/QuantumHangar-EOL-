@@ -28,12 +28,14 @@ namespace QuantumHangar.HangarChecks
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AdminChecks));
         private readonly bool InConsole = false;
 
+        private CommandContext Ctx;
+
         public AdminChecks(CommandContext Context)
         {
-            Chat = new Chat(Context);
 
             InConsole = TryGetAdminPosition(Context.Player);
-
+            Chat = new Chat(Context, InConsole);
+            Ctx = Context;
         }
 
         private bool TryGetAdminPosition(IMyPlayer Admin)
@@ -64,7 +66,7 @@ namespace QuantumHangar.HangarChecks
             GridStamp stamp = Result.GenerateGridStamp();
             
 
-            PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat);
+            PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat, true);
 
 
             GridUtilities.FormatGridName(PlayersHanger, stamp);
@@ -84,10 +86,10 @@ namespace QuantumHangar.HangarChecks
 
         public void LoadGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, Chat, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
                 return;
 
-            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat);
+            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
 
             if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
                 return;
@@ -113,8 +115,11 @@ namespace QuantumHangar.HangarChecks
 
         public void ListGrids(string NameOrSteamID)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, Chat, out ulong PlayerSteamID))
+
+
+            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
                 return;
+
 
             PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
             PlayersHanger.ListAllGrids();
@@ -122,16 +127,25 @@ namespace QuantumHangar.HangarChecks
 
         public void SyncHangar(string NameOrSteamID)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, Chat, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
                 return;
 
             PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
             PlayersHanger.UpdateHangar();
-
-
         }
 
-        public static bool AdminTryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
+        public void RemoveGrid(string NameOrSteamID, int Index)
+        {
+            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
+                return;
+
+            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
+            if (PlayersHanger.RemoveGridStamp(Index))
+                Chat.Respond("Successfully removed grid!");
+           
+        }
+
+        public bool AdminTryGetPlayerSteamID(string NameOrSteamID, out ulong PSteamID)
         {
             ulong? SteamID;
             if (UInt64.TryParse(NameOrSteamID, out ulong PlayerSteamID))
