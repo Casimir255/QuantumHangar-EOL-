@@ -405,7 +405,7 @@ namespace QuantumHangar.Utils
                         gridList.Add(grid);
                     }
 
-                    if (IsPlayerIdCorrect(playerId, gridList))
+                    if (gridList.Count != 0 && IsPlayerIdCorrect(playerId, gridList))
                         grids.Add(gridList);
                 });
 
@@ -429,7 +429,7 @@ namespace QuantumHangar.Utils
                         gridList.Add(grid);
                     }
 
-                    if (IsPlayerIdCorrect(playerId, gridList))
+                    if (gridList.Count != 0 && IsPlayerIdCorrect(playerId, gridList))
                         grids.Add(gridList);
                 });
             }
@@ -493,6 +493,7 @@ namespace QuantumHangar.Utils
                 Log.Warn(e);
             }
         }
+
 
         public static bool BiggestGrid(IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
         {

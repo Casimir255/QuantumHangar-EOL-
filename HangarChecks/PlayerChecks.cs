@@ -353,7 +353,7 @@ namespace QuantumHangar.HangarChecks
             PlayersHanger.ListAllGrids();
         }
 
-        public void LoadGrid(int ID)
+        public void LoadGrid(int ID, bool LoadNearPlayer)
         {
             if (!PerformMainChecks(false))
                 return;
@@ -371,7 +371,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
-            Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition);
+            Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition, LoadNearPlayer);
 
 
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition, SpawnedGridsSuccessful);

@@ -58,19 +58,19 @@ namespace QuantumHangar.Serialization
         {
 
 
-            Log.Info("Collecting ObjectBuilders");
+            //Log.Info("Collecting ObjectBuilders");
             List<MyObjectBuilder_CubeGrid> Return = new List<MyObjectBuilder_CubeGrid>();
 
             foreach (MyCubeGrid grid in Grids)
             {
 
 
-                Log.Info(grid.DisplayName);
+                //Log.Info(grid.DisplayName);
                 RemoveCharacters(grid);
-                Log.Info("Removed Characters!");
+                //Log.Info("Removed Characters!");
                 if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
                     throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
-                Log.Info("Adding objectbuilder!");
+               // Log.Info("Adding objectbuilder!");
                 Return.Add(objectBuilder);
             }
 

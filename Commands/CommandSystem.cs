@@ -48,7 +48,7 @@ namespace QuantumHangar.Commands
 
             if (!SteamID.HasValue)
             {
-                Log.Info(" Running Admin command!");
+                //Log.Info(" Running Admin command!");
 
                 try
                 {
@@ -75,7 +75,7 @@ namespace QuantumHangar.Commands
 
             if (SteamID.Value == 1)
             {
-                Log.Warn("PP");
+                //Log.Warn("PP");
                 Task Run = new Task(Invoker);
                 Run.Start();
                 return;
