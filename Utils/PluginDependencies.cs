@@ -21,6 +21,8 @@ namespace QuantumHangar.Utils
         private static MethodInfo BackupGridBuilders;
         private static ITorchPlugin GridBackupRef;
 
+        public static bool BlockLimiterInstalled { get; private set; } = false;
+
 
         public static void InitPluginDependencies(PluginManager Plugins)
         {
@@ -43,6 +45,8 @@ namespace QuantumHangar.Utils
            Type GridBackupType = DeclareInstalledPlugin(Plugin);
            BackupGridBuilders = GridBackupType.GetMethod("BackupGridsManuallyWithBuilders", BindingFlags.Public | BindingFlags.Instance, null, new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null);
            GridBackupRef = Plugin;
+
+           BlockLimiterInstalled = true;
         }
 
         private static void AquireBlockLimiter(ITorchPlugin Plugin)
@@ -63,14 +67,17 @@ namespace QuantumHangar.Utils
             }
         }
 
-        public static void CheckGridLimits(List<MyObjectBuilder_CubeGrid> Grids, long AgainstUser)
+        public static bool CheckGridLimits(List<MyObjectBuilder_CubeGrid> Grids, long AgainstUser)
         {
             try
             {
-                CheckFutureLimits?.Invoke(null, new object[] { Grids.ToArray(), AgainstUser });
+                bool Return = (bool)CheckFutureLimits?.Invoke(null, new object[] { Grids.ToArray(), AgainstUser });
+                return Return;
+
             }catch(Exception ex)
             {
                 Log.Error(ex, "BlockLimiter threw an error!");
+                return false;
             }
         }
 

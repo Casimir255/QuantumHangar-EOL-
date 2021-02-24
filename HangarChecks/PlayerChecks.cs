@@ -361,8 +361,12 @@ namespace QuantumHangar.HangarChecks
             if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
             {
                 Log.Error("Loading grid failed!");
+                return;
             }
 
+
+            if (!PlayersHanger.CheckLimits(Stamp, Grids))
+                return;
 
             if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition))
                 return;
