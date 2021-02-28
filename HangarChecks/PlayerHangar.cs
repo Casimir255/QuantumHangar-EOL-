@@ -503,7 +503,7 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        private bool CheckGridLimits( GridStamp Grid)
+        private bool CheckGridLimits(GridStamp Grid)
         {
             //Backwards compatibale
             if (Config.OnLoadTransfer)

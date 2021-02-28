@@ -113,11 +113,14 @@ namespace QuantumHangar.HangarChecks
             if (!Result.GetGrids(Chat, UserCharacter))
                 return;
 
-            
+           
+
             //Calculates incoming grids data
             GridStamp GridData = Result.GenerateGridStamp();
 
-            
+
+            //PlayersHanger.CheckGridLimits(GridData);
+
             //Checks for single and all slot block and grid limits
             if (!PlayersHanger.ExtensiveLimitChecker(GridData))
                 return;
@@ -360,7 +363,8 @@ namespace QuantumHangar.HangarChecks
 
             if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
             {
-                Log.Error("Loading grid failed!");
+                Log.Error($"Loading grid {ID} failed for {IdentityID}!");
+                Chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
 
@@ -374,8 +378,13 @@ namespace QuantumHangar.HangarChecks
             if (!RequireLoadCurrency(Stamp))
                 return;
 
+
+
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition, LoadNearPlayer);
+
+            if (!CheckDistanceToLoadPoint(SpawnPos))
+                return;
 
 
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition, SpawnedGridsSuccessful);
@@ -530,6 +539,7 @@ namespace QuantumHangar.HangarChecks
 
         private bool CheckEnemyDistance(LoadType LoadingAtSavePoint, Vector3D Position = new Vector3D())
         {
+
             if (LoadingAtSavePoint == LoadType.ForceLoadMearPlayer)
             {
                 Position = PlayerPosition;
@@ -705,6 +715,21 @@ namespace QuantumHangar.HangarChecks
         private void ChangeBalance(long Amount)
         {
             MyBankingSystem.ChangeBalance(IdentityID, Amount);
+        }
+
+        private bool CheckDistanceToLoadPoint(Vector3D LoadPoint)
+        {
+            if (!Config.RequireLoadRadius)
+                return true;
+
+
+            double Distance = Vector3D.Distance(PlayerPosition, LoadPoint);
+            if (Distance < Config.LoadRadius)
+                return true;
+
+            CharacterUtilities.SendGps(LoadPoint, "Load Point", IdentityID);
+            Chat.Respond("Cannot load! You are " + Distance + "m away from the load point! Check your GPS points!");
+            return false;
         }
 
 
