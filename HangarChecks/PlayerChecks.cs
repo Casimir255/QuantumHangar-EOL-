@@ -113,7 +113,10 @@ namespace QuantumHangar.HangarChecks
             if (!Result.GetGrids(Chat, UserCharacter))
                 return;
 
-           
+
+            if (IsAnyGridInsideSafeZone(Result))
+                return;
+            
 
             //Calculates incoming grids data
             GridStamp GridData = Result.GenerateGridStamp();
@@ -728,10 +731,24 @@ namespace QuantumHangar.HangarChecks
                 return true;
 
             CharacterUtilities.SendGps(LoadPoint, "Load Point", IdentityID);
-            Chat.Respond("Cannot load! You are " + Distance + "m away from the load point! Check your GPS points!");
+            Chat.Respond("Cannot load! You are " + Math.Round(Distance,0) + "m away from the load point! Check your GPS points!");
             return false;
         }
 
+        private bool IsAnyGridInsideSafeZone(GridResult Result)
+        {
+            foreach (MySafeZone Zone in MySessionComponentSafeZones.SafeZones)
+            {
+                if (Zone.Entities.Contains(Result.BiggestGrid.EntityId))
+                {
+                    Chat?.Respond("Cannot save a grid in safezone!");
+                    return true;
 
+                }
+                    
+            }
+
+            return false;
+        }
     }
 }
