@@ -37,7 +37,7 @@ namespace QuantumHangar.Commands
         public void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
             AdminChecks User = new AdminChecks(Context);
-            CommandSystem.RunTask(delegate { User.LoadGrid(NameOrSteamID, ID, FromSavePos); }, 1);
+            CommandSystem.RunTask(delegate { User.LoadGrid(NameOrSteamID, ID, FromSavePos); });
         }
 
         [Command("remove", "removes the grid from the players hangar")]
@@ -53,7 +53,7 @@ namespace QuantumHangar.Commands
         public void Sync(string NameOrSteamID)
         {
             AdminChecks User = new AdminChecks(Context);
-            CommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); }, 1);
+            CommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); });
 
         }
 
@@ -125,7 +125,7 @@ namespace QuantumHangar.Commands
             CommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); }, 1);
         }
 
-        /*
+        
 
         [Command("exportgrid", "exportgrids to obj")]
         [Permission(MyPromoteLevel.Admin)]
@@ -147,7 +147,7 @@ namespace QuantumHangar.Commands
 
         }
 
-        */
+        
 
         [Command("enable", "Enables Hangar")]
         [Permission(MyPromoteLevel.Admin)]

@@ -55,28 +55,28 @@ namespace QuantumHangar.HangarChecks
                 Chat?.Respond("Plugin is not enabled!");
                 return false;
             }
-               
+
 
             if (PlayerHangar.IsServerSaving(Chat))
             {
                 Chat?.Respond("Server is saving or is paused!");
                 return false;
             }
-                
+
 
             if (!CheckZoneRestrictions(IsSaving))
             {
                 Chat?.Respond("You are not in the right zone!");
                 return false;
             }
-                
+
 
             if (!CheckGravity())
             {
                 Chat?.Respond("Unable to perform this action in gravity!");
                 return false;
             }
-                
+
 
             PlayersHanger = new PlayerHangar(SteamID, Chat);
 
@@ -85,7 +85,7 @@ namespace QuantumHangar.HangarChecks
                 Chat?.Respond("Command cooldown is still in affect!");
                 return false;
             }
-                
+
 
 
             /*
@@ -106,7 +106,7 @@ namespace QuantumHangar.HangarChecks
             if (!PlayersHanger.CheckHanagarLimits())
                 return;
 
-               
+
             GridResult Result = new GridResult();
 
             //Gets grids player is looking at
@@ -116,7 +116,7 @@ namespace QuantumHangar.HangarChecks
 
             if (IsAnyGridInsideSafeZone(Result))
                 return;
-            
+
 
             //Calculates incoming grids data
             GridStamp GridData = Result.GenerateGridStamp();
@@ -128,20 +128,20 @@ namespace QuantumHangar.HangarChecks
             if (!PlayersHanger.ExtensiveLimitChecker(GridData))
                 return;
 
-            
+
             if (!CheckEnemyDistance(Config.LoadType, PlayerPosition))
                 return;
 
 
             if (!RequireSaveCurrency(Result))
                 return;
-            
-           
+
+
             GridUtilities.FormatGridName(PlayersHanger, GridData);
             GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
             if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
             {
-               
+
                 PlayersHanger.SaveGridStamp(GridData);
                 Chat?.Respond("Save Complete!");
             }
@@ -392,7 +392,7 @@ namespace QuantumHangar.HangarChecks
 
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition, SpawnedGridsSuccessful);
             Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
-            if(Spawner.Start(KeepOriginalPosition, SpawnPos))
+            if (Spawner.Start(KeepOriginalPosition, SpawnPos))
             {
                 Chat?.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);
@@ -417,7 +417,7 @@ namespace QuantumHangar.HangarChecks
         {
             GridUtilities.BiggestGrid(Grids, out MyCubeGrid BiggestGrid);
 
-            if(BiggestGrid != null && IdentityID != 0)
+            if (BiggestGrid != null && IdentityID != 0)
                 CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
         }
 
@@ -654,7 +654,7 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        private Vector3D DetermineSpawnPosition(Vector3D GridPosition, Vector3D CharacterPosition, out bool KeepOriginalPosition,  bool PlayersSpawnNearPlayer = false)
+        private Vector3D DetermineSpawnPosition(Vector3D GridPosition, Vector3D CharacterPosition, out bool KeepOriginalPosition, bool PlayersSpawnNearPlayer = false)
         {
             //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
             if (Config.LoadType == LoadType.ForceLoadNearOriginalPosition)
@@ -702,7 +702,7 @@ namespace QuantumHangar.HangarChecks
             try
             {
 
-                
+
                 balance = MyBankingSystem.GetBalance(IdentityID);
                 return true;
             }
@@ -731,7 +731,7 @@ namespace QuantumHangar.HangarChecks
                 return true;
 
             CharacterUtilities.SendGps(LoadPoint, "Load Point", IdentityID);
-            Chat.Respond("Cannot load! You are " + Math.Round(Distance,0) + "m away from the load point! Check your GPS points!");
+            Chat.Respond("Cannot load! You are " + Math.Round(Distance, 0) + "m away from the load point! Check your GPS points!");
             return false;
         }
 
@@ -745,7 +745,7 @@ namespace QuantumHangar.HangarChecks
                     return true;
 
                 }
-                    
+
             }
 
             return false;

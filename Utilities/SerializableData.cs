@@ -16,6 +16,7 @@ using Sandbox.Game.Entities.Character;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using Sandbox.Game.World;
+using NLog;
 
 namespace QuantumHangar
 {
@@ -468,6 +469,8 @@ namespace QuantumHangar
 
     public class GridResult
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
         public List<MyCubeGrid> Grids = new List<MyCubeGrid>();
         public MyCubeGrid BiggestGrid;
         public string GridName;
@@ -511,8 +514,8 @@ namespace QuantumHangar
             else
                 BiggestOwner = BiggestGrid.BigOwners[0];
 
-
-            if(!GetOwner(BiggestOwner, out OwnerSteamID))
+            
+            if (!GetOwner(BiggestOwner, out OwnerSteamID))
             {
                 Response.Respond("Unable to get owners SteamID");
                 return false;
@@ -533,13 +536,21 @@ namespace QuantumHangar
 
         public bool GetOwner(long BiggestOwner, out ulong SteamID)
         {
+
             SteamID = 0;
             if (MySession.Static.Players.IdentityIsNpc(BiggestOwner))
+            {
+                Log.Error($"{BiggestOwner} has been identitied as npc!");
                 return false;
+            }
 
             SteamID = MySession.Static.Players.TryGetSteamId(BiggestOwner);
             if (SteamID == 0)
+            {
+                Log.Error($"{BiggestOwner} doesnt have a steamID!");
                 return false;
+            }
+                
 
 
             return true;
