@@ -32,7 +32,7 @@ namespace QuantumHangar.HangarChecks
 
         private Vector3D SpawnPosition = Vector3D.Zero;
         private bool LoadingAtSave = true;
-        private PlayerHangar PlayersHanger;
+        private PlayerHangar PlayersHanger { get; set; }
 
         public static Settings Config { get { return Hangar.Config; } }
         private bool LoadFromSavePosition;
@@ -409,6 +409,7 @@ namespace QuantumHangar.HangarChecks
 
         public void RemoveGrid(int ID)
         {
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
             if (PlayersHanger.RemoveGridStamp(ID))
                 Chat.Respond("Successfully removed grid!");
         }
