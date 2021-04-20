@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace QuantumHangar.Commands
 {
-    public static class CommandSystem
+    public static class HangarCommandSystem
     {
-        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(CommandSystem));
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
         /* Need an action system/Queue*/
         private static ConcurrentDictionary<ulong, Task> Dictionary = new ConcurrentDictionary<ulong, Task>();

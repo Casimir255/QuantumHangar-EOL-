@@ -20,7 +20,7 @@ namespace QuantumHangar.Commands
         public void SaveGrid()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -28,7 +28,7 @@ namespace QuantumHangar.Commands
         public void ListGrids()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
         }
 
         [Command("load", "Loads the specified grid by index number")]
@@ -36,7 +36,7 @@ namespace QuantumHangar.Commands
         public void Load(int ID, bool LoadNearPlayer = false)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.LoadGrid(ID, LoadNearPlayer); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.LoadGrid(ID, LoadNearPlayer); }, Context.Player?.SteamUserId);
         }
 
         [Command("remove", "removes the grid from your hangar")]
@@ -44,7 +44,7 @@ namespace QuantumHangar.Commands
         public void Remove(int ID)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
         }
 
 
@@ -53,7 +53,7 @@ namespace QuantumHangar.Commands
         public void Info()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
         }
     }
 
@@ -66,7 +66,7 @@ namespace QuantumHangar.Commands
         public void SaveGrid()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.SaveGrid(); }, Context.Player?.SteamUserId);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -74,7 +74,7 @@ namespace QuantumHangar.Commands
         public void ListGrids()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.ListGrids(); }, Context.Player?.SteamUserId);
         }
 
         [Command("load", "Loads the specified grid by index number")]
@@ -82,7 +82,7 @@ namespace QuantumHangar.Commands
         public void Load(int ID, bool LoadNearPlayer = false)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.LoadGrid(ID, LoadNearPlayer); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.LoadGrid(ID, LoadNearPlayer); }, Context.Player?.SteamUserId);
         }
 
 
@@ -91,7 +91,7 @@ namespace QuantumHangar.Commands
         public void Remove(int ID)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
         }
 
 
@@ -100,7 +100,7 @@ namespace QuantumHangar.Commands
         public void Info()
         {
             PlayerChecks User = new PlayerChecks(Context);
-            CommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
         }
 
     }

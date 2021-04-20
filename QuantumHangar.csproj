@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoHangar\Autohangar.cs" />
-    <Compile Include="Commands\CommandSystem.cs" />
+    <Compile Include="Commands\HangarCommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />
     <Compile Include="Commands\HangarCommands.cs" />
     <Compile Include="Hangar.cs" />
