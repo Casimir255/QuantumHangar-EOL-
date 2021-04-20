@@ -423,22 +423,45 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public void DetailedReport()
+        public void DetailedReport(int ID)
         {
             StringBuilder Response = new StringBuilder();
-            string Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ MaxHangarSlots}";
-            Response.AppendLine("- - Global Limits - -");
-            Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
-            Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
-            Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.TotalMaxStaticGrids}");
-            Response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{ Config.TotalMaxLargeGrids}");
-            Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.TotalMaxSmallGrids}");
-            Response.AppendLine();
-            Response.AppendLine("- - Individual Hangar Slots - -");
-            for(int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+            string Prefix = "";
+            if (ID == 0)
             {
-                GridStamp Stamp = SelectedPlayerFile.Grids[i];
-                Response.AppendLine($" * * Slot {i+1} : {Stamp.GridName} * *");
+                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ MaxHangarSlots}";
+                Response.AppendLine("- - Global Limits - -");
+                Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
+                Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
+                Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.TotalMaxStaticGrids}");
+                Response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{ Config.TotalMaxLargeGrids}");
+                Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.TotalMaxSmallGrids}");
+                Response.AppendLine();
+                Response.AppendLine("- - Individual Hangar Slots - -");
+                for (int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+                {
+                    GridStamp Stamp = SelectedPlayerFile.Grids[i];
+                    Response.AppendLine($" * * Slot {i + 1} : {Stamp.GridName} * *");
+                    Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
+                    Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                    Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
+                    Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
+                    Response.AppendLine($"SmallGrids: {Stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
+                    Response.AppendLine($"TotalGridCount: {Stamp.NumberOfGrids}");
+                    Response.AppendLine($"Mass: {Stamp.GridMass}kg");
+                    Response.AppendLine($"Built%: {Stamp.GridBuiltPercent * 100}%");
+                    Response.AppendLine($" * * * * * * * * * * * * * * * * ");
+                    Response.AppendLine();
+                }
+            }
+            else
+            {
+                if (!IsInputValid(ID - 1))
+                    return;
+
+
+                GridStamp Stamp = SelectedPlayerFile.Grids[ID-1];
+                Prefix = $"Slot {ID} : {Stamp.GridName}";
                 Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
                 Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
                 Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
@@ -446,12 +469,10 @@ namespace QuantumHangar.HangarChecks
                 Response.AppendLine($"SmallGrids: {Stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
                 Response.AppendLine($"TotalGridCount: {Stamp.NumberOfGrids}");
                 Response.AppendLine($"Mass: {Stamp.GridMass}kg");
-                Response.AppendLine($"Built%: {Stamp.GridBuiltPercent*100}%");
-                Response.AppendLine($" * * * * * * * * * * * * * * * * ");
+                Response.AppendLine($"Built%: {Stamp.GridBuiltPercent * 100}%");
                 Response.AppendLine();
             }
 
-            Log.Info("Completed detailed report!");
             ModCommunication.SendMessageTo(new DialogMessage("Hangar Info", Prefix, Response.ToString()), SteamID);
             //Chat.Respond(Response.ToString());
 

@@ -50,10 +50,10 @@ namespace QuantumHangar.Commands
 
         [Command("info", "Provides some info of the current grid in your hangar")]
         [Permission(MyPromoteLevel.None)]
-        public void Info()
+        public void Info(int ID = 0)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(ID); }, Context.Player?.SteamUserId);
         }
     }
 
@@ -97,10 +97,10 @@ namespace QuantumHangar.Commands
 
         [Command("info", "Provides some info of the current grid in your hangar")]
         [Permission(MyPromoteLevel.None)]
-        public void Info()
+        public void Info(int ID = 0)
         {
             PlayerChecks User = new PlayerChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
+            HangarCommandSystem.RunTask(delegate { User.DetailedInfo(ID); }, Context.Player?.SteamUserId);
         }
 
     }
