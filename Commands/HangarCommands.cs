@@ -46,6 +46,15 @@ namespace QuantumHangar.Commands
             PlayerChecks User = new PlayerChecks(Context);
             CommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
         }
+
+
+        [Command("info", "Provides some info of the current grid in your hangar")]
+        [Permission(MyPromoteLevel.None)]
+        public void Info()
+        {
+            PlayerChecks User = new PlayerChecks(Context);
+            CommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
+        }
     }
 
     [Torch.Commands.Category("h")]
@@ -83,6 +92,15 @@ namespace QuantumHangar.Commands
         {
             PlayerChecks User = new PlayerChecks(Context);
             CommandSystem.RunTask(delegate { User.RemoveGrid(ID); }, Context.Player?.SteamUserId);
+        }
+
+
+        [Command("info", "Provides some info of the current grid in your hangar")]
+        [Permission(MyPromoteLevel.None)]
+        public void Info()
+        {
+            PlayerChecks User = new PlayerChecks(Context);
+            CommandSystem.RunTask(delegate { User.DetailedInfo(); }, Context.Player?.SteamUserId);
         }
 
     }

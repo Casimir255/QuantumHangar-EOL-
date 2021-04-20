@@ -359,6 +359,12 @@ namespace QuantumHangar.HangarChecks
             PlayersHanger.ListAllGrids();
         }
 
+        public void DetailedInfo()
+        {
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
+            PlayersHanger.DetailedReport();
+        }
+
         public void LoadGrid(int ID, bool LoadNearPlayer)
         {
             if (!PerformMainChecks(false))

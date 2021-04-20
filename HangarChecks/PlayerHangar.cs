@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Torch.Mod;
+using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
 
@@ -107,7 +109,7 @@ namespace QuantumHangar.HangarChecks
                 Chat?.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
                 return false;
             }
-           
+
             return true;
         }
 
@@ -382,10 +384,6 @@ namespace QuantumHangar.HangarChecks
             return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, IdentityID);
         }
 
-
-
-
-
         public void ListAllGrids()
         {
 
@@ -424,6 +422,43 @@ namespace QuantumHangar.HangarChecks
             return;
 
         }
+
+        public void DetailedReport()
+        {
+            StringBuilder Response = new StringBuilder();
+            string Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ MaxHangarSlots}";
+            Response.AppendLine("- - Global Limits - -");
+            Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
+            Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
+            Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.TotalMaxStaticGrids}");
+            Response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{ Config.TotalMaxLargeGrids}");
+            Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.TotalMaxSmallGrids}");
+            Response.AppendLine();
+            Response.AppendLine("- - Individual Hangar Slots - -");
+            for(int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+            {
+                GridStamp Stamp = SelectedPlayerFile.Grids[i];
+                Response.AppendLine($" * * Slot {i+1} : {Stamp.GridName} * *");
+                Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
+                Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
+                Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
+                Response.AppendLine($"SmallGrids: {Stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
+                Response.AppendLine($"TotalGridCount: {Stamp.NumberOfGrids}");
+                Response.AppendLine($"Mass: {Stamp.GridMass}kg");
+                Response.AppendLine($"Built%: {Stamp.GridBuiltPercent*100}%");
+                Response.AppendLine($" * * * * * * * * * * * * * * * * ");
+                Response.AppendLine();
+            }
+
+            Log.Info("Completed detailed report!");
+            ModCommunication.SendMessageTo(new DialogMessage("Hangar Info", Prefix, Response.ToString()), SteamID);
+            //Chat.Respond(Response.ToString());
+
+
+        }
+
+
 
         public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
         {
@@ -510,7 +545,7 @@ namespace QuantumHangar.HangarChecks
                 return true;
 
             MyIdentity NewPlayer = MySession.Static.Players.TryGetIdentity(IdentityID);
-            if(NewPlayer == null)
+            if (NewPlayer == null)
             {
                 Log.Fatal("Unable to get player identity! " + IdentityID);
                 return false;
@@ -650,78 +685,78 @@ namespace QuantumHangar.HangarChecks
 
                     //Cycle each grid in the ship blueprints
 
-                        foreach (var CubeGrid in shipblueprints)
+                    foreach (var CubeGrid in shipblueprints)
+                    {
+
+                        //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
+                        if (BiggestGrid < CubeGrid.CubeBlocks.Count())
+                        {
+                            BiggestGrid = CubeGrid.CubeBlocks.Count();
+                        }
+                        blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
+
+                        foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
                         {
 
-                            //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
-                            if (BiggestGrid < CubeGrid.CubeBlocks.Count())
+                            MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
+
+                            if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
                             {
-                                BiggestGrid = CubeGrid.CubeBlocks.Count();
-                            }
-                            blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
-
-                            foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
-                            {
-
-                                MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
-
-                                if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
+                                //Check for BlockPair or SubType?
+                                string BlockName = "";
+                                if (Config.SBlockLimits)
                                 {
-                                    //Check for BlockPair or SubType?
-                                    string BlockName = "";
-                                    if (Config.SBlockLimits)
-                                    {
-                                        //Server Block Limits
-                                        BlockName = myCubeBlockDefinition.BlockPairName;
+                                    //Server Block Limits
+                                    BlockName = myCubeBlockDefinition.BlockPairName;
 
+                                }
+                                else
+                                {
+                                    //Custom Block SubType Limits
+                                    BlockName = myCubeBlockDefinition.Id.SubtypeName;
+                                }
+
+                                long blockowner2 = 0L;
+                                blockowner2 = block.BuiltBy;
+
+                                //If the player dictionary already has a Key, we need to retrieve it
+                                if (BlocksAndOwnerForLimits.ContainsKey(blockowner2))
+                                {
+                                    //if the dictionary already contains the same block type
+                                    Dictionary<string, int> dictforuser = BlocksAndOwnerForLimits[blockowner2];
+                                    if (dictforuser.ContainsKey(BlockName))
+                                    {
+                                        dictforuser[BlockName]++;
                                     }
                                     else
                                     {
-                                        //Custom Block SubType Limits
-                                        BlockName = myCubeBlockDefinition.Id.SubtypeName;
+                                        dictforuser.Add(BlockName, 1);
                                     }
-
-                                    long blockowner2 = 0L;
-                                    blockowner2 = block.BuiltBy;
-
-                                    //If the player dictionary already has a Key, we need to retrieve it
-                                    if (BlocksAndOwnerForLimits.ContainsKey(blockowner2))
-                                    {
-                                        //if the dictionary already contains the same block type
-                                        Dictionary<string, int> dictforuser = BlocksAndOwnerForLimits[blockowner2];
-                                        if (dictforuser.ContainsKey(BlockName))
-                                        {
-                                            dictforuser[BlockName]++;
-                                        }
-                                        else
-                                        {
-                                            dictforuser.Add(BlockName, 1);
-                                        }
-                                        BlocksAndOwnerForLimits[blockowner2] = dictforuser;
-                                    }
-                                    else
-                                    {
-                                        BlocksAndOwnerForLimits.Add(blockowner2, new Dictionary<string, int>
+                                    BlocksAndOwnerForLimits[blockowner2] = dictforuser;
+                                }
+                                else
+                                {
+                                    BlocksAndOwnerForLimits.Add(blockowner2, new Dictionary<string, int>
                             {
                                 {
                                     BlockName,
                                     1
                                 }
                             });
-                                    }
-
-                                    FinalBlocksPCU += myCubeBlockDefinition.PCU;
-
-
-                                    //if()
-
                                 }
 
+                                FinalBlocksPCU += myCubeBlockDefinition.PCU;
+
+
+                                //if()
 
                             }
 
-                            FinalBlocksCount += CubeGrid.CubeBlocks.Count;
-                        
+
+                        }
+
+                        FinalBlocksCount += CubeGrid.CubeBlocks.Count;
+
                     }
 
 
@@ -758,11 +793,11 @@ namespace QuantumHangar.HangarChecks
 
                     List<MyObjectBuilder_CubeGrid> grids = new List<MyObjectBuilder_CubeGrid>();
 
-                        foreach (var CubeGrid in shipblueprints)
-                        {
-                            grids.Add(CubeGrid);
-                        }
-                    
+                    foreach (var CubeGrid in shipblueprints)
+                    {
+                        grids.Add(CubeGrid);
+                    }
+
 
 
                     bool ValueReturn = PluginDependencies.CheckGridLimits(grids, IdentityID);
