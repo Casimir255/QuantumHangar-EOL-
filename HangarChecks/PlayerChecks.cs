@@ -387,9 +387,6 @@ namespace QuantumHangar.HangarChecks
             if (!RequireLoadCurrency(Stamp))
                 return;
 
-            if (!CheckForIntersectingGrids(Stamp, Grids.ToList(), ID))
-                return;
-
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition, LoadNearPlayer);
 
@@ -427,24 +424,6 @@ namespace QuantumHangar.HangarChecks
 
             if (BiggestGrid != null && IdentityID != 0)
                 CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
-        }
-        private bool CheckForIntersectingGrids(GridStamp stamp, List<MyObjectBuilder_CubeGrid> grids, int ID)
-        {
-            if (Config.RequireLoadRadius) return true;
-            var pos = stamp.GridSavePosition;
-            var box = BoundingBoxD.CreateFromSphere(new BoundingSphere(pos, 200));
-
-            List<MyEntity> entsInBox = new List<MyEntity>();
-            MyGamePruningStructure.GetAllEntitiesInBox(ref box, entsInBox);
-            Log.Warn("Checkign bounding box.");
-            foreach (MyEntity e in entsInBox)
-            {
-                if (e == null) continue;
-                if (e is MyCharacter) continue;
-                Chat.Respond("Something is in the way.");
-                return false;
-            }
-            return true;
         }
 
         private bool CheckZoneRestrictions(bool IsSave)
