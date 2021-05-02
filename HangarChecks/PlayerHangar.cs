@@ -131,9 +131,20 @@ namespace QuantumHangar.HangarChecks
             if (SelectedPlayerFile.Timer != null)
             {
                 TimeStamp Old = SelectedPlayerFile.Timer;
+                TimeSpan WaitTimeSpawn;
                 //There is a time limit!
                 TimeSpan Subtracted = DateTime.Now.Subtract(Old.OldTime);
-                TimeSpan WaitTimeSpawn = new TimeSpan(0, (int)Config.WaitTime, 0);
+                if (Config.WaitTime > 60)
+                {
+                    int hours = (int)Config.WaitTime / 60;
+                    int minutes = (int)Config.WaitTime - (hours* 60);
+                    WaitTimeSpawn = new TimeSpan(hours, minutes, 0);
+                }
+                else
+                {
+                    WaitTimeSpawn = new TimeSpan(0, (int)Config.WaitTime, 0);
+                }
+                
                 TimeSpan Remainder = WaitTimeSpawn - Subtracted;
                 //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
                 if (Subtracted.TotalMinutes <= Config.WaitTime)
