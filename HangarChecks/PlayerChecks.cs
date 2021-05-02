@@ -387,8 +387,6 @@ namespace QuantumHangar.HangarChecks
             if (!RequireLoadCurrency(Stamp))
                 return;
 
-
-
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             Vector3D SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, PlayerPosition, out bool KeepOriginalPosition, LoadNearPlayer);
 
@@ -566,6 +564,7 @@ namespace QuantumHangar.HangarChecks
                         continue;
 
                     long PlayerID = OnlinePlayer.GetPlayerIdentityId();
+                    if (PlayerID == 0L) continue;
                     if (PlayerID == IdentityID)
                         continue;
 
