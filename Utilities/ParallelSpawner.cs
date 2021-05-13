@@ -8,6 +8,7 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.World;
+using Sandbox.Game.World.Generator;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,7 @@ namespace QuantumHangar
 {
     public class ParallelSpawner
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
         //Rexxars spicy ParallelSpawner
         private readonly int _maxCount;
@@ -35,8 +37,9 @@ namespace QuantumHangar
         private readonly Action<HashSet<MyCubeGrid>> _callback;
         private readonly HashSet<MyCubeGrid> _spawned;
         private readonly Chat _Response;
-        private static int Timeout = 6000;
+        private static int Timeout = 20000;
         public bool _AlignToGravity = false;
+        private Vector3D SpawnPosition;
 
         public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, bool AlignToGravity = false, Action<HashSet<MyCubeGrid>> callback = null)
         {
@@ -67,7 +70,7 @@ namespace QuantumHangar
             }
 
 
-            
+
 
             Task<bool> Spawn = GameEvents.InvokeAsync<bool, Vector3D, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition, Target);
             if (Spawn.Wait(Timeout))
@@ -95,75 +98,73 @@ namespace QuantumHangar
         private bool CalculateSafePositionAndSpawn(bool keepOriginalLocation, Vector3D Target)
         {
             //This has to be ran on the main game thread!
+
+
             if (keepOriginalLocation)
             {
+                // Run the keepOriginal position check with orientated bounding box
+   
                 var BoundingBox = FindBoundingBox(_grids);
-
-               
-
-                //sphere.Center = Target;
                 List<MyEntity> entities = new List<MyEntity>();
+
+
+                // So for some reason the following check is not exact. Just close. so we have to go in and double check if we want exact results
                 MyGamePruningStructure.GetAllEntitiesInOBB(ref BoundingBox, entities);
 
-              
                 bool PotentialGrids = false;
                 foreach (var entity in entities)
                 {
-                    if (entity is MyCubeGrid )
+                    if (entity is MyCubeGrid)
                     {
-                        PotentialGrids = true;
-
-                        BoundingBox Box = entity.PositionComp.LocalAABB;
-                        ContainmentType Type = BoundingBox.Contains(ref Box);
-                        
-                       //Hangar.Debug(entity.DisplayName + " is intersecting spawn area! Containment Type: "+ Type.ToString());
-                        
-
-                        _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
-                        break;
+                        MyCubeGrid Grid = entity as MyCubeGrid;
+                        var GridBox = new MyOrientedBoundingBoxD(Grid.PositionComp.LocalAABB, Grid.PositionComp.WorldMatrixRef);
+                        //Log.Info($"{entity.DisplayName}");
+                        if (BoundingBox.Intersects(ref GridBox))
+                        {
+                            PotentialGrids = true;
+                            _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
+                            break;
+                        }
                     }
                 }
 
-
-                if (PotentialGrids)
-                {
-                    var pos = FindPastePosition(Target);
-                    if (!pos.HasValue)
-                    {
-                        _Response.Respond("No free spawning zone found! Stopping load!");
-                        return false;
-                    }
-
-                    UpdateGridsPosition(pos.Value);
+                //If there are no potential grids goahead and spawn the grid in
+                if (!PotentialGrids)
                     return true;
-                }
-                else
-                {
-                    return true;
-                }
             }
 
 
-            //Everything else is loading for near point
-            if (!keepOriginalLocation)
+            Vector3D? SpawnPos = null;
+
+            /* Where do we want to paste the grids? Lets find out. */
+            Vector3 gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target);
+            if(gravityDirectionalVector.LengthSquared() > Vector3.Zero.LengthSquared())
             {
-                /* Where do we want to paste the grids? Lets find out. */
-                var pos = FindPastePosition(Target);
-                if (pos == null)
-                {
-                    _Response.Respond("No free spawning zone found! Stopping load!");
-                    return false;
-                }
+                //Gravity spawning... Gotta do this the old fasion way
+                SpawnPos = FindPastePosition(Target);
 
-                var newPosition = pos.Value;
-
-                /* Update GridsPosition if that doesnt work get out of here. */
-                if (!UpdateGridsPosition(newPosition))
-                {
-                    _Response.Respond("The File to be imported does not seem to be compatible with the server!");
-                    return false;
-                }
             }
+            else
+            {
+                //Mainly for space
+                SpawnPos = FindNewSpawnPosition(Target);
+            }
+
+
+            if (SpawnPos == null || !SpawnPos.HasValue)
+            {
+                _Response.Respond("No free spawning zone found! Stopping load!");
+                return false;
+            }
+
+
+            /* Update GridsPosition if that doesnt work get out of here. */
+            if (!UpdateGridsPosition(SpawnPos.Value))
+            {
+                _Response.Respond("The File to be imported does not seem to be compatible with the server!");
+                return false;
+            }
+
             return true;
         }
 
@@ -188,7 +189,7 @@ namespace QuantumHangar
             Parallel.ForEach(grids, grid =>
             {
                 var gridSphere = grid.CalculateBoundingSphere();
-                
+
                 /* If this is the first run, we use the center of that grid, and its radius as it is */
                 if (vector == null)
                 {
@@ -221,6 +222,158 @@ namespace QuantumHangar
             return new BoundingSphereD(vector.Value, radius);
         }
 
+        private Vector3D? FindNewSpawnPosition(Vector3D Target)
+        {
+            BoundingBoxD physicalGroupAABB = FindBoundingBox(_grids).GetAABB();
+            physicalGroupAABB.Inflate(50.0);
+
+            BoundingBoxD box = physicalGroupAABB.GetInflated(physicalGroupAABB.HalfExtents * 10.0);
+            box.Translate(Target - box.Center);
+
+            List<MyObjectSeed> m_objectsInRange = new List<MyObjectSeed>();
+            List<BoundingBoxD> m_obstaclesInRange = new List<BoundingBoxD>();
+            List<MyEntity> m_entitiesInRange = new List<MyEntity>();
+            Vector3D vector3D = Target;
+
+
+
+            m_objectsInRange.Clear();
+            MyProceduralWorldGenerator.Static.OverlapAllAsteroidSeedsInSphere(new BoundingSphereD(box.Center, box.HalfExtents.AbsMax()), m_objectsInRange);
+            foreach (MyObjectSeed item3 in m_objectsInRange)
+            {
+                m_obstaclesInRange.Add(item3.BoundingVolume);
+            }
+            m_objectsInRange.Clear();
+
+
+            m_objectsInRange.Clear();
+            MyProceduralWorldGenerator.Static.GetAllInSphere<MyStationCellGenerator>(new BoundingSphereD(box.Center, box.HalfExtents.AbsMax()), m_objectsInRange);
+            foreach (MyObjectSeed item4 in m_objectsInRange)
+            {
+                MyStation myStation = item4.UserData as MyStation;
+                if (myStation != null)
+                {
+                    BoundingBoxD item = new BoundingBoxD(myStation.Position - MyStation.SAFEZONE_SIZE, myStation.Position + MyStation.SAFEZONE_SIZE);
+                    if (item.Contains(vector3D) != 0)
+                    {
+                        m_obstaclesInRange.Add(item);
+                    }
+                }
+            }
+
+
+            m_objectsInRange.Clear();
+            MyGamePruningStructure.GetTopMostEntitiesInBox(ref box, m_entitiesInRange);
+            foreach (MyEntity item5 in m_entitiesInRange)
+            {
+                if (!(item5 is MyPlanet))
+                {
+                    m_obstaclesInRange.Add(item5.PositionComp.WorldAABB.GetInflated(physicalGroupAABB.HalfExtents));
+                }
+            }
+
+            int num = 35;
+            int num2 = 0;
+            BoundingBoxD? boundingBoxD = null;
+
+            //Flag: True if invalid spawn
+            bool flag = false;
+            bool flag2 = false;
+            while (num2 < num)
+            {
+                num2++;
+                flag = false;
+                foreach (BoundingBoxD item6 in m_obstaclesInRange)
+                {
+                    ContainmentType containmentType = item6.Contains(vector3D);
+                    if (containmentType == ContainmentType.Contains || containmentType == ContainmentType.Intersects)
+                    {
+                        if (!boundingBoxD.HasValue)
+                        {
+                            boundingBoxD = item6;
+                        }
+                        boundingBoxD = boundingBoxD.Value.Include(item6);
+                        boundingBoxD = boundingBoxD.Value.Inflate(1.0);
+                        vector3D = ClosestPointOnBounds(boundingBoxD.Value, vector3D);
+
+
+                        flag = true;
+                        break;
+                    }
+                }
+
+
+                if (!flag)
+                {
+                    flag2 = true;
+                    break;
+                }
+            }
+
+
+            m_obstaclesInRange.Clear();
+            m_entitiesInRange.Clear();
+            m_objectsInRange.Clear();
+
+            if (flag2)
+            {
+                //GetClosestSurfacePointGlobal
+
+
+
+                
+
+
+
+
+                SpawnPosition = vector3D;
+                return vector3D;
+            }
+
+            return null;
+
+
+        }
+
+        private Vector3D ClosestPointOnBounds(BoundingBoxD b, Vector3D p)
+        {
+            Vector3D vector3D = (p - b.Center) / b.HalfExtents;
+            switch (vector3D.AbsMaxComponent())
+            {
+                case 0:
+                    if (vector3D.X > 0.0)
+                    {
+                        p.X = b.Max.X;
+                    }
+                    else
+                    {
+                        p.X = b.Min.X;
+                    }
+                    break;
+                case 1:
+                    if (vector3D.Y > 0.0)
+                    {
+                        p.Y = b.Max.Y;
+                    }
+                    else
+                    {
+                        p.Y = b.Min.Y;
+                    }
+                    break;
+                case 2:
+                    if (vector3D.Z > 0.0)
+                    {
+                        p.Z = b.Max.Z;
+                    }
+                    else
+                    {
+                        p.Z = b.Min.Z;
+                    }
+                    break;
+            }
+            return p;
+        }
+
         private static MyOrientedBoundingBoxD FindBoundingBox(IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
             BoundingBox First = grids.First().CalculateBoundingBox();
@@ -232,7 +385,6 @@ namespace QuantumHangar
 
             return new MyOrientedBoundingBoxD(First, grids.First().PositionAndOrientation.Value.GetMatrix());
         }
-
 
         private bool UpdateGridsPosition(Vector3D newPosition)
         {
@@ -292,6 +444,11 @@ namespace QuantumHangar
 
 
 
+
+
+
+
+
         /*  Align to gravity code.
          * 
          * 
@@ -299,7 +456,7 @@ namespace QuantumHangar
 
         private void EnableRequiredItemsOnLoad(IEnumerable<MyObjectBuilder_CubeGrid> _grid)
         {
-            foreach(var grid in _grid)
+            foreach (var grid in _grid)
             {
                 grid.LinearVelocity = new SerializableVector3();
                 grid.AngularVelocity = new SerializableVector3();
@@ -498,7 +655,7 @@ namespace QuantumHangar
             //Log.Warn(response+" Mod: "+ _mod);
             if (_mod)
             {
-                
+
                 //Should fix admin commands
                 _context.Respond(response);
             }

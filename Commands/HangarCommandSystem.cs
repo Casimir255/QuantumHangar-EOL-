@@ -42,10 +42,20 @@ namespace QuantumHangar.Commands
                     return;
                 }
 
-                Log.Error("Task is being removed! Status: " + RunningTask.Status + " Errors: " + RunningTask.Exception.Message);
+                StringBuilder Builder = new StringBuilder();
+                Builder.AppendLine($"Task is being removed! Status: {RunningTask.Status}");
+
+                foreach (Exception ex in RunningTask.Exception.InnerExceptions)
+                {
+                    Builder.AppendLine(ex.ToString());
+                }
+
+                Log.Error(Builder.ToString());
                 Dictionary.TryRemove(SteamID.Value, out _);
             }
 
+
+            /*
             if (!SteamID.HasValue)
             {
                 //Log.Info(" Running Admin command!");
@@ -60,6 +70,10 @@ namespace QuantumHangar.Commands
                 }
                 return;
             }
+            */
+
+            if (!SteamID.HasValue)
+                SteamID = 1;
 
 
             if (SteamID.Value != 1)

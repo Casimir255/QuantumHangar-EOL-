@@ -25,7 +25,7 @@ namespace QuantumHangar.Serialization
         public static bool SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName, long OwnerIdentity)
         {
 
-            Log.Info(Grids.Count());
+            //Log.Info(Grids.Count());
             Task<IEnumerable<MyObjectBuilder_CubeGrid>> GridTask = GameEvents.InvokeAsync<IEnumerable<MyCubeGrid>, IEnumerable<MyObjectBuilder_CubeGrid>>(GetObjectBuilders, Grids);
             if (!GridTask.Wait(5000))
             {

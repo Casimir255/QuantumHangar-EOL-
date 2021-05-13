@@ -1,6 +1,7 @@
 ﻿using NLog;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utils;
+using Sandbox;
 using Sandbox.Game.Entities;
 using Sandbox.Game.World;
 using System;
@@ -18,8 +19,9 @@ namespace QuantumHangar
     public static class AutoHangar
     {
         private static Timer UpdateTimer = new Timer(1800000);
-        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AutoHangar));
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static Settings Config { get { return Hangar.Config; } }
+
 
 
         public static void StartAutoHangar()
@@ -36,10 +38,10 @@ namespace QuantumHangar
 
         public static void RunAutoHangar()
         {
-            if (!Hangar.ServerRunning || !MySession.Static.Ready)
+            if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
-            Log.Info("Invoking AutoHangar!");
+           
 
             try
             {

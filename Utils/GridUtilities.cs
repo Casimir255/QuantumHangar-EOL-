@@ -173,7 +173,7 @@ namespace QuantumHangar.Utils
 
             ParallelSpawner Spawner = new ParallelSpawner(grids, chat, AlignToGravity);
             Log.Info("Attempting Grid Spawning @" + TargetLocation.ToString());
-            return Spawner.Start(keepOriginalLocation, TargetLocation);
+            return  Spawner.Start(keepOriginalLocation, TargetLocation);
         }
 
 
