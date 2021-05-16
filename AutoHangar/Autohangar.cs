@@ -103,7 +103,7 @@ namespace QuantumHangar
                 
                 
 
-                ConcurrentBag<List<MyCubeGrid>> gridGroups = GridUtilities.FindGridList(player, false);
+                ConcurrentBag<List<MyCubeGrid>> gridGroups = GridUtilities.FindGridList(player, Config.EnableSubGrids);
                 //Log.Warn(player + ":" + gridGroups.Count);
 
                 if (gridGroups.Count == 0)

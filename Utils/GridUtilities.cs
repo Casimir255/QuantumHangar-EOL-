@@ -414,12 +414,10 @@ namespace QuantumHangar.Utils
             {
                 Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups.ToList(), group =>
                 {
-
                     List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
                     foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
                     {
-
                         MyCubeGrid grid = groupNodes.NodeData;
 
                         if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
