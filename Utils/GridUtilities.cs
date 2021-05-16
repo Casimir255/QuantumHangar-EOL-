@@ -389,7 +389,7 @@ namespace QuantumHangar.Utils
             if (includeConnectedGrids)
             {
 
-                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
+                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups.ToList(), group =>
                 {
 
                     List<MyCubeGrid> gridList = new List<MyCubeGrid>();
@@ -412,8 +412,7 @@ namespace QuantumHangar.Utils
             }
             else
             {
-
-                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
+                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups.ToList(), group =>
                 {
 
                     List<MyCubeGrid> gridList = new List<MyCubeGrid>();
