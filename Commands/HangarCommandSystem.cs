@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Torch.Commands;
 
 namespace QuantumHangar.Commands
 {
@@ -18,7 +19,12 @@ namespace QuantumHangar.Commands
         /* Need an action system/Queue*/
         private static ConcurrentDictionary<ulong, Task> Dictionary = new ConcurrentDictionary<ulong, Task>();
 
-        public static void RunTask(Action Invoker, ulong? SteamID = null)
+
+        //Keep a list of all runing tasks
+        private static List<ulong> RunningTasks = new List<ulong>();
+
+
+        public static async Task RunTask(Action Invoker, ulong? SteamID = null)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready)
                 return;
@@ -80,18 +86,18 @@ namespace QuantumHangar.Commands
             {
                 Action Completed = delegate { RemoveAfterCompletion(SteamID.Value); };
                 Invoker += Completed;
-                Task Run = new Task(Invoker);
-                Run.Start();
 
-                Dictionary.TryAdd(SteamID.Value, Run);
+                Dictionary.TryAdd(SteamID.Value, null);
+                await Task.Run(() => Invoker);
+
+                
                 return;
             }
 
             if (SteamID.Value == 1)
             {
                 //Log.Warn("PP");
-                Task Run = new Task(Invoker);
-                Run.Start();
+                await Task.Run(() => Invoker);
                 return;
             }
 
@@ -102,9 +108,55 @@ namespace QuantumHangar.Commands
         private static void RemoveAfterCompletion(ulong SteamID)
         {
             if (Dictionary.ContainsKey(SteamID))
-                Dictionary.TryRemove(SteamID, out _);
+                Dictionary.TryRemove(SteamID, out Task task);
 
             Log.Warn(SteamID + " Action completed!");
         }
+
+
+
+
+
+
+        public static async Task RunTaskAsync(Action Function, CommandContext Context)
+        {
+            if (!CheckTaskStatus(Context))
+                return;
+
+            await Task.Run(Function);
+            RemoveCompletedTask(Context);
+        }
+
+
+
+        public static async Task RunAdminTaskAsync(Action Function)
+        {
+            await Task.Run(Function);
+        }
+
+
+
+
+        public static bool CheckTaskStatus(CommandContext Context)
+        {
+            if (RunningTasks.Contains(Context.Player.SteamUserId))
+            {
+                Context.Respond("Your previous command has yet to finish!");
+                return false;
+            }
+               
+
+            RunningTasks.Add(Context.Player.SteamUserId);
+            return true;
+        }
+
+
+        public static void RemoveCompletedTask(CommandContext Context)
+        {
+            if (RunningTasks.Contains(Context.Player.SteamUserId))
+                RunningTasks.Remove(Context.Player.SteamUserId);
+        }
+
+
     }
 }

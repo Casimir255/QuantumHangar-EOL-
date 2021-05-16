@@ -18,50 +18,50 @@ namespace QuantumHangar.Commands
 
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void SaveGrid(string GridName = "")
+        public async void SaveGrid(string GridName = "")
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.SaveGrid(GridName); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SaveGrid(GridName));
         }
 
         [Command("list", "Lists all grids of given player")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void ListGrids(string NameOrSteamID)
+        public async void ListGrids(string NameOrSteamID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.ListGrids(NameOrSteamID); });
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.ListGrids(NameOrSteamID));
         }
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public async void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.LoadGrid(NameOrSteamID, ID, FromSavePos); });
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.LoadGrid(NameOrSteamID, ID, FromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Remove(string NameOrSteamID, int ID)
+        public async void Remove(string NameOrSteamID, int ID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.RemoveGrid(NameOrSteamID, ID); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.RemoveGrid(NameOrSteamID, ID));
         }
 
         [Command("sync", "Re-scans the folder for added or removed grids")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Sync(string NameOrSteamID)
+        public async void Sync(string NameOrSteamID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); });
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncHangar(NameOrSteamID));
 
         }
 
         [Command("autohangar", "Runs Autohangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void RunAutoHangar()
+        public async void RunAutoHangar()
         {
-            HangarCommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
         }
 
         [Command("enable", "Enables Hangar")]
@@ -80,53 +80,61 @@ namespace QuantumHangar.Commands
 
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void SaveGrid(string GridName = "")
+        public async void SaveGrid(string GridName = "")
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.SaveGrid(GridName);}, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SaveGrid(GridName));
         }
 
         [Command("list", "Lists all grids of given player")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void ListGrids(string NameOrSteamID)
+        public async void ListGrids(string NameOrSteamID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.ListGrids(NameOrSteamID); });
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.ListGrids(NameOrSteamID));
         }
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public async void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.LoadGrid(NameOrSteamID, ID, FromSavePos); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.LoadGrid(NameOrSteamID, ID, FromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Remove(string NameOrSteamID, int ID)
+        public async void Remove(string NameOrSteamID, int ID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.RemoveGrid(NameOrSteamID, ID); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.RemoveGrid(NameOrSteamID, ID));
         }
 
         [Command("sync", "Re-scans the folder for added or removed grids")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Sync(string NameOrSteamID)
+        public async void Sync(string NameOrSteamID)
         {
             AdminChecks User = new AdminChecks(Context);
-            HangarCommandSystem.RunTask(delegate { User.SyncHangar(NameOrSteamID); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncHangar(NameOrSteamID));
+
         }
 
         [Command("autohangar", "Runs Autohangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void RunAutoHangar()
+        public async void RunAutoHangar()
         {
-            HangarCommandSystem.RunTask(delegate { AutoHangar.RunAutoHangar(); }, 1);
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
         }
 
-        
+        [Command("enable", "Enables Hangar")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public void Enable(bool SetPluginEnable)
+        {
+            Hangar.Config.PluginEnabled = SetPluginEnable;
+        }
 
+
+        /*
         [Command("exportgrid", "exportgrids to obj")]
         [Permission(MyPromoteLevel.Admin)]
         public void GridExporter()
@@ -146,16 +154,7 @@ namespace QuantumHangar.Commands
             //GridStamp stamp = Result.GenerateGridStamp();
 
         }
-
-        
-
-        [Command("enable", "Enables Hangar")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void Enable(bool SetPluginEnable)
-        {
-            Hangar.Config.PluginEnabled = SetPluginEnable;
-        }
-
+        */
     }
 
 

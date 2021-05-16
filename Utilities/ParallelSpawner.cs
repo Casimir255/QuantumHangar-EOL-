@@ -79,6 +79,12 @@ namespace QuantumHangar
                 {
                     foreach (var o in _grids)
                     {
+
+                        o.PlayerPresenceTier = MyUpdateTiersPlayerPresence.Normal;
+                        o.CreatePhysics = true;
+                        o.EntityId = 0;
+
+
                         MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
                     }
                     return true;
@@ -103,7 +109,7 @@ namespace QuantumHangar
             if (keepOriginalLocation)
             {
                 // Run the keepOriginal position check with orientated bounding box
-   
+
                 var BoundingBox = FindBoundingBox(_grids);
                 List<MyEntity> entities = new List<MyEntity>();
 
@@ -138,7 +144,7 @@ namespace QuantumHangar
 
             /* Where do we want to paste the grids? Lets find out. */
             Vector3 gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target);
-            if(gravityDirectionalVector.LengthSquared() > Vector3.Zero.LengthSquared())
+            if (gravityDirectionalVector.LengthSquared() > Vector3.Zero.LengthSquared())
             {
                 //Gravity spawning... Gotta do this the old fasion way
                 SpawnPos = FindPastePosition(Target);
@@ -321,7 +327,7 @@ namespace QuantumHangar
 
 
 
-                
+
 
 
 
@@ -438,7 +444,11 @@ namespace QuantumHangar
                 MyAPIGateway.Entities.AddEntity(g, true);
             }
 
-            _callback?.Invoke(_spawned);
+
+            MyAPIGateway.Utilities.InvokeOnGameThread(() =>
+            {
+                _callback?.Invoke(_spawned);
+            });
 
         }
 
