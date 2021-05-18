@@ -20,6 +20,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.SaveGrid(), Context);
         }
@@ -36,6 +42,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Load(int ID, bool LoadNearPlayer = false)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.LoadGrid(ID, LoadNearPlayer), Context);
         }
@@ -44,6 +56,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Remove(int ID)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.RemoveGrid(ID), Context);
         }
@@ -53,6 +71,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Info(int ID = 0)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.DetailedInfo(ID), Context);
         }
@@ -66,6 +90,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(User.SaveGrid, Context);
         }
@@ -74,6 +104,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void ListGrids()
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(User.ListGrids, Context);
         }
@@ -82,6 +118,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Load(int ID, bool LoadNearPlayer = false)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.LoadGrid(ID, LoadNearPlayer), Context);
         }
@@ -90,6 +132,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Remove(int ID)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.RemoveGrid(ID), Context);
         }
@@ -99,6 +147,12 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void Info(int ID = 0)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.DetailedInfo(ID), Context);
         }

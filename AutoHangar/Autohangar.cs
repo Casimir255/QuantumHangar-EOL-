@@ -97,12 +97,7 @@ namespace QuantumHangar
             {
                 ulong id = MySession.Static.Players.TryGetSteamId(player);
 
-
-
                 //string path = GridMethods.CreatePathForPlayer(Config.FolderDirectory, id);
-                
-                
-
                 ConcurrentBag<List<MyCubeGrid>> gridGroups = GridUtilities.FindGridList(player, Config.EnableSubGrids);
                 //Log.Warn(player + ":" + gridGroups.Count);
 

@@ -120,10 +120,19 @@ namespace QuantumHangar.Commands
 
         public static async Task RunTaskAsync(Action Function, CommandContext Context)
         {
+
             if (!CheckTaskStatus(Context))
                 return;
 
-            await Task.Run(Function);
+            try
+            {
+                await Task.Run(Function);
+            }catch(Exception ex)
+            {
+                Log.Error(ex);
+                Context.Respond("An error occurred when running this command! Check logs for more details!");
+            }
+
             RemoveCompletedTask(Context);
         }
 
