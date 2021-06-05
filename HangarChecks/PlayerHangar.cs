@@ -131,27 +131,18 @@ namespace QuantumHangar.HangarChecks
             if (SelectedPlayerFile.Timer != null)
             {
                 TimeStamp Old = SelectedPlayerFile.Timer;
-                TimeSpan WaitTimeSpawn;
-                //There is a time limit!
-                TimeSpan Subtracted = DateTime.Now.Subtract(Old.OldTime);
-                if (Config.WaitTime > 60)
-                {
-                    int hours = (int)Config.WaitTime / 60;
-                    int minutes = (int)Config.WaitTime - (hours* 60);
-                    WaitTimeSpawn = new TimeSpan(hours, minutes, 0);
-                }
-                else
-                {
-                    WaitTimeSpawn = new TimeSpan(0, (int)Config.WaitTime, 0);
-                }
-                
-                TimeSpan Remainder = WaitTimeSpawn - Subtracted;
+                DateTime LastUse = Old.OldTime;
+
+
+                //When the player can use the command
+                DateTime CanUseTime = LastUse + TimeSpan.FromMinutes(Config.WaitTime);
                 //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
-                if (Subtracted.TotalMinutes <= Config.WaitTime)
+                if (CanUseTime > DateTime.Now)
                 {
+
+                    TimeSpan TimeLeft = DateTime.Now - CanUseTime;
                     //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                    string Timeformat = string.Format("{0:mm}min & {0:ss}s", Remainder);
-                    Chat?.Respond("You have " + Timeformat + "  before you can perform this action!");
+                    Chat?.Respond($"You have {TimeLeft.ToString(@"hh\:mm\:ss")} until you can perform this action!");
                     return false;
                 }
                 else
