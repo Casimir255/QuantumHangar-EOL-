@@ -124,6 +124,7 @@ namespace QuantumHangar.Commands
             if (!CheckTaskStatus(Context))
                 return;
 
+            ulong SteamUserID = Context.Player.SteamUserId;
             try
             {
                 await Task.Run(Function);
@@ -133,7 +134,7 @@ namespace QuantumHangar.Commands
                 Context.Respond("An error occurred when running this command! Check logs for more details!");
             }
 
-            RemoveCompletedTask(Context);
+            RemoveCompletedTask(SteamUserID);
         }
 
 
@@ -160,10 +161,10 @@ namespace QuantumHangar.Commands
         }
 
 
-        public static void RemoveCompletedTask(CommandContext Context)
+        public static void RemoveCompletedTask(ulong SteamUserID)
         {
-            if (RunningTasks.Contains(Context.Player.SteamUserId))
-                RunningTasks.Remove(Context.Player.SteamUserId);
+            if (RunningTasks.Contains(SteamUserID))
+                RunningTasks.Remove(SteamUserID);
         }
 
 
