@@ -77,6 +77,7 @@ namespace QuantumHangar.Utilities
         {
             //Jimm thank you. This is the best
             var ctx = new TaskCompletionSource<T3>();
+
             MySandboxGame.Static.Invoke(() =>
             {
                 try

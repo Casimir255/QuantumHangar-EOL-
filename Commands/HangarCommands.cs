@@ -97,7 +97,7 @@ namespace QuantumHangar.Commands
             }
 
             PlayerChecks User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(User.SaveGrid, Context);
+            await HangarCommandSystem.RunTaskAsync(() => User.SaveGrid(), Context);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -111,7 +111,7 @@ namespace QuantumHangar.Commands
             }
 
             PlayerChecks User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(User.ListGrids, Context);
+            await HangarCommandSystem.RunTaskAsync(() => User.ListGrids(), Context);
         }
 
         [Command("load", "Loads the specified grid by index number")]

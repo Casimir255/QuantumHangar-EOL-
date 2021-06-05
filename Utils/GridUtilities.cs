@@ -160,20 +160,18 @@ namespace QuantumHangar.Utils
 
 
             Vector3D TargetLocation;
-            bool AlignToGravity = false;
             if (keepOriginalLocation || SpawningPlayerLocation == Vector3D.Zero)
             {
                 TargetLocation = GridSaveLocation;
             }
             else
             {
-                AlignToGravity = true;
                 TargetLocation = SpawningPlayerLocation;
             }
 
-            ParallelSpawner Spawner = new ParallelSpawner(grids, chat, AlignToGravity);
+            ParallelSpawner Spawner = new ParallelSpawner(grids, chat);
             Log.Info("Attempting Grid Spawning @" + TargetLocation.ToString());
-            return  Spawner.Start(keepOriginalLocation, TargetLocation);
+            return  Spawner.Start(TargetLocation, keepOriginalLocation);
         }
 
 

@@ -394,9 +394,9 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !KeepOriginalPosition, SpawnedGridsSuccessful);
+            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, SpawnedGridsSuccessful);
             Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
-            if (Spawner.Start(KeepOriginalPosition, SpawnPos))
+            if (Spawner.Start(SpawnPos, KeepOriginalPosition))
             {
                 Chat?.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);

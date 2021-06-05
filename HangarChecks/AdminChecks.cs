@@ -99,8 +99,8 @@ namespace QuantumHangar.HangarChecks
                 FromSavePos = true;
 
 
-            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, !FromSavePos);
-            if (Spawner.Start(FromSavePos, AdminPlayerPosition))
+            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat);
+            if (Spawner.Start(AdminPlayerPosition, FromSavePos))
             {
                 Chat?.Respond("Spawning Complete!");
                 PlayersHanger.RemoveGridStamp(Stamp);
