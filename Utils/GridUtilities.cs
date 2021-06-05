@@ -261,16 +261,14 @@ namespace QuantumHangar.Utils
             if (string.IsNullOrEmpty(gridNameOrEntityId) && character == null)
                 return false;
 
+       
+
             if (Config.EnableSubGrids)
             {
                 //If we include subgrids in the grid grab
-
-                long EntitiyID = character.Entity.EntityId;
-
-
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> groups;
 
-                if (String.IsNullOrEmpty(gridNameOrEntityId))
+                if (String.IsNullOrEmpty(gridNameOrEntityId) && character != null)
                     groups = GridFinder.FindLookAtGridGroup(character);
                 else
                     groups = GridFinder.FindGridGroup(gridNameOrEntityId);
