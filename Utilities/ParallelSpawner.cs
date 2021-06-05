@@ -61,6 +61,7 @@ namespace QuantumHangar
 
         public bool Start(Vector3D Target, bool LoadInOriginalPosition = true)
         {
+            TargetPos = Target;
             if (_grids.Count() == 0)
             {
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
@@ -71,6 +72,9 @@ namespace QuantumHangar
             // Fix for recent keen update. (if grids have projected grids saved then they will get the infinite streaming bug)
             foreach (var cubeGrid in _grids)
             {
+                cubeGrid.PlayerPresenceTier = MyUpdateTiersPlayerPresence.Normal;
+                cubeGrid.CreatePhysics = true;
+
                 // Set biggest grid in grid group
                 if (_BiggestGrid == null || _BiggestGrid.CubeBlocks.Count < cubeGrid.CubeBlocks.Count)
                     _BiggestGrid = cubeGrid;
@@ -93,7 +97,7 @@ namespace QuantumHangar
 
             //This should return more than a bool (we only need to run on game thread to find a safe spot)
 
-            Task<bool> Spawn = GameEvents.InvokeAsync<bool, Vector3D, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition, Target);
+            Task<bool> Spawn = GameEvents.InvokeAsync<bool, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition);
             if (Spawn.Wait(Timeout))
             {
                 if (Spawn.Result)
@@ -118,7 +122,7 @@ namespace QuantumHangar
 
 
 
-        private bool CalculateSafePositionAndSpawn(bool keepOriginalLocation, Vector3D Target)
+        private bool CalculateSafePositionAndSpawn(bool keepOriginalLocation)
         {
             try
             {
@@ -132,19 +136,21 @@ namespace QuantumHangar
 
 
                 //This has to be ran on the main game thread!
-
-                //If the original spot is clear, return true and spawn
-                if (OriginalSpotClear())
-                    return true;
+                if (keepOriginalLocation)
+                {
+                    //If the original spot is clear, return true and spawn
+                    if (OriginalSpotClear())
+                        return true;
+                }
 
 
                 //This is for aligning to gravity. If we are trying to find a safe spot, lets check gravity, and if we did recalculate, lets re-calc grid bounds
-                if (CalculateGridPosition(Target))
+                if (CalculateGridPosition(TargetPos))
                     FindGridBounds();
 
 
                 //Find new spawn position either around character or last save (Target is specified on spawn call)
-                var pos = FindPastePosition(Target);
+                var pos = FindPastePosition(TargetPos);
                 if (!pos.HasValue)
                 {
                     _Response.Respond("No free spawning zone found! Stopping load!");
@@ -205,7 +211,7 @@ namespace QuantumHangar
 
                     ContainmentType Type = BoxD.Contains(ref OBB);
 
-                    Log.Info($"{entity.DisplayName} Type: {Type.ToString()}");
+                    //Log.Info($"{entity.DisplayName} Type: {Type.ToString()}");
 
                     if (Type == ContainmentType.Contains || Type == ContainmentType.Intersects)
                     {
@@ -223,7 +229,7 @@ namespace QuantumHangar
 
         private void UpdateGridsPosition(Vector3D TargetPos)
         {
-            Log.Info("New Grid Position: " + TargetPos);
+            //Log.Info("New Grid Position: " + TargetPos);
 
             //Translated point
             TargetPos = TargetPos - Delta3D;
