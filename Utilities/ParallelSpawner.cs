@@ -87,8 +87,7 @@ namespace QuantumHangar
             }
 
 
-            //We only need to align to gravity if a new spawn position is required
-            EnableRequiredItemsOnLoad();
+
 
 
             //Remap to fix entity conflicts
@@ -146,7 +145,12 @@ namespace QuantumHangar
 
                 //This is for aligning to gravity. If we are trying to find a safe spot, lets check gravity, and if we did recalculate, lets re-calc grid bounds
                 if (CalculateGridPosition(TargetPos))
+                {
+                    //We only need to align to gravity if a new spawn position is required
+                    EnableRequiredItemsOnLoad();
+
                     FindGridBounds();
+                }
 
 
                 //Find new spawn position either around character or last save (Target is specified on spawn call)

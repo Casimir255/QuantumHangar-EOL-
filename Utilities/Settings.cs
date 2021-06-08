@@ -116,10 +116,7 @@ namespace QuantumHangar
         public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
 
         private bool _EnableSubGrids = false;
-        public bool EnableSubGrids { get => _EnableSubGrids; set => SetValue(ref _EnableSubGrids, value); }
-
-        private bool _LoadFromOriginalPos = false;
-        public bool LoadFromOriginalPos { get => _LoadFromOriginalPos; set => SetValue(ref _LoadFromOriginalPos, value); }
+        public bool EnableSubGrids { get => _EnableSubGrids; set => SetValue(ref _EnableSubGrids, value); 
 
 
         private bool _RequireRestockFee = false;
