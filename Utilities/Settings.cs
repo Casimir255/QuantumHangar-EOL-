@@ -82,6 +82,8 @@ namespace QuantumHangar
         private bool _RequireLoadRadius = true;
         public bool RequireLoadRadius { get => _RequireLoadRadius; set => SetValue(ref _RequireLoadRadius, value); }
 
+        private bool _DigVoxels = false;
+        public bool DigVoxels { get => _DigVoxels; set => SetValue(ref _DigVoxels, value); }
 
         private bool _BlackListRadioButton = false;
         public bool SBlockLimits { get => _BlackListRadioButton; set => SetValue(ref _BlackListRadioButton, value); }
