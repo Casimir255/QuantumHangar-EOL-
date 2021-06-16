@@ -37,6 +37,7 @@ namespace QuantumHangar
         private readonly Chat _Response;
         private MyObjectBuilder_CubeGrid _BiggestGrid;
         private static int Timeout = 6000;
+        public static Settings Config { get { return Hangar.Config; } }
 
 
         //Bounds
@@ -139,7 +140,10 @@ namespace QuantumHangar
                 {
                     //If the original spot is clear, return true and spawn
                     if (OriginalSpotClear())
+                    {
+                        if (Config.DigVoxels) DigVoxels();
                         return true;
+                    }
                 }
 
 
@@ -165,6 +169,7 @@ namespace QuantumHangar
                 TargetPos = pos.Value;
                 UpdateGridsPosition(TargetPos);
 
+                if (Config.DigVoxels) DigVoxels();
                 return true;
 
             }
@@ -172,6 +177,57 @@ namespace QuantumHangar
             {
                 Log.Fatal(Ex);
                 return false;
+            }
+        }
+
+        // DigVoxels will dig voxels around the grids if necessary.
+        //
+        // Grids built inside dug out voxel (e.g. underground bases) have the problem that once saved
+        // in hangar, voxels are likely to regenerate, and the grids cannot be loaded again without
+        // exploding, requiring either admin assistance to dig it out, or give up on the grids.
+        //
+        // However it is not desirable to dig out all voxels around the grids unconditionally, grids placed
+        // on voxels (e.g. surface bases) can load just fine and voxels under them should remain intact.
+        //
+        // Therefore the criteria is: if the grids center is inside voxels then dig voxels around, otherwise not.
+        // The current digging strategy is simply a bounding box around it, aligned on the biggest grid and as
+        // large as necessary for the whole grid to fit, plus an arbitrary 2 meters to fit a character standing.
+        //
+        // The grids center and the bounding box are determined by FindGridBounds.
+        //
+        // It is worth noting that this behavior can be used to dig out voxels for free, e.g. a long line of
+        // blocks in each direction would result in a large cube dug out; or, in gravity a station grid that was
+        // previously held by voxels would now appear to float in the air. These are definitely quirks but
+        // not game breaking, as players can achieve the same result themselves.
+        //
+        // Needs to run in the game thread.
+        private void DigVoxels()
+        {
+            var center = new BoundingBoxD(SphereD.Center - 0.1f, SphereD.Center + 0.1f);
+            foreach (MyVoxelBase voxel in MySession.Static.VoxelMaps.Instances)
+            {
+                if (voxel.StorageName == null) continue; // invalid voxel
+
+                // ignore ghost asteroids: planets don't have physics linked directly to entity and
+                // asteroids do have physics and they're disabled when in ghost placement mode, but not null
+                if (!(voxel is MyPlanet) && (voxel.Physics == null || !voxel.Physics.Enabled)) continue;
+
+                // before we check if it's inside voxel material (complex), there's a fast check
+                // we can do: if it's not near the voxel map, then bail out
+                if (!voxel.IsBoxIntersectingBoundingBoxOfThisVoxelMap(ref center)) continue;
+
+                // dig only if the grids center is inside voxel material
+                // this allows to leave untouched grids that are partially in voxels on purpose
+                if (!voxel.IsAnyAabbCornerInside(ref MatrixD.Identity, center)) continue;
+
+                // in practice, this is reached only once because voxel material cannot overlap
+
+                var box = new BoundingBoxD(BoxAAB.Min, BoxAAB.Max);
+                box.Inflate(2f); // just enough for one character height
+                var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
+                shape.Boundaries = box;
+                shape.Transform = _BiggestGrid.PositionAndOrientation.Value.GetMatrix();
+                MyAPIGateway.Session.VoxelMaps.CutOutShape(voxel, shape);
             }
         }
 
