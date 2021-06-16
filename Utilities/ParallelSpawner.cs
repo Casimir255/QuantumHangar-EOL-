@@ -42,7 +42,7 @@ namespace QuantumHangar
         //Bounds
         private BoundingSphereD SphereD;
         private MyOrientedBoundingBoxD BoxD;
-        private BoundingBox BoxAAB = new BoundingBox();
+        private BoundingBoxD BoxAAB = new BoundingBoxD();
 
         //Delta
         private Vector3D Delta3D; //This should be a vector from the grids center, to that of the CENTER of the grid
@@ -186,15 +186,27 @@ namespace QuantumHangar
 
         private void FindGridBounds()
         {
-            BoundingSphere Sphere = new BoundingSphere();
-            BoxAAB = new BoundingBox();
+            BoxAAB = new BoundingBoxD();
+            BoxAAB.Include(_BiggestGrid.CalculateBoundingBox());
 
-            Parallel.ForEach(_grids, grid =>
+            var biggestGridWorldToLocal = MatrixD.Invert(_BiggestGrid.PositionAndOrientation.Value.GetMatrix());
+
+            Vector3D[] corners = new Vector3D[8];
+            foreach (var grid in _grids)
             {
-                Sphere.Include(grid.CalculateBoundingSphere());
-                BoxAAB.Include(grid.CalculateBoundingBox());
-            });
+                if (grid == _BiggestGrid) continue;
+                var box = new BoundingBoxD();
+                box.Include(grid.CalculateBoundingBox());
+                var worldBox = new MyOrientedBoundingBoxD(box, grid.PositionAndOrientation.Value.GetMatrix());
+                worldBox.Transform(biggestGridWorldToLocal);
+                worldBox.GetCorners(corners, 0);
+                foreach (var corner in corners)
+                {
+                    BoxAAB.Include(corner);
+                }
+            }
 
+            BoundingSphereD Sphere = BoundingSphereD.CreateFromBoundingBox(BoxAAB);
             BoxD = new MyOrientedBoundingBoxD(BoxAAB, _BiggestGrid.PositionAndOrientation.Value.GetMatrix());
             SphereD = new BoundingSphereD(BoxD.Center, Sphere.Radius);
 
