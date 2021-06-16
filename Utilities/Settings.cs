@@ -111,8 +111,7 @@ namespace QuantumHangar
 
         private int _SellAFKDayAmount = 30;
         public int SellAFKDayAmount { get => _SellAFKDayAmount; set => SetValue(ref _SellAFKDayAmount, value); }
-        private byte[] _Workbook = null;
-        public byte[] Workbook { get => _Workbook; set => SetValue(ref _Workbook, value); }
+
 
         private bool _AdvancedDebug = false;
         public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
@@ -141,15 +140,8 @@ namespace QuantumHangar
         private ObservableCollection<HangarBlacklist> _AutoHangarPlayerBlacklist = new ObservableCollection<HangarBlacklist>();
         public ObservableCollection<HangarBlacklist> AutoHangarPlayerBlacklist { get => _AutoHangarPlayerBlacklist; set => SetValue(ref _AutoHangarPlayerBlacklist, value); }
 
-
-        private bool _CrossServerEcon = false;
-        public bool CrossServerEcon { get => _CrossServerEcon; set => SetValue(ref _CrossServerEcon, value); }
-
         private bool _AutoHangarGrids = false;
         public bool AutoHangarGrids { get => _AutoHangarGrids; set => SetValue(ref _AutoHangarGrids, value); }
-
-        private bool _AutoDisconnectGearConnectors = false;
-        public bool AutoDisconnectGearConnectors { get => _AutoDisconnectGearConnectors; set => SetValue(ref _AutoDisconnectGearConnectors, value); }
 
         private bool _DeleteRespawnPods = false;
         public bool DeleteRespawnPods { get => _DeleteRespawnPods; set => SetValue(ref _DeleteRespawnPods, value); }
@@ -172,13 +164,8 @@ namespace QuantumHangar
         private bool _AutoHangarSmallGrids = true;
         public bool AutoHangarSmallGrids { get => _AutoHangarSmallGrids; set => SetValue(ref _AutoHangarSmallGrids, value); }
 
-
         private bool _OnLoadTransfer = false;
         public bool OnLoadTransfer { get => _OnLoadTransfer; set => SetValue(ref _OnLoadTransfer, value); }
-
-        //ExtendedConfigs
-        private bool _requireAdminPermForHangarWipe = false;
-        public bool requireAdminPermForHangarWipe { get => _requireAdminPermForHangarWipe;}
 
 
         //Single slot
@@ -229,10 +216,6 @@ namespace QuantumHangar
 
         private double _MaxGravityAmount = 0;
         public double MaxGravityAmount { get => _MaxGravityAmount; set => SetValue(ref _MaxGravityAmount, value); }
-
-
-        private bool _HostServer = false;
-        public bool HostServer { get => _HostServer; set => SetValue(ref _HostServer, value); }
 
 
     }
