@@ -1,6 +1,7 @@
 ﻿using Havok;
 using NLog;
 using QuantumHangar.Utilities;
+using QuantumHangar.Utils;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Engine.Voxels;
@@ -245,17 +246,23 @@ namespace QuantumHangar
             BoxAAB = new BoundingBoxD();
             BoxAAB.Include(_BiggestGrid.CalculateBoundingBox());
 
-            var biggestGridWorldToLocal = MatrixD.Invert(_BiggestGrid.PositionAndOrientation.Value.GetMatrix());
+            MatrixD BiggestGridMatrix = _BiggestGrid.PositionAndOrientation.Value.GetMatrix();
+            MatrixD BiggestGridMatrixToLocal = MatrixD.Invert(BiggestGridMatrix);
+
 
             Vector3D[] corners = new Vector3D[8];
             foreach (var grid in _grids)
             {
-                if (grid == _BiggestGrid) continue;
-                var box = new BoundingBoxD();
-                box.Include(grid.CalculateBoundingBox());
-                var worldBox = new MyOrientedBoundingBoxD(box, grid.PositionAndOrientation.Value.GetMatrix());
-                worldBox.Transform(biggestGridWorldToLocal);
+                if (grid == _BiggestGrid)
+                    continue;
+
+
+                BoundingBoxD box = grid.CalculateBoundingBox();
+
+                MyOrientedBoundingBoxD worldBox = new MyOrientedBoundingBoxD(box, grid.PositionAndOrientation.Value.GetMatrix());
+                worldBox.Transform(BiggestGridMatrixToLocal);
                 worldBox.GetCorners(corners, 0);
+
                 foreach (var corner in corners)
                 {
                     BoxAAB.Include(corner);
@@ -263,8 +270,26 @@ namespace QuantumHangar
             }
 
             BoundingSphereD Sphere = BoundingSphereD.CreateFromBoundingBox(BoxAAB);
-            BoxD = new MyOrientedBoundingBoxD(BoxAAB, _BiggestGrid.PositionAndOrientation.Value.GetMatrix());
+            BoxD = new MyOrientedBoundingBoxD(BoxAAB, BiggestGridMatrix);
             SphereD = new BoundingSphereD(BoxD.Center, Sphere.Radius);
+
+
+
+            //Test bounds to make sure they are in the right spot
+
+            /*
+
+            long ID = MySession.Static.Players.TryGetIdentityId(76561198045096439);
+            Vector3D[] array = new Vector3D[8];
+            BoxD.GetCorners(array, 0);
+
+            for (int i = 0; i <= 7; i++)
+            {
+                CharacterUtilities.SendGps(array[i], i.ToString(), ID, 10);
+            }
+            */
+
+            //Log.Info($"HangarDebug: {BoxD.ToString()}");
 
         }
 
@@ -274,24 +299,22 @@ namespace QuantumHangar
             MyGamePruningStructure.GetAllEntitiesInOBB(ref BoxD, entities);
 
             bool SpotCleared = true;
-            foreach (var entity in entities)
+            foreach (var entity in entities.OfType<MyCubeGrid>())
             {
-                if (entity is MyCubeGrid)
+
+                MyOrientedBoundingBoxD OBB = new MyOrientedBoundingBoxD(entity.PositionComp.LocalAABB, entity.WorldMatrix);
+
+                ContainmentType Type = BoxD.Contains(ref OBB);
+
+                //Log.Info($"{entity.DisplayName} Type: {Type.ToString()}");
+
+                if (Type == ContainmentType.Contains || Type == ContainmentType.Intersects)
                 {
-
-                    MyOrientedBoundingBoxD OBB = new MyOrientedBoundingBoxD(entity.PositionComp.LocalAABB, entity.WorldMatrix);
-
-                    ContainmentType Type = BoxD.Contains(ref OBB);
-
-                    //Log.Info($"{entity.DisplayName} Type: {Type.ToString()}");
-
-                    if (Type == ContainmentType.Contains || Type == ContainmentType.Intersects)
-                    {
-                        SpotCleared = false;
-                        _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
-                        break;
-                    }
+                    SpotCleared = false;
+                    _Response.Respond("There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
+                    break;
                 }
+
             }
 
             return SpotCleared;
@@ -411,7 +434,7 @@ namespace QuantumHangar
             Vector3D upDirectionalVector;
             if (gravityDirectionalVector != Vector3.Zero)
             {
-               
+
                 gravityDirectionalVector.Normalize();
                 upDirectionalVector = -gravityDirectionalVector;
 
