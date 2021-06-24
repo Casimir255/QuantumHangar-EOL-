@@ -48,6 +48,18 @@ namespace QuantumHangar.HangarChecks
             UserCharacter = (MyCharacter)Context.Player.Character;
         }
 
+        // PlayerChecks as initiated by another server to call LoadGrid.
+        // We don't have a command context nor a player character object to work with,
+        // but we receive all required data in the Nexus message.
+        public PlayerChecks(Chat chat, ulong steamID, long identityID, Vector3D playerPosition)
+        {
+            Chat = chat;
+            SteamID = steamID;
+            IdentityID = identityID;
+            PlayerPosition = playerPosition;
+            // UserCharacter can remain null, it is only used by SaveGrid.
+        }
+
         private bool PerformMainChecks(bool IsSaving)
         {
             if (!Config.PluginEnabled)
@@ -393,6 +405,9 @@ namespace QuantumHangar.HangarChecks
             if (!CheckDistanceToLoadPoint(SpawnPos))
                 return;
 
+            if (PluginDependencies.NexusInstalled &&
+                NexusSupport.RelayLoadIfNecessary(SpawnPos, ID, LoadNearPlayer, Chat, SteamID, IdentityID, PlayerPosition))
+                return;
 
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat, SpawnedGridsSuccessful);
             Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
