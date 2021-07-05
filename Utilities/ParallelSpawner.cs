@@ -560,33 +560,53 @@ namespace QuantumHangar
     }
 
 
+    // Simple chat class so i can control the colors easily.
     public class Chat
     {
         private CommandContext _context;
         private bool _mod;
+        private Action<string, Color, string> _send;
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(Chat));
-        //Simple chat class so i can control the colors easily
+
+        // Respond to a command.
         public Chat(CommandContext context, bool Mod = false)
         {
             _context = context;
             _mod = Mod;
         }
 
+        // Respond without a command, delegate how to send the response.
+        public Chat(Action<string, Color, string> sender)
+        {
+            _send = sender;
+        }
+
         public void Respond(string response)
         {
-            if (_context == null)
-                return;
-
             //Log.Warn(response+" Mod: "+ _mod);
             if (_mod)
             {
 
                 //Should fix admin commands
-                _context.Respond(response);
+                Send(response);
             }
             else
             {
-                _context.Respond(response, Color.Yellow, "Hangar");
+                Send(response, Color.Yellow, "Hangar");
+            }
+        }
+
+        private void Send(string response, Color color = default, string sender = null)
+        {
+            if (_context != null)
+            {
+                _context.Respond(response, color, sender);
+                return;
+            }
+            if (_send != null)
+            {
+                _send(response, color, sender);
+                return;
             }
         }
     }

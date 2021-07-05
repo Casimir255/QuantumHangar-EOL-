@@ -16,12 +16,14 @@ namespace QuantumHangar.Utils
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private static Guid BlockLimiterGUID = new Guid("11fca5c4-01b6-4fc3-a215-602e2325be2b");
         private static Guid GridBackupGUID = new Guid("75e99032-f0eb-4c0d-8710-999808ed970c");
+        private static Guid NexusGUID = new Guid("28a12184-0422-43ba-a6e6-2e228611cca5");
 
         private static MethodInfo CheckFutureLimits;
         private static MethodInfo BackupGridBuilders;
         private static ITorchPlugin GridBackupRef;
 
         public static bool BlockLimiterInstalled { get; private set; } = false;
+        public static bool NexusInstalled { get; private set; } = false;
 
 
         public static void InitPluginDependencies(PluginManager Plugins)
@@ -31,6 +33,14 @@ namespace QuantumHangar.Utils
 
             if (Plugins.Plugins.TryGetValue(BlockLimiterGUID, out ITorchPlugin BlockLimiterPlugin))
                 AquireBlockLimiter(BlockLimiterPlugin);
+
+            if (Plugins.Plugins.TryGetValue(NexusGUID, out ITorchPlugin NexusPlugin))
+                AquireNexus(NexusPlugin);
+        }
+
+        public static void Dispose()
+        {
+            if (NexusInstalled) NexusSupport.Dispose();
         }
 
         private static Type DeclareInstalledPlugin(ITorchPlugin Plugin)
@@ -53,6 +63,13 @@ namespace QuantumHangar.Utils
         {
             Type BlockLimiterType = DeclareInstalledPlugin(Plugin);
             CheckFutureLimits = BlockLimiterType.GetMethod("CheckLimits_future");
+        }
+
+        private static void AquireNexus(ITorchPlugin Plugin)
+        {
+            DeclareInstalledPlugin(Plugin);
+            NexusSupport.Init(Plugin);
+            NexusInstalled = true;
         }
 
 

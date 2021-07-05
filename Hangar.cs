@@ -149,6 +149,7 @@ namespace QuantumHangar
         public void PluginDispose()
         {
             AutoHangar.Dispose();
+            PluginDependencies.Dispose();
             /*
 
             //Un register events
