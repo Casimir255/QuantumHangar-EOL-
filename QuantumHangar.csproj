@@ -72,6 +72,7 @@
     <Compile Include="Utils\FileUtilities.cs" />
     <Compile Include="Utils\GridObjExtractor.cs" />
     <Compile Include="Utils\GridUtilities.cs" />
+    <Compile Include="Utils\NexusAPI.cs" />
     <Compile Include="Utils\PluginDependencies.cs" />
     <Compile Include="Utils\NexusSupport.cs" />
   </ItemGroup>
@@ -163,10 +164,6 @@
     </Reference>
     <Reference Include="VRage.XmlSerializers">
       <HintPath>$(GamePath)\Bin64\VRage.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Nexus">
-      <HintPath>$(TorchPath)\Plugins\Nexus\Nexus.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="WindowsBase" />

@@ -67,8 +67,16 @@ namespace QuantumHangar.Utils
 
         private static void AquireNexus(ITorchPlugin Plugin)
         {
-            DeclareInstalledPlugin(Plugin);
-            NexusSupport.Init(Plugin);
+            Type NexusMain = DeclareInstalledPlugin(Plugin);
+            Type ReflectedServerSideAPI = NexusMain?.Assembly.GetType("Nexus.API.PluginAPISync");
+
+            if (ReflectedServerSideAPI == null)
+                return;
+
+
+            ReflectedServerSideAPI.GetMethod("ApplyPatching", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { typeof(NexusAPI), "QuantumHangar" });
+
+            NexusSupport.Init();
             NexusInstalled = true;
         }
 

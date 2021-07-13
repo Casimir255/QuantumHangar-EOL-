@@ -1,6 +1,4 @@
-﻿using Nexus;
-using Nexus.API;
-using NLog;
+﻿using NLog;
 using ProtoBuf;
 using QuantumHangar.HangarChecks;
 using Sandbox.Engine.Multiplayer;
@@ -12,16 +10,20 @@ using VRageMath;
 
 namespace QuantumHangar.Utils
 {
-    public class NexusSupport
+    public static class NexusSupport
     {
         private const ushort QuantumHangarNexusModID = 0x24fc;
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private static NexusAPI _api = new NexusAPI(QuantumHangarNexusModID);
 
-        public static void Init(ITorchPlugin Plugin)
+        private static int ThisServerID;
+
+        public static void Init()
         {
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(QuantumHangarNexusModID, ReceivePacket);
+            ThisServerID = NexusAPI.GetThisServer().ServerID;
+            Log.Info("QuantumHangar -> Nexus integration has been initilized with serverID " + ThisServerID);
         }
 
         public static void Dispose()
@@ -46,12 +48,12 @@ namespace QuantumHangar.Utils
         // must try again later when the target server is online.
         public static bool RelayLoadIfNecessary(Vector3D spawnPos, int ID, bool loadNearPlayer, Chat Chat, ulong SteamID, long IdentityID, Vector3D PlayerPosition)
         {
-            if (!IsRunningNexus()) return false;
+            if (!NexusAPI.IsRunningNexus()) return false;
 
-            var target = GetServerIDFromPosition(spawnPos);
-            if (target == Main.Config.ServerID) return false;
+            var target = NexusAPI.GetServerIDFromPosition(spawnPos);
+            if (target == ThisServerID) return false;
 
-            if (!IsServerOnline(target))
+            if (!NexusAPI.IsServerOnline(target))
             {
                 Chat?.Respond("Sorry, this grid belongs to another server that is currently offline. Please try again later.");
                 return true;
@@ -66,9 +68,12 @@ namespace QuantumHangar.Utils
                 LoadNearPlayer = loadNearPlayer,
                 IdentityID = IdentityID,
                 PlayerPosition = PlayerPosition,
-                ServerID = Main.Config.ServerID
+                ServerID = ThisServerID
             };
-            SendMessageToServer(target, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(msg));
+
+            _api.SendMessageToServer(target, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(msg));
+
+
             return true;
         }
 
@@ -113,40 +118,12 @@ namespace QuantumHangar.Utils
                     Color = color,
                     Sender = sender,
                 };
-                SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
+                _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
             });
 
             PlayerChecks User = new PlayerChecks(chatOverNexus, msg.SteamID, msg.IdentityID, msg.PlayerPosition);
             User.LoadGrid(msg.LoadGridID, msg.LoadNearPlayer);
         }
-
-        #region Convenience wrappers around NexusServerSideAPI
-        private static bool IsRunningNexus()
-        {
-            bool result = false;
-            NexusServerSideAPI.IsRunningNexus(ref result);
-            return result;
-        }
-
-        private static int GetServerIDFromPosition(Vector3D position)
-        {
-            int result = 0;
-            NexusServerSideAPI.GetServerIDFromPosition(ref result, position);
-            return result;
-        }
-
-        private static bool IsServerOnline(int ServerID)
-        {
-            bool result = false;
-            NexusServerSideAPI.IsServerOnline(ref result, ServerID);
-            return result;
-        }
-
-        private static void SendMessageToServer(int ServerID, byte[] Message)
-        {
-            NexusServerSideAPI.SendMessageToServer(ref _api, ServerID, Message);
-        }
-        #endregion
     }
 
     [ProtoContract]
