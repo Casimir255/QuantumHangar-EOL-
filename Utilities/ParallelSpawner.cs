@@ -586,9 +586,11 @@ namespace QuantumHangar
             //Log.Warn(response+" Mod: "+ _mod);
             if (_mod)
             {
+                if (_context == null)
+                    return;
 
                 //Should fix admin commands
-                Send(response);
+                _context.Respond(response);
             }
             else
             {
@@ -603,6 +605,7 @@ namespace QuantumHangar
                 _context.Respond(response, color, sender);
                 return;
             }
+
             if (_send != null)
             {
                 _send(response, color, sender);
