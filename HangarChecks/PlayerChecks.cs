@@ -405,7 +405,7 @@ namespace QuantumHangar.HangarChecks
             if (!CheckDistanceToLoadPoint(SpawnPos))
                 return;
 
-            if (PluginDependencies.NexusInstalled &&
+            if (PluginDependencies.NexusInstalled && Config.NexusAPI &&
                 NexusSupport.RelayLoadIfNecessary(SpawnPos, ID, LoadNearPlayer, Chat, SteamID, IdentityID, PlayerPosition))
                 return;
 

@@ -14,6 +14,9 @@ namespace QuantumHangar
         private bool _Enabled = false;
         public bool PluginEnabled { get => _Enabled; set => SetValue(ref _Enabled, value); }
 
+        private bool _NexusAPI = false;
+        public bool NexusAPI { get => _NexusAPI; set => SetValue(ref _NexusAPI, value); }
+
         private string _FolderDirectory;
         public string FolderDirectory { get => _FolderDirectory; set => SetValue(ref _FolderDirectory, value); }
 
