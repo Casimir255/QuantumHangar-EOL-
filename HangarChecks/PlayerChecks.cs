@@ -25,6 +25,7 @@ namespace QuantumHangar.HangarChecks
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Chat Chat;
+        private readonly GpsSender GpsSender;
         public readonly ulong SteamID;
         private readonly long IdentityID;
         private readonly Vector3D PlayerPosition;
@@ -42,6 +43,7 @@ namespace QuantumHangar.HangarChecks
         public PlayerChecks(CommandContext Context)
         {
             Chat = new Chat(Context);
+            GpsSender = new GpsSender();
             SteamID = Context.Player.SteamUserId;
             IdentityID = Context.Player.Identity.IdentityId;
             PlayerPosition = Context.Player.GetPosition();
@@ -51,9 +53,10 @@ namespace QuantumHangar.HangarChecks
         // PlayerChecks as initiated by another server to call LoadGrid.
         // We don't have a command context nor a player character object to work with,
         // but we receive all required data in the Nexus message.
-        public PlayerChecks(Chat chat, ulong steamID, long identityID, Vector3D playerPosition)
+        public PlayerChecks(Chat chat, GpsSender gpsSender, ulong steamID, long identityID, Vector3D playerPosition)
         {
             Chat = chat;
+            GpsSender = gpsSender;
             SteamID = steamID;
             IdentityID = identityID;
             PlayerPosition = playerPosition;
@@ -438,7 +441,7 @@ namespace QuantumHangar.HangarChecks
             GridUtilities.BiggestGrid(Grids, out MyCubeGrid BiggestGrid);
 
             if (BiggestGrid != null && IdentityID != 0)
-                CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
+                GpsSender.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
         }
 
         private bool CheckZoneRestrictions(bool IsSave)
@@ -516,13 +519,13 @@ namespace QuantumHangar.HangarChecks
 
                 if (IsSave)
                 {
-                    CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
+                    GpsSender.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
                     Chat?.Respond("Nearest save area has been added to your HUD");
                     return false;
                 }
                 else
                 {
-                    CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
+                    GpsSender.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
                     //Chat chat = new Chat(Context);
                     Chat?.Respond("Nearest load area has been added to your HUD");
                     return false;
@@ -605,7 +608,7 @@ namespace QuantumHangar.HangarChecks
                     if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) <= Config.DistanceCheck)
                     {
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
-                        CharacterUtilities.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
+                        GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
                         EnemyFoundFlag = true;
                         break;
                     }
@@ -665,7 +668,7 @@ namespace QuantumHangar.HangarChecks
                     {
                         //Stop loop
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
-                        CharacterUtilities.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
+                        GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
                         EnemyFoundFlag = true;
                         break;
                     }
@@ -751,7 +754,7 @@ namespace QuantumHangar.HangarChecks
             if (Distance < Config.LoadRadius)
                 return true;
 
-            CharacterUtilities.SendGps(LoadPoint, "Load Point", IdentityID);
+            GpsSender.SendGps(LoadPoint, "Load Point", IdentityID);
             Chat.Respond("Cannot load! You are " + Math.Round(Distance, 0) + "m away from the load point! Check your GPS points!");
             return false;
         }
