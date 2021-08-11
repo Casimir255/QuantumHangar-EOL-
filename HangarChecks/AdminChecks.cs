@@ -5,6 +5,7 @@ using Sandbox.Game.Entities.Character;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -132,6 +133,29 @@ namespace QuantumHangar.HangarChecks
 
             PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
             PlayersHanger.UpdateHangar();
+        }
+
+        public void SyncAll()
+        {
+
+            //Get All hangar folders
+            foreach(var folder in Directory.GetDirectories(Config.FolderDirectory))
+            {
+               string PlayerID = Path.GetFileName(folder);
+
+                ulong ID = UInt64.Parse(PlayerID);
+
+                if (ID == 0)
+                    continue;
+
+
+                PlayerHangar PlayersHanger = new PlayerHangar(ID, Chat, true);
+                PlayersHanger.UpdateHangar();
+            }
+
+
+
+
         }
 
         public void RemoveGrid(string NameOrSteamID, int Index)

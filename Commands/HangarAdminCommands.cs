@@ -57,6 +57,14 @@ namespace QuantumHangar.Commands
 
         }
 
+        [Command("syncall", "Re-scans all folders for added or removed grids")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void SyncAll()
+        {
+            AdminChecks User = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
+        }
+
         [Command("autohangar", "Runs Autohangar")]
         [Permission(MyPromoteLevel.Moderator)]
         public async void RunAutoHangar()
@@ -116,6 +124,15 @@ namespace QuantumHangar.Commands
         {
             AdminChecks User = new AdminChecks(Context);
             await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncHangar(NameOrSteamID));
+
+        }
+
+        [Command("syncall", "Re-scans all folders for added or removed grids")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void SyncAll()
+        {
+            AdminChecks User = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
 
         }
 

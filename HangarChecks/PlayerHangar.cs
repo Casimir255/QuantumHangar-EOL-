@@ -512,7 +512,10 @@ namespace QuantumHangar.HangarChecks
         {
             IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
+            if (myFiles.Count() == 0)
+                return;
             //Scan for new grids
+
 
             List<GridStamp> NewGrids = new List<GridStamp>();
             int AddedGrids = 0;
