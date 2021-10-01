@@ -65,11 +65,11 @@ namespace QuantumHangar.Commands
             await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
         }
 
-        [Command("autohangar", "Runs Autohangar")]
+        [Command("autohangar", "Runs Autohangar ( [hangerNow (true/false)] [hangerStatic (true/false)] [hangerLarge (true/false)] [hangerSmall (true/false)] )")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void RunAutoHangar()
+        public async void RunAutoHangar(bool hangerNow = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(hangerNow, hangerStatic, hangerLarge, hangerSmall, hangerLargest));
         }
 
         [Command("enable", "Enables Hangar")]
@@ -136,11 +136,11 @@ namespace QuantumHangar.Commands
 
         }
 
-        [Command("autohangar", "Runs Autohangar")]
+        [Command("autohangar", "Runs Autohangar ( [hangerNow (true/false)] [hangerStatic (true/false)] [hangerLarge (true/false)] [hangerSmall (true/false)] )")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void RunAutoHangar()
+        public async void RunAutoHangar(bool hangerNow = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(hangerNow, hangerStatic, hangerLarge, hangerSmall, hangerLargest));
         }
 
         [Command("enable", "Enables Hangar")]
