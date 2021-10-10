@@ -79,6 +79,14 @@ namespace QuantumHangar.Commands
             Hangar.Config.PluginEnabled = SetPluginEnable;
         }
 
+
+        [Command("saveall", "Saves All grids on server into hangar")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void SaveAllGrids()
+        {
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true));
+        }
+
     }
 
 
@@ -148,6 +156,13 @@ namespace QuantumHangar.Commands
         public void Enable(bool SetPluginEnable)
         {
             Hangar.Config.PluginEnabled = SetPluginEnable;
+        }
+
+        [Command("saveall", "Saves All grids on server into hangar")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void SaveAllGrids()
+        {
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true));
         }
 
 

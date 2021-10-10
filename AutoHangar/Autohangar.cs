@@ -32,27 +32,28 @@ namespace QuantumHangar
 
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if(Config.AutoHangarGrids)
+            if (Config.AutoHangarGrids)
                 RunAutoHangar();
         }
 
-        public static void RunAutoHangar()
+        public static void RunAutoHangar(bool SaveAll = false)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
-           
+
 
             try
             {
-                AutoHangarWorker();
-            }catch(Exception ex)
+                AutoHangarWorker(SaveAll);
+            }
+            catch (Exception ex)
             {
                 Log.Error(ex);
             }
         }
 
-        private static void AutoHangarWorker()
+        private static void AutoHangarWorker(bool SaveAll = false)
         {
 
             //Significant performance increase
@@ -63,7 +64,7 @@ namespace QuantumHangar
             List<long> ExportPlayerIdentities = new List<long>();
 
             Log.Warn("AutoHangar: Getting Players!");
-            
+
             foreach (MyIdentity player in MySession.Static.Players.GetAllIdentities())
             {
                 if (player == null)
@@ -79,13 +80,21 @@ namespace QuantumHangar
                 if (SteamID == 0)
                     continue;
 
-                if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
+
+                if (!SaveAll)
                 {
-                    //AutoHangarBlacklist
-                    if (!Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                    if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
                     {
-                        ExportPlayerIdentities.Add(player.IdentityId);
+                        //AutoHangarBlacklist
+                        if (!Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                        {
+                            ExportPlayerIdentities.Add(player.IdentityId);
+                        }
                     }
+                }
+                else
+                {
+                    ExportPlayerIdentities.Add(player.IdentityId);
                 }
             }
 
