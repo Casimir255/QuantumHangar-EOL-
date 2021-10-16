@@ -105,6 +105,7 @@ namespace QuantumHangar
     {
         //Items we will send to the block on load (Less lag)
 
+
         [ProtoMember(1)] public string Name;
         [ProtoMember(2)] public string Description;
         [ProtoMember(3)] public string Seller = "Sold by Server";
@@ -142,40 +143,6 @@ namespace QuantumHangar
         [ProtoIgnore] public Dictionary<ulong, int> PlayerPurchases = new Dictionary<ulong, int>();
 
     }
-
-    public class PlayerAccount
-    {
-        public string Name;
-        public ulong SteamID;
-        public long AccountBalance;
-        public bool AccountAdjustment;
-
-
-        public PlayerAccount()
-        {
-            Name = null;
-            SteamID = 0;
-            AccountBalance = 0;
-        }
-
-
-        public PlayerAccount(string Name, ulong SteamID, long AccountBalance, bool AccountAdjustment = false)
-        {
-            this.Name = Name;
-            this.SteamID = SteamID;
-            this.AccountBalance = AccountBalance;
-            this.AccountAdjustment = AccountAdjustment;
-        }
-
-
-    }
-
-    public class Accounts
-    {
-
-        public Dictionary<ulong, long> PlayerAccounts = new Dictionary<ulong, long>();
-    }
-
 
     public class MarketData
     {

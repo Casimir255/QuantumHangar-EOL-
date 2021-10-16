@@ -56,6 +56,9 @@
     <Compile Include="HangarChecks\FactionHangar.cs" />
     <Compile Include="HangarChecks\PlayerChecks.cs" />
     <Compile Include="HangarChecks\PlayerHangar.cs" />
+    <Compile Include="HangarMarket\HangarMarketConfigs.cs" />
+    <Compile Include="HangarMarket\HangarMarketController.cs" />
+    <Compile Include="HangarMarket\MarketListing.cs" />
     <Compile Include="Properties\Debug.cs" />
     <Compile Include="Serialization\GridSerializer.cs" />
     <Compile Include="Serialization\JsonSerializer.cs" />
@@ -174,8 +177,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="HangarMarket\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

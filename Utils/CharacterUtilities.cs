@@ -18,52 +18,7 @@ namespace QuantumHangar.Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public static bool TryUpdatePlayerBalance(PlayerAccount Account)
-        {
-            try
-            {
-
-                long IdentityID = MySession.Static.Players.TryGetIdentityId(Account.SteamID);
-
-                if (IdentityID == 0)
-                {
-                    return false;
-                }
-
-
-                if (Account.AccountAdjustment)
-                {
-                    MyBankingSystem.ChangeBalance(IdentityID, Account.AccountBalance);
-                    return true;
-                }
-
-
-                long OriginalBalance = MyBankingSystem.GetBalance(IdentityID);
-                long BalanceAdjuster = Account.AccountBalance - OriginalBalance;
-
-                if (BalanceAdjuster == 0)
-                {
-                    return true;
-                }
-
-                MyBankingSystem.ChangeBalance(IdentityID, BalanceAdjuster);
-                //Hangar.Debug("Player " + IdentityID + " account has been updated! ");
-
-                return true;
-            }
-            catch
-            {
-
-
-                return false;
-            }
-
-
-
-
-
-
-        }
+    
         public static bool TryGetPlayerBalance(ulong steamID, out long balance)
         {
             try
@@ -164,8 +119,6 @@ namespace QuantumHangar.Utils
 
         public static void SendGps(Vector3D Position, string name, long EntityID, double Miniutes = 5)
         {
-
-
             MyGps myGps = new MyGps();
             myGps.ShowOnHud = true;
             myGps.Coords = Position;
@@ -173,12 +126,11 @@ namespace QuantumHangar.Utils
             myGps.Description = "Hangar location for loading grid at or around this position";
             myGps.AlwaysVisible = true;
 
+            
             MyGps gps = myGps;
             gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + Miniutes);
             gps.GPSColor = Color.Yellow;
             MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
         }
-
-        
     }
 }

@@ -506,7 +506,7 @@
             </TabItem>
 
 
-            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="False">
+            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130"/>

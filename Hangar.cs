@@ -30,6 +30,7 @@ using Torch.Managers.PatchManager;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
 using VRageMath;
 using QuantumHangar.Utils;
+using QuantumHangar.HangarMarket;
 
 namespace QuantumHangar
 {
@@ -99,6 +100,7 @@ namespace QuantumHangar
 
             if (Config.GridMarketEnabled)
             {
+                HangarMarketController Controller = new HangarMarketController();
                 //Market = new GridMarket(StoragePath);
                 //Market.InitilizeGridMarket();
             }
