@@ -117,8 +117,16 @@ namespace QuantumHangar.Utils
             return Vector3D.Zero;
         }
 
-        public static void SendGps(Vector3D Position, string name, long EntityID, double Miniutes = 5)
+
+
+        // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
+        public void SendGps(Vector3D Position, string name, long EntityID)
         {
+            if (_send != null)
+            {
+                _send(Position, name, EntityID);
+                return;
+            }
             MyGps myGps = new MyGps();
             myGps.ShowOnHud = true;
             myGps.Coords = Position;
@@ -128,7 +136,7 @@ namespace QuantumHangar.Utils
 
             
             MyGps gps = myGps;
-            gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + Miniutes);
+            gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
             gps.GPSColor = Color.Yellow;
             MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
         }

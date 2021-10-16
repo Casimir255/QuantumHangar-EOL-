@@ -16,6 +16,7 @@ namespace QuantumHangar.Utils
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private static NexusAPI _api = new NexusAPI(QuantumHangarNexusModID);
+        private static GpsSender gpsSender = new GpsSender();
 
         private static int ThisServerID;
 
@@ -63,6 +64,7 @@ namespace QuantumHangar.Utils
 
             NexusHangarMessage msg = new NexusHangarMessage
             {
+                Type = NexusHangarMessageType.LoadGrid,
                 SteamID = SteamID,
                 LoadGridID = ID,
                 LoadNearPlayer = loadNearPlayer,
@@ -93,55 +95,89 @@ namespace QuantumHangar.Utils
                 return;
             }
 
-            // The remote server loading the grid wants to respond to the player on our server.
-            if (msg.Response != null)
+            switch (msg.Type)
             {
-                var chat = new ScriptedChatMsg()
-                {
-                    Author = msg.Sender,
-                    Text = msg.Response,
-                    Font = MyFontEnum.White,
-                    Color = msg.Color,
-                    Target = msg.IdentityID
-                };
-                MyMultiplayerBase.SendScriptedChatMessage(ref chat);
-                return;
+                case NexusHangarMessageType.Chat:
+                    var chat = new ScriptedChatMsg()
+                    {
+                        Author = msg.Sender,
+                        Text = msg.Response,
+                        Font = MyFontEnum.White,
+                        Color = msg.Color,
+                        Target = msg.ChatIdentityID
+                    };
+                    MyMultiplayerBase.SendScriptedChatMessage(ref chat);
+                    return;
+
+                case NexusHangarMessageType.SendGPS:
+                    gpsSender.SendGps(msg.Position, msg.Name, msg.EntityID);
+                    return;
+
+                case NexusHangarMessageType.LoadGrid:
+                    var chatOverNexus = new Chat((text, color, sender) =>
+                    {
+                        NexusHangarMessage m = new NexusHangarMessage
+                        {
+                            Type = NexusHangarMessageType.Chat,
+                            IdentityID = msg.IdentityID,
+                            Response = text,
+                            Color = color,
+                            Sender = sender,
+                        };
+                        _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
+                    });
+
+                    var gpsOverNexus = new GpsSender((position, name, entityID) =>
+                    {
+                        NexusHangarMessage m = new NexusHangarMessage
+                        {
+                            Type = NexusHangarMessageType.SendGPS,
+                            Name = name,
+                            Position = position,
+                            EntityID = entityID,
+                        };
+                        _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
+                    });
+
+                    PlayerChecks User = new PlayerChecks(chatOverNexus, gpsOverNexus, msg.SteamID, msg.IdentityID, msg.PlayerPosition);
+                    User.LoadGrid(msg.LoadGridID, msg.LoadNearPlayer);
+                    return;
             }
 
-            // Load grid locally and relay chat responses back to the other server where the player is.
-            var chatOverNexus = new Chat((text, color, sender) =>
-            {
-                NexusHangarMessage m = new NexusHangarMessage
-                {
-                    IdentityID = msg.IdentityID,
-                    Response = text,
-                    Color = color,
-                    Sender = sender,
-                };
-                _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
-            });
-
-            PlayerChecks User = new PlayerChecks(chatOverNexus, msg.SteamID, msg.IdentityID, msg.PlayerPosition);
-            User.LoadGrid(msg.LoadGridID, msg.LoadNearPlayer);
+            Log.Error("Invalid Nexus cross-server message for Quantum Hangar (unrecognized type: " + msg.Type + ")");
         }
+    }
+
+    public enum NexusHangarMessageType
+    {
+        Unset,
+        LoadGrid,
+        Chat,
+        SendGPS
     }
 
     [ProtoContract]
     public class NexusHangarMessage
     {
-        // Common field for both load grid and chat response.
-        [ProtoMember(1)] public long IdentityID;
+        [ProtoMember(1)] public NexusHangarMessageType Type;
 
-        // Request to load grid.
-        [ProtoMember(2)] public int LoadGridID;
-        [ProtoMember(3)] public bool LoadNearPlayer;
-        [ProtoMember(4)] public ulong SteamID;
-        [ProtoMember(5)] public Vector3D PlayerPosition;
-        [ProtoMember(6)] public int ServerID;
+        // Request to load grid: Type == LoadGrid
+        [ProtoMember(2)] public long IdentityID;
+        [ProtoMember(3)] public int LoadGridID;
+        [ProtoMember(4)] public bool LoadNearPlayer;
+        [ProtoMember(5)] public ulong SteamID;
+        [ProtoMember(6)] public Vector3D PlayerPosition;
+        [ProtoMember(7)] public int ServerID;
 
-        // Relay chat response back.
-        [ProtoMember(7)] public string Response;
-        [ProtoMember(8)] public Color Color;
-        [ProtoMember(9)] public string Sender;
+        // Relay chat response back: Type == Chat
+        [ProtoMember(8)] public long ChatIdentityID;
+        [ProtoMember(9)] public string Response;
+        [ProtoMember(10)] public Color Color;
+        [ProtoMember(11)] public string Sender;
+
+        // Relay send GPS back: Type == SendGPS
+        [ProtoMember(12)] public string Name;
+        [ProtoMember(13)] public Vector3D Position;
+        [ProtoMember(14)] public long EntityID;
     }
 }
