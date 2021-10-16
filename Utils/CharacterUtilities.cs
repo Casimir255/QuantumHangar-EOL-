@@ -118,27 +118,41 @@ namespace QuantumHangar.Utils
         }
 
 
-
-        // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
-        public void SendGps(Vector3D Position, string name, long EntityID)
+        // GpsSender is a class to send GPS coordinates to the player.
+        public class GpsSender
         {
-            if (_send != null)
-            {
-                _send(Position, name, EntityID);
-                return;
-            }
-            MyGps myGps = new MyGps();
-            myGps.ShowOnHud = true;
-            myGps.Coords = Position;
-            myGps.Name = name;
-            myGps.Description = "Hangar location for loading grid at or around this position";
-            myGps.AlwaysVisible = true;
 
-            
-            MyGps gps = myGps;
-            gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
-            gps.GPSColor = Color.Yellow;
-            MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+            // Normal object to send GPS directly, i.e. in the current game.
+            public GpsSender() { }
+
+            private Action<Vector3D, string, long> _send;
+
+            // Delegate how to send the GPS, e.g. via a Nexus message.
+            public GpsSender(Action<Vector3D, string, long> sender)
+            {
+                _send = sender;
+            }
+
+            // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
+            public void SendGps(Vector3D Position, string name, long EntityID)
+            {
+                if (_send != null)
+                {
+                    _send(Position, name, EntityID);
+                    return;
+                }
+                MyGps myGps = new MyGps();
+                myGps.ShowOnHud = true;
+                myGps.Coords = Position;
+                myGps.Name = name;
+                myGps.Description = "Hangar location for loading grid at or around this position";
+                myGps.AlwaysVisible = true;
+
+                MyGps gps = myGps;
+                gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
+                gps.GPSColor = Color.Yellow;
+                MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+            }
         }
     }
 }

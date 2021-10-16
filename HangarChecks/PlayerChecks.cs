@@ -16,6 +16,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar.HangarChecks
 {

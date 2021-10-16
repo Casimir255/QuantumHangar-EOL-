@@ -7,6 +7,7 @@ using System;
 using Torch.API.Plugins;
 using VRage.Game;
 using VRageMath;
+using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar.Utils
 {
