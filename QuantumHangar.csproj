@@ -56,6 +56,7 @@
     <Compile Include="HangarChecks\FactionHangar.cs" />
     <Compile Include="HangarChecks\PlayerChecks.cs" />
     <Compile Include="HangarChecks\PlayerHangar.cs" />
+    <Compile Include="Commands\HangarMarketCommands.cs" />
     <Compile Include="HangarMarket\HangarMarketConfigs.cs" />
     <Compile Include="HangarMarket\HangarMarketController.cs" />
     <Compile Include="HangarMarket\MarketListing.cs" />

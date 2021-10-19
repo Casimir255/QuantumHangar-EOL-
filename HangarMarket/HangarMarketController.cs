@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,12 +18,11 @@ namespace QuantumHangar.HangarMarket
 
 
         private static string MarketFolderDir { get { return Path.Combine(Hangar.Config.FolderDirectory, "HangarMarket"); } }
-        private static string MarketOfferFiles { get { return Path.Combine(Hangar.Config.FolderDirectory, "Offers"); } }
-        private static string MarketGridBuilders { get { return Path.Combine(Hangar.Config.FolderDirectory, "Grids"); } }
 
 
 
-        private static ConcurrentDictionary<string, byte[]> MarketOffers = new ConcurrentDictionary<string, byte[]>();
+
+        private static ConcurrentDictionary<string, MarketListing> MarketOffers = new ConcurrentDictionary<string, MarketListing>();
 
 
 
@@ -36,23 +36,28 @@ namespace QuantumHangar.HangarMarket
 
         public HangarMarketController()
         {
+            //Run this when server initilizes
 
             //Make sure to create the market directory
-            Directory.CreateDirectory(MarketOfferFiles);
-            Directory.CreateDirectory(MarketGridBuilders);
+            Directory.CreateDirectory(MarketFolderDir);
 
 
+            //Initilize server and read all exsisting market files
             string[] MarketFileOffers = Directory.GetFiles(MarketFolderDir, "*.txt", SearchOption.TopDirectoryOnly);
-
-            foreach(var Offer in MarketFileOffers)
+            foreach(var OfferPath in MarketFileOffers)
             {
-                string FileName = Path.GetFileName(Offer);
+                string FileName = Path.GetFileName(OfferPath);
                 Log.Error($"Adding File: {FileName}");
-                MarketOffers.TryAdd(FileName, File.ReadAllBytes(Offer));
+
+
+                if (!TryGetReadMarketFile(OfferPath, out MarketListing Offer))
+                    continue;
+
+                MarketOffers.TryAdd(FileName, Offer);
             }
 
 
-            //Run this when server initilizes
+          
 
 
 
@@ -113,9 +118,15 @@ namespace QuantumHangar.HangarMarket
             
 
             byte[] Data = File.ReadAllBytes(e.FullPath);
-            
 
-            if (MarketOffers.TryAdd(e.Name, Data))
+
+            if (!TryGetReadMarketFile(e.FullPath, out MarketListing Offer))
+                return;
+
+
+
+
+            if (MarketOffers.TryAdd(e.Name, Offer))
                 Log.Error("Added this file to the dictionary!");
 
         }
@@ -123,15 +134,44 @@ namespace QuantumHangar.HangarMarket
 
 
 
-        private static void ReadMarketFile(string FilePath)
+
+      
+        private static bool TryGetReadMarketFile(string FilePath, out MarketListing Listing)
         {
+            //Reads market file from path
+
+            Listing = null;
+            try
+            {
+                Listing = JsonConvert.DeserializeObject<MarketListing>(File.ReadAllText(FilePath));
+                return true;
+
+            }
+            catch(Exception ex)
+            {
+                Log.Error(ex);
+                return false;
+            }
+        }
 
 
+        private static bool SaveNewMarketFile(MarketListing NewListing)
+        {
+            //Saves a new market listing
 
+            string FileName = NewListing.Steamid + "-" + NewListing.Name + ".json";
 
+            try
+            {
+                //Save new market offer
+                File.WriteAllText(FileName, JsonConvert.SerializeObject(NewListing, Formatting.Indented));
+                return true;
 
-
-
+            }catch(Exception ex)
+            {
+                Log.Error(ex);
+                return false;
+            }
         }
     }
 }

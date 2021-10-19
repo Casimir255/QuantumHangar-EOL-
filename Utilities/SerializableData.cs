@@ -17,6 +17,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using Sandbox.Game.World;
 using NLog;
+using QuantumHangar.Serialization;
 
 namespace QuantumHangar
 {
@@ -336,7 +337,6 @@ namespace QuantumHangar
             GridID = BiggestGrid.EntityId;
             GridSavePosition = BiggestGrid.PositionComp.GetPosition();
         }
-
         public bool CheckGridLimits(Chat Response, MyIdentity TargetIdentity)
         {
             //No need to check limits
@@ -417,9 +417,6 @@ namespace QuantumHangar
 
             return true;
         }
-
-        
-
         public void UpdatePCUCounter(long Player, int Amount)
         {
             if (ShipPCU.ContainsKey(Player))
@@ -430,6 +427,24 @@ namespace QuantumHangar
             {
                 ShipPCU.Add(Player, Amount);
             }
+        }
+
+        public string GetGridPath(string PlayersFolderPath)
+        {
+            return Path.Combine(PlayersFolderPath, GridName + ".sbc");
+        }
+
+
+
+        public bool TryGetGrids(string PlayersFolderPath, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        {
+            Grids = null;
+            string GridPath = Path.Combine(PlayersFolderPath, GridName + ".sbc");
+
+            if (!GridSerializer.LoadGrid(GridPath, out Grids))
+                return false;
+
+            return true;
         }
 
     }

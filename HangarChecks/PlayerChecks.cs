@@ -386,14 +386,17 @@ namespace QuantumHangar.HangarChecks
             if (!PerformMainChecks(false))
                 return;
 
-            if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
+
+            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
+                return;
+
+            if (!PlayersHanger.LoadGrid(Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids))
             {
                 Log.Error($"Loading grid {ID} failed for {IdentityID}!");
                 Chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
-
-
+              
             if (!PlayersHanger.CheckLimits(Stamp, Grids))
                 return;
 
@@ -426,6 +429,16 @@ namespace QuantumHangar.HangarChecks
             }
 
 
+
+
+        }
+
+        public void SellGrid(int ID, double Price, string Description)
+        {
+
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
+
+            
 
 
         }
