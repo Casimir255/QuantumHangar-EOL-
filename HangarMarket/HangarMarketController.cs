@@ -22,7 +22,7 @@ namespace QuantumHangar.HangarMarket
 
 
 
-        private static ConcurrentDictionary<string, MarketListing> MarketOffers = new ConcurrentDictionary<string, MarketListing>();
+        public static ConcurrentDictionary<string, MarketListing> MarketOffers = new ConcurrentDictionary<string, MarketListing>();
 
 
 
@@ -45,7 +45,7 @@ namespace QuantumHangar.HangarMarket
 
 
             //Initilize server and read all exsisting market files
-            string[] MarketFileOffers = Directory.GetFiles(MarketFolderDir, "*.txt", SearchOption.TopDirectoryOnly);
+            string[] MarketFileOffers = Directory.GetFiles(MarketFolderDir, "*.json", SearchOption.TopDirectoryOnly);
             foreach(var OfferPath in MarketFileOffers)
             {
                 string FileName = Path.GetFileName(OfferPath);
@@ -158,6 +158,13 @@ namespace QuantumHangar.HangarMarket
 
 
 
+
+        public static void RemoveMarketListing(ulong Owner, string Name)
+        {
+            string FileName = Owner + "-" + Name + ".json";
+
+            File.Delete(Path.Combine(MarketFolderDir, FileName));
+        }
 
 
         public static bool SaveNewMarketFile(MarketListing NewListing)

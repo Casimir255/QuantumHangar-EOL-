@@ -33,5 +33,26 @@ namespace QuantumHangar.HangarMarket
         }
 
 
+        [Command("marketlist", "Lists all grids for sale")]
+        [Permission(MyPromoteLevel.None)]
+        public void MarketList()
+        {
+
+            StringBuilder Builder = new StringBuilder();
+
+            foreach(var Value in HangarMarketController.MarketOffers.Values)
+            {
+                Builder.AppendLine($"{Value.Name} - {Value.Price}");
+            }
+
+
+            Chat Response = new Chat(Context);
+            Response.Respond(Builder.ToString());
+
+        }
+
+
+
+
     }
 }

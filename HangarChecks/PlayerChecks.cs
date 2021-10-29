@@ -1,4 +1,5 @@
 ﻿using NLog;
+using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
@@ -389,6 +390,15 @@ namespace QuantumHangar.HangarChecks
 
             if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
                 return;
+
+
+
+            //Check to see if the grid is for sale. We need to let the player know if it is
+            if (!CheckGridForSale(Stamp, ID))
+                return;
+
+
+
 
             if (!PlayersHanger.LoadGrid(Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids))
             {
@@ -799,6 +809,67 @@ namespace QuantumHangar.HangarChecks
             }
 
             return false;
+        }
+
+
+
+
+
+        private static Dictionary<ulong, int> PlayerConfirmations = new Dictionary<ulong, int>();
+        private bool CheckGridForSale(GridStamp Stamp, int ID)
+        {
+
+            if(!Stamp.GridForSale)
+            {
+                //if grid is not for sale, remove any confirmations
+                PlayerConfirmations.Remove(SteamID);
+                return true;
+            }
+            else
+            {
+
+                if(!PlayerConfirmations.TryGetValue(SteamID, out int Selection))
+                {
+                    //Prompt user
+                    if (Config.RequireRestockFee)
+                    {
+                        Chat.Respond($"This grid is for sale! Run this command again to pay {Config.RequireRestockFee}sc to remove it from the market and load it in!");
+                    }
+                    else
+                    {
+                        Chat.Respond("This grid is for sale! Run this command again to confirm removal of sell offer and load it in!");
+                    }
+
+
+                    PlayerConfirmations.Add(SteamID, ID);
+
+                    return false;
+
+                }
+                else
+                {
+
+                    if(Selection != ID)
+                    {
+                        //If this grid is for sale and doesnt match our first selection need to remove it from the list and call this function again.
+                        PlayerConfirmations.Remove(SteamID);
+                        return CheckGridForSale(Stamp, ID);
+                    }
+
+
+
+                    //Remove market offer
+                    HangarMarketController.RemoveMarketListing(SteamID, Stamp.GridName);
+                    PlayerConfirmations.Remove(SteamID);
+                    return true;
+                }
+            }
+
+
+
+
+
+
         }
     }
 }

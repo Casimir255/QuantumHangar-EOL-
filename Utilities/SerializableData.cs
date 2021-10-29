@@ -64,7 +64,7 @@ namespace QuantumHangar
         {
             try
             {
-                File.WriteAllText(dir, JsonConvert.SerializeObject(data));
+                File.WriteAllText(dir, JsonConvert.SerializeObject(data, Formatting.Indented));
             }
             catch (Exception e)
             {
