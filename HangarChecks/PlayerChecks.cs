@@ -433,14 +433,26 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public void SellGrid(int ID, double Price, string Description)
+        public void SellGrid(int ID, long Price, string Description)
         {
 
             PlayersHanger = new PlayerHangar(SteamID, Chat);
 
-            
+            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
+                return;
+
+            //Check to see if grid is already for sale
+            if (Stamp.IsGridForSale())
+            {
+                Chat.Respond("This grid is already for sale!");
+                return;
+            }
 
 
+            if (!PlayersHanger.SellSelectedGrid(Stamp, Price, Description))
+                return;
+
+            Chat.Respond("Grid has been succesfully listed!");
         }
 
         public void RemoveGrid(int ID)

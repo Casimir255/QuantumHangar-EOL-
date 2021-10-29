@@ -17,7 +17,7 @@ namespace QuantumHangar.HangarMarket
         //files will by .json 
 
 
-        private static string MarketFolderDir { get { return Path.Combine(Hangar.Config.FolderDirectory, "HangarMarket"); } }
+        private static string MarketFolderDir;
 
 
 
@@ -37,6 +37,8 @@ namespace QuantumHangar.HangarMarket
         public HangarMarketController()
         {
             //Run this when server initilizes
+            MarketFolderDir = Path.Combine(Hangar.Config.FolderDirectory, "HangarMarket");
+
 
             //Make sure to create the market directory
             Directory.CreateDirectory(MarketFolderDir);
@@ -155,16 +157,19 @@ namespace QuantumHangar.HangarMarket
         }
 
 
-        private static bool SaveNewMarketFile(MarketListing NewListing)
+
+
+
+        public static bool SaveNewMarketFile(MarketListing NewListing)
         {
             //Saves a new market listing
 
-            string FileName = NewListing.Steamid + "-" + NewListing.Name + ".json";
+            string FileName = NewListing.SteamID + "-" + NewListing.Name + ".json";
 
             try
             {
                 //Save new market offer
-                File.WriteAllText(FileName, JsonConvert.SerializeObject(NewListing, Formatting.Indented));
+                File.WriteAllText(Path.Combine(MarketFolderDir,FileName), JsonConvert.SerializeObject(NewListing, Formatting.Indented));
                 return true;
 
             }catch(Exception ex)

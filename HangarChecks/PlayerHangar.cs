@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Definitions;
@@ -461,7 +462,7 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public bool IsGridForSale(GridStamp Grid)
+        public bool IsGridForSale(GridStamp Grid, bool Admin = false)
         {
             if (Grid.GridForSale)
             {
@@ -694,16 +695,20 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        public bool SellSelectedGrid(int ID, out GridStamp Stamp)
+        public bool SellSelectedGrid(GridStamp Stamp, long Price, string Description)
         {
 
-            Stamp = null;
-            if (!IsInputValid(ID))
-                return false;
-
-
-            Stamp = SelectedPlayerFile.Grids[ID - 1];
             Stamp.GridForSale = true;
+
+
+            MarketListing NewListing = new MarketListing(Stamp);
+            NewListing.SetUserInputs(Description, Price);
+
+            //We will set this into the file. (in the block we will dynamically get palyer name and faction)
+            NewListing.SetPlayerData(SteamID, IdentityID);
+            HangarMarketController.SaveNewMarketFile(NewListing);
+
+
 
             //Save player file
             SavePlayerFile();

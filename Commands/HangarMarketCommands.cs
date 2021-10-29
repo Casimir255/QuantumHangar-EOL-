@@ -1,4 +1,6 @@
-﻿using System;
+﻿using QuantumHangar.Commands;
+using QuantumHangar.HangarChecks;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,10 +19,16 @@ namespace QuantumHangar.HangarMarket
 
         [Command("sell", "Sells the grid")]
         [Permission(MyPromoteLevel.None)]
-        public async void SellGrid(int ID, double price, string description)
+        public async void SellGrid(int ID, long price, string description)
         {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
 
-
+            PlayerChecks User = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
 
         }
 

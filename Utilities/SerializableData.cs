@@ -447,6 +447,11 @@ namespace QuantumHangar
             return true;
         }
 
+        public bool IsGridForSale()
+        {
+            return GridForSale;
+        }
+
     }
 
     public class GridResult

@@ -1,9 +1,11 @@
 ﻿using ProtoBuf;
+using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VRage.Game.ModAPI;
 
 namespace QuantumHangar.HangarMarket
 {
@@ -18,40 +20,74 @@ namespace QuantumHangar.HangarMarket
         [ProtoMember(3)] public string Seller = "Sold by Server";
         [ProtoMember(4)] public long Price;
         [ProtoMember(5)] public double MarketValue;
-        [ProtoMember(6)] public ulong Steamid;
-        [ProtoMember(7)] public string SellerFaction = "N/A";
+        [ProtoMember(6)] public ulong SteamID;
+        [ProtoMember(7)] public long IdentityID;
+        [ProtoMember(8)] public string SellerFaction = "N/A";
 
 
 
 
         //Grid specfic details
-        [ProtoMember(8)] public float GridMass = 0;
-        [ProtoMember(9)] public int SmallGrids = 0;
-        [ProtoMember(10)] public int LargeGrids = 0;
-        [ProtoMember(11)] public int StaticGrids = 0;
-        [ProtoMember(12)] public int NumberofBlocks = 0;
-        [ProtoMember(13)] public float MaxPowerOutput = 0;
-        [ProtoMember(14)] public float GridBuiltPercent = 0;
-        [ProtoMember(15)] public long JumpDistance = 0;
-        [ProtoMember(16)] public int NumberOfGrids = 0;
-        [ProtoMember(17)] public int PCU = 0;
+        [ProtoMember(10)] public float GridMass = 0;
+        [ProtoMember(11)] public int SmallGrids = 0;
+        [ProtoMember(12)] public int LargeGrids = 0;
+        [ProtoMember(13)] public int StaticGrids = 0;
+        [ProtoMember(14)] public int NumberofBlocks = 0;
+        [ProtoMember(15)] public float MaxPowerOutput = 0;
+        [ProtoMember(16)] public float GridBuiltPercent = 0;
+        [ProtoMember(17)] public long JumpDistance = 0;
+        [ProtoMember(18)] public int NumberOfGrids = 0;
+        [ProtoMember(19)] public int PCU = 0;
 
 
 
         //Server blocklimits Block
-        [ProtoMember(18)] public Dictionary<string, int> BlockTypeCount = new Dictionary<string, int>();
+        [ProtoMember(20)] public Dictionary<string, int> BlockTypeCount = new Dictionary<string, int>();
 
 
         //Grid Stored Materials
-        [ProtoMember(19)] public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
-        [ProtoMember(19)] public string GridFileName; //Point to the objectbuilder in the player's file
-        [ProtoMember(25)] public byte[] GridDefinition;
+        [ProtoMember(30)] public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
+        [ProtoMember(31)] public string GridFileName; //Point to the objectbuilder in the player's file
+        [ProtoMember(32)] public byte[] GridDefinition;
 
 
 
-        [ProtoMember(30)] public bool ServerOffer = false;
+        [ProtoMember(33)] public bool ServerOffer = false;
 
 
+        public MarketListing() { }
+        public MarketListing(GridStamp Stamp)
+        {
+            Name = Stamp.GridName;
+            
+            
+
+            GridMass = Stamp.GridMass;
+            SmallGrids = Stamp.SmallGrids;
+            LargeGrids = Stamp.LargeGrids;
+            StaticGrids = Stamp.StaticGrids;
+            NumberofBlocks = Stamp.NumberofBlocks;
+            MaxPowerOutput = Stamp.MaxPowerOutput;
+            GridBuiltPercent = Stamp.GridBuiltPercent;
+            JumpDistance = Stamp.JumpDistance;
+            NumberOfGrids = Stamp.NumberOfGrids;
+            PCU = Stamp.GridPCU;
+            MarketValue = Stamp.MarketValue;
+        }
+
+        public void SetUserInputs(string Description, long Price)
+        {
+            this.Description = Description;
+            this.Price = Price;
+        }
+
+
+
+        public void SetPlayerData(ulong SteamID, long IdentityID)
+        {
+            this.SteamID = SteamID;
+            this.IdentityID = IdentityID;
+        }
 
 
     }
