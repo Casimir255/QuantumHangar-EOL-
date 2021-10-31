@@ -12,6 +12,8 @@
         <converters:TextToBoolConverter x:Key="TextToBoolConverter"/>
     </UserControl.Resources>
 
+    
+    
     <Grid>
 
         <Grid.ColumnDefinitions>

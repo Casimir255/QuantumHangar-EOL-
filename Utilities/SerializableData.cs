@@ -42,7 +42,6 @@ namespace QuantumHangar
         RequestAllItems,
         AddOne,
         RemoveOne,
-
         SendDefinition,
         PurchasedGrid,
     }
@@ -55,7 +54,6 @@ namespace QuantumHangar
 
         public static void Save(string dir, object data)
         {
-
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
             FileSaveTask(dir, data);
         }

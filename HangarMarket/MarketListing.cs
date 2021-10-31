@@ -12,15 +12,17 @@ namespace QuantumHangar.HangarMarket
 
 
     //This is the file we keep for a public market listing
+
+    [ProtoContract]
     public class MarketListing
     {
 
-        [ProtoMember(1)] public string Name;
-        [ProtoMember(2)] public string Description;
+        [ProtoMember(1)] public string Name = "Grid";
+        [ProtoMember(2)] public string Description = "Description";
         [ProtoMember(3)] public string Seller = "Sold by Server";
-        [ProtoMember(4)] public long Price;
-        [ProtoMember(5)] public double MarketValue;
-        [ProtoMember(6)] public ulong SteamID;
+        [ProtoMember(4)] public long Price = 0;
+        [ProtoMember(5)] public double MarketValue = 0;
+        [ProtoMember(6)] public ulong SteamID = 0;
         [ProtoMember(7)] public long IdentityID;
         [ProtoMember(8)] public string SellerFaction = "N/A";
 

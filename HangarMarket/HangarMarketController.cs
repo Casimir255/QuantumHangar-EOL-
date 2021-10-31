@@ -1,12 +1,23 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.Serialization;
+using QuantumHangar.Utilities;
+using Sandbox;
+using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Blocks;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using VRage;
+using VRage.Game;
+using VRage.Game.Entity;
+using VRageMath;
 
 namespace QuantumHangar.HangarMarket
 {
@@ -29,10 +40,10 @@ namespace QuantumHangar.HangarMarket
 
         // We use this to read new offers
         private FileSystemWatcher MarketWatcher;
-
-
-
-
+        private ClientCommunication Communication;
+       
+        private static MethodInfo SendNewProjection;
+   
 
         public HangarMarketController()
         {
@@ -46,7 +57,7 @@ namespace QuantumHangar.HangarMarket
 
             //Initilize server and read all exsisting market files
             string[] MarketFileOffers = Directory.GetFiles(MarketFolderDir, "*.json", SearchOption.TopDirectoryOnly);
-            foreach(var OfferPath in MarketFileOffers)
+            foreach (var OfferPath in MarketFileOffers)
             {
                 string FileName = Path.GetFileName(OfferPath);
                 Log.Error($"Adding File: {FileName}");
@@ -59,7 +70,7 @@ namespace QuantumHangar.HangarMarket
             }
 
 
-          
+
 
 
 
@@ -70,6 +81,8 @@ namespace QuantumHangar.HangarMarket
             MarketWatcher = new FileSystemWatcher(MarketFolderDir);
             MarketWatcher.NotifyFilter = NotifyFilters.Attributes | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Security | NotifyFilters.FileName;
 
+
+            
 
             MarketWatcher.Created += MarketWatcher_Created;
             MarketWatcher.Deleted += MarketWatcher_Deleted;
@@ -82,6 +95,22 @@ namespace QuantumHangar.HangarMarket
 
 
 
+
+           
+            SendNewProjection = typeof(MyProjectorBase).GetMethod("SendNewBlueprint", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            
+        }
+
+
+        public void ServerStarted()
+        {
+            Communication = new ClientCommunication();
+        }
+
+        public void Close()
+        {
+            Communication.close();
         }
 
         private void MarketWatcher_Renamed(object sender, RenamedEventArgs e)
@@ -102,13 +131,15 @@ namespace QuantumHangar.HangarMarket
         private void MarketWatcher_Deleted(object sender, FileSystemEventArgs e)
         {
             //Market offer deleted
-          
+
             //Log.Warn($"File {e.FullPath} deleted! {e.Name}");
 
             if (MarketOffers.TryRemove(e.Name, out _))
                 Log.Error("Removed this file from the dictionary!");
 
 
+            //Send new offer update to all clients
+            Communication.UpdateAllOffers();
 
         }
 
@@ -117,9 +148,9 @@ namespace QuantumHangar.HangarMarket
             //New market offer created
             //Log.Warn($"File {e.FullPath} created! {e.Name}");
 
-            
 
-            byte[] Data = File.ReadAllBytes(e.FullPath);
+
+
 
 
             if (!TryGetReadMarketFile(e.FullPath, out MarketListing Offer))
@@ -131,13 +162,16 @@ namespace QuantumHangar.HangarMarket
             if (MarketOffers.TryAdd(e.Name, Offer))
                 Log.Error("Added this file to the dictionary!");
 
+
+            //Send new offer update to all clients
+            Communication.UpdateAllOffers();
         }
 
 
 
 
 
-      
+
         private static bool TryGetReadMarketFile(string FilePath, out MarketListing Listing)
         {
             //Reads market file from path
@@ -145,11 +179,19 @@ namespace QuantumHangar.HangarMarket
             Listing = null;
             try
             {
+
+                using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var sr = new StreamReader(fs, Encoding.UTF8);
+
+                string Data = sr.ReadToEnd();
+
+
+            
                 Listing = JsonConvert.DeserializeObject<MarketListing>(File.ReadAllText(FilePath));
                 return true;
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex);
                 return false;
@@ -161,7 +203,7 @@ namespace QuantumHangar.HangarMarket
 
         public static void RemoveMarketListing(ulong Owner, string Name)
         {
-            string FileName = Owner + "-" + Name + ".json";
+            string FileName = GetNameFormat(Owner, Name);
 
             File.Delete(Path.Combine(MarketFolderDir, FileName));
         }
@@ -171,19 +213,92 @@ namespace QuantumHangar.HangarMarket
         {
             //Saves a new market listing
 
-            string FileName = NewListing.SteamID + "-" + NewListing.Name + ".json";
+            string FileName = GetNameFormat(NewListing.SteamID, NewListing.Name);
 
             try
             {
                 //Save new market offer
-                File.WriteAllText(Path.Combine(MarketFolderDir,FileName), JsonConvert.SerializeObject(NewListing, Formatting.Indented));
+                File.WriteAllText(Path.Combine(MarketFolderDir, FileName), JsonConvert.SerializeObject(NewListing, Formatting.Indented));
                 return true;
 
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Log.Error(ex);
                 return false;
             }
+        }
+
+
+        public static void SetGridPreview(long EntityID, ulong Owner, string GridName)
+        {
+            string FileName = GetNameFormat(Owner, GridName);
+            if (MarketOffers.TryGetValue(FileName, out MarketListing Offer))
+            {
+                if (!File.Exists(Path.Combine(MarketFolderDir, FileName)))
+                {
+                    //Someone this happened?
+                    MarketOffers.TryRemove(FileName, out _);
+                    return;
+                }
+
+
+
+                string FolderPath = Path.Combine(Hangar.Config.FolderDirectory, Owner.ToString());
+                string GridPath =  Path.Combine(FolderPath, GridName + ".sbc");
+
+                Log.Warn("Loading Grid");
+                if (!GridSerializer.LoadGrid(GridPath, out IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders))
+                {
+                    RemoveMarketListing(Owner, GridName);
+                    return;
+                }
+
+
+                //Now attempt to load grid
+                
+                if(MyEntities.TryGetEntityById(EntityID, out MyEntity entity))
+                {
+                    MyProjectorBase proj = entity as MyProjectorBase;
+                    if(proj != null)
+                    {
+                        Log.Warn("Setting projection!");
+
+                        proj.SendRemoveProjection();
+
+                        var Grids = GridBuilders.ToList();
+
+                        
+
+
+
+
+
+                    
+
+
+
+
+
+
+
+                        SendNewProjection.Invoke(proj, new object[] { Grids });
+
+
+                        //proj.SendNewOffset(new Vector3I(boundingBox.Extents), Vector3I.Zero, .25f, false);
+                    }
+                }
+            }
+        }
+
+      
+
+
+
+
+        private static string GetNameFormat(ulong Onwer, string GridName)
+        {
+            return Onwer + "-" + GridName + ".json";
         }
     }
 }
