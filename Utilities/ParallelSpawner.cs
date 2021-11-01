@@ -503,7 +503,7 @@ namespace QuantumHangar
             });
         }
 
-        private MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
+        public static MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
         {
 
 

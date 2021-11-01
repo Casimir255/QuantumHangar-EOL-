@@ -1,6 +1,7 @@
 ﻿using NLog;
 using QuantumHangar.HangarChecks;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.Screens.Helpers;
 using Sandbox.Game.World;
 using System;
@@ -39,6 +40,24 @@ namespace QuantumHangar.Utils
 
 
         }
+
+
+        public static bool TryGetIdentityFromSteamID(this MyPlayerCollection Collection,  ulong SteamID, out MyIdentity Player)
+        {
+
+            Player = Collection.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID, 0));
+
+            if (Player == null)
+                return false;
+
+            return true;
+        }
+
+
+
+
+
+
 
         public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {

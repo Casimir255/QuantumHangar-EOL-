@@ -237,6 +237,12 @@ namespace QuantumHangar.Utils
             return BiggestGrid != null;
         }
 
+        public static bool BiggestGrid(IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
+        {
+            BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
+            return BiggestGrid != null;
+        }
+
 
 
 

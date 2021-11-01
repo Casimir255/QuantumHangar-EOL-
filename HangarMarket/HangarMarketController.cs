@@ -1,12 +1,20 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.HangarChecks;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utilities;
+using QuantumHangar.Utils;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Definitions;
+using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Entities.Cube;
+using Sandbox.Game.GameSystems.BankingAndCurrency;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using System;
 using System.Collections.Concurrent;
@@ -19,7 +27,9 @@ using System.Threading.Tasks;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.ObjectBuilders;
 using VRageMath;
+using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 
 namespace QuantumHangar.HangarMarket
 {
@@ -43,9 +53,9 @@ namespace QuantumHangar.HangarMarket
         // We use this to read new offers
         private FileSystemWatcher MarketWatcher;
         private ClientCommunication Communication;
-       
+
         private static MethodInfo SendNewProjection;
-   
+
 
         public HangarMarketController()
         {
@@ -84,7 +94,7 @@ namespace QuantumHangar.HangarMarket
             MarketWatcher.NotifyFilter = NotifyFilters.Attributes | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Security | NotifyFilters.FileName;
 
 
-            
+
 
             MarketWatcher.Created += MarketWatcher_Created;
             MarketWatcher.Deleted += MarketWatcher_Deleted;
@@ -98,10 +108,10 @@ namespace QuantumHangar.HangarMarket
 
 
 
-           
+
             SendNewProjection = typeof(MyProjectorBase).GetMethod("SendNewBlueprint", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            
+
         }
 
 
@@ -188,7 +198,7 @@ namespace QuantumHangar.HangarMarket
                 string Data = sr.ReadToEnd();
 
 
-            
+
                 Listing = JsonConvert.DeserializeObject<MarketListing>(File.ReadAllText(FilePath));
                 return true;
 
@@ -231,188 +241,131 @@ namespace QuantumHangar.HangarMarket
             }
         }
 
+        private static bool ValidGrid(ulong Owner, string GridName, out MarketListing Offer, out string FolderPath, out string GridPath)
+        {
+            FolderPath = string.Empty;
+            GridPath = string.Empty;
+
+            string FileName = GetNameFormat(Owner, GridName);
+
+            if (!MarketOffers.TryGetValue(FileName, out Offer))
+                return false;
+
+
+            //Check if file exsists
+            if (!File.Exists(Path.Combine(MarketFolderDir, FileName)))
+            {
+                //Someone this happened?
+                MarketOffers.TryRemove(FileName, out _);
+                return false;
+            }
+
+
+
+            FolderPath = Path.Combine(Hangar.Config.FolderDirectory, Owner.ToString());
+            GridPath = Path.Combine(FolderPath, GridName + ".sbc");
+
+            //Confirm files exsits
+            if (!Directory.Exists(FolderPath) || !File.Exists(GridPath))
+            {
+                RemoveMarketListing(Owner, GridName);
+                return false;
+            }
+
+
+
+            return true;
+        }
+
 
         public static void SetGridPreview(long EntityID, ulong Owner, string GridName)
         {
-            string FileName = GetNameFormat(Owner, GridName);
-            if (MarketOffers.TryGetValue(FileName, out MarketListing Offer))
+
+            if (!ValidGrid(Owner, GridName, out _, out _, out string GridPath))
+                return;
+
+
+            Log.Warn("Loading Grid");
+            if (!GridSerializer.LoadGrid(GridPath, out IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders))
             {
-                if (!File.Exists(Path.Combine(MarketFolderDir, FileName)))
+                RemoveMarketListing(Owner, GridName);
+                return;
+            }
+
+
+            //Now attempt to load grid
+
+            if (MyEntities.TryGetEntityById(EntityID, out MyEntity entity))
+            {
+                MyProjectorBase proj = entity as MyProjectorBase;
+                if (proj != null)
                 {
-                    //Someone this happened?
-                    MarketOffers.TryRemove(FileName, out _);
-                    return;
-                }
 
 
-
-                string FolderPath = Path.Combine(Hangar.Config.FolderDirectory, Owner.ToString());
-                string GridPath =  Path.Combine(FolderPath, GridName + ".sbc");
-
-                Log.Warn("Loading Grid");
-                if (!GridSerializer.LoadGrid(GridPath, out IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders))
-                {
-                    RemoveMarketListing(Owner, GridName);
-                    return;
-                }
-
-
-                //Now attempt to load grid
-                
-                if(MyEntities.TryGetEntityById(EntityID, out MyEntity entity))
-                {
-                    MyProjectorBase proj = entity as MyProjectorBase;
-                    if(proj != null)
-                    {
-                        Log.Warn("Setting projection!");
-
-                        proj.SendRemoveProjection();
-
-                        var Grids = GridBuilders.ToList();
+                    proj.SendRemoveProjection();
 
 
 
 
-                        SendNewProjection.Invoke(proj, new object[] { Grids });
-                        proj.AlignToRepairProjector(Grids[0]);
+                    var Grids = GridBuilders.ToList();
 
-                        //proj.SendNewOffset(new Vector3I(boundingBox.Extents), Vector3I.Zero, .25f, false);
-                    }
+
+                    Log.Warn("Setting projection!");
+
+                    SendNewProjection.Invoke(proj, new object[] { Grids });
                 }
             }
+
         }
 
-      
+        public static void PurchaseGridOffer(ulong Buyer, ulong Owner, string GridName)
+        {
+            if (!ValidGrid(Owner, GridName, out MarketListing Offer, out string FolderPath, out string GridPath))
+                return;
+
+
+
+
+            if (!MySession.Static.Players.TryGetIdentityFromSteamID(Buyer, out MyIdentity BuyerIdentity) || !MySession.Static.Players.TryGetIdentityFromSteamID(Owner, out MyIdentity OwnerIdentity))
+                return;
+
+
+
+            long BuyerBalance = MyBankingSystem.GetBalance(BuyerIdentity.IdentityId);
+          
+
+
+            //Have a successfull buy
+            RemoveMarketListing(Owner, GridName);
+
+
+            if (BuyerBalance < Offer.Price)
+            {
+                //Yell shit at player for trying to cheat those bastards
+                MyMultiplayer.Static.BanClient(Buyer, true);
+                return;
+            }
+
+
+
+            //Transfer grid
+            if(PlayerHangar.TransferGrid(Owner, Buyer, GridName))
+            {
+                MyBankingSystem.ChangeBalance(BuyerIdentity.IdentityId, -1 * Offer.Price);
+                MyBankingSystem.ChangeBalance(OwnerIdentity.IdentityId, Offer.Price);
+            }
+
+
+
+        }
+
+
+
 
 
         private static string GetNameFormat(ulong Onwer, string GridName)
         {
             return Onwer + "-" + GridName + ".json";
-        }
-    }
-
-    public static class OrientationAlgebra
-    {
-        private static readonly bool[] ValidOrientations =
-        {
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-        };
-
-        private static readonly Vector3I[] ProjectionRotations =
-        {
-            Vector3I.Zero,
-            Vector3I.Zero,
-            new Vector3I(-2, -2, -1),
-            new Vector3I(-2, -2, 1),
-            new Vector3I(-2, -2, -2),
-            new Vector3I(-2, -2, 0),
-            Vector3I.Zero,
-            Vector3I.Zero,
-            new Vector3I(-2, 0, -1),
-            new Vector3I(-2, 0, 1),
-            new Vector3I(-2, 0, 0),
-            new Vector3I(-2, 0, -2),
-            new Vector3I(-1, -2, 1),
-            new Vector3I(-1, -2, -1),
-            Vector3I.Zero,
-            Vector3I.Zero,
-            new Vector3I(-1, -2, -2),
-            new Vector3I(-1, -2, 0),
-            new Vector3I(-1, 0, 1),
-            new Vector3I(-1, 0, -1),
-            Vector3I.Zero,
-            Vector3I.Zero,
-            new Vector3I(-1, 0, 0),
-            new Vector3I(-1, 0, -2),
-            new Vector3I(-2, 1, 0),
-            new Vector3I(-2, 1, -2),
-            new Vector3I(-2, 1, -1),
-            new Vector3I(-2, 1, 1),
-            Vector3I.Zero,
-            Vector3I.Zero,
-            new Vector3I(-2, -1, -2),
-            new Vector3I(-2, -1, 0),
-            new Vector3I(-2, -1, -1),
-            new Vector3I(-2, -1, 1),
-            Vector3I.Zero,
-            Vector3I.Zero,
-        };
-
-        public static bool ProjectionRotationFromForwardAndUp(Base6Directions.Direction forward, Base6Directions.Direction up, out Vector3I rotation)
-        {
-            var index = ((int)forward * 6 + (int)up) % 36;
-            if (!ValidOrientations[index])
-            {
-                rotation = Vector3I.Zero;
-                return false;
-            }
-
-            rotation = ProjectionRotations[index];
-            return true;
-        }
-    }
-
-    public static class GridExtensions
-    {
-        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
-        {
-
-
-            projector.Orientation.GetQuaternion(out var gridToProjectorQuaternion);
-            var projectorToGridQuaternion = Quaternion.Inverse(gridToProjectorQuaternion);
-            if (!OrientationAlgebra.ProjectionRotationFromForwardAndUp(Base6Directions.GetDirection(projectorToGridQuaternion.Forward), Base6Directions.GetDirection(projectorToGridQuaternion.Up), out var projectionRotation))
-                return false;
-
-            var anchorBlock = projector.CubeGrid.CubeBlocks.FirstOrDefault();
-            if (anchorBlock == null)
-                return false;
-
-            var offsetInsideGrid = projector.Position - anchorBlock.Position;
-            var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
-            projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
-
-            var p = (IMyProjector)projector;
-            p.SetValueBool("KeepProjection", true);
-            p.ProjectionOffset = projectionOffset;
-            p.ProjectionRotation = projectionRotation;
-            p.UpdateOffsetAndRotation();
-
-            return true;
         }
     }
 

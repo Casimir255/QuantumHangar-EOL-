@@ -37,6 +37,10 @@ namespace QuantumHangar.HangarMarket
                         SetGridPreview(RecievedMessage.Definition);
                         break;
 
+                    case Message.MessageType.BuySelectedGrid:
+                        PruchaseGrid(RecievedMessage.BuyRequest, arg3);
+                        break;
+
 
                     default:
                         Log.Warn($"Unkown message type! Is this mod up to date?");
@@ -87,14 +91,16 @@ namespace QuantumHangar.HangarMarket
         private void SetGridPreview(GridDefinition Definition)
         {
             //Need to have a cooldown on this shit
-
             Log.Warn($"Client requested to set grid preview of {Definition.GridName}!");
 
 
             //Get grid.
-
             HangarMarketController.SetGridPreview(Definition.ProjectorEntityID, Definition.OwnerSteamID, Definition.GridName);
+        }
 
+        private void PruchaseGrid(BuyGridRequest Offer, ulong BuyerSteamID)
+        {
+            HangarMarketController.PurchaseGridOffer(BuyerSteamID, Offer.OwnerSteamID, Offer.GridName);
         }
 
 

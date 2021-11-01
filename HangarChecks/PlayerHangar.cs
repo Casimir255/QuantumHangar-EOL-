@@ -24,7 +24,7 @@ namespace QuantumHangar.HangarChecks
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
         private readonly Chat Chat;
         public readonly PlayerInfo SelectedPlayerFile;
-        private int MaxHangarSlots = 5;
+
         private bool IsAdminCalling = false;
         private readonly ulong SteamID;
         private readonly long IdentityID;
@@ -51,7 +51,7 @@ namespace QuantumHangar.HangarChecks
 
                 PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
                 SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
-                GetMaxHangarSlot(SteamID);
+
 
             }
             catch (Exception ex)
@@ -61,48 +61,58 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        /* Private Methods */
-        private void GetMaxHangarSlot(ulong SteamID)
-        {
-            MyPromoteLevel UserLvl = MySession.Static.GetUserPromoteLevel(SteamID);
 
-            MaxHangarSlots = Config.NormalHangarAmount;
-            if (UserLvl == MyPromoteLevel.Scripter)
-            {
-                MaxHangarSlots = Config.ScripterHangarAmount;
-            }
-            else if (UserLvl == MyPromoteLevel.Moderator)
-            {
-                MaxHangarSlots = Config.ScripterHangarAmount * 2;
-            }
-            else if (UserLvl >= MyPromoteLevel.Admin)
-            {
-                MaxHangarSlots = Config.ScripterHangarAmount * 10;
-            }
-        }
-        private bool IsInputValid(int Index)
+
+        public static bool TransferGrid(ulong From, ulong To, string GridName)
         {
-            if (Index < 0)
+
+            try
             {
-                Chat?.Respond("Please input a positive non-zero number");
+                var FromInfo = new PlayerInfo();
+                FromInfo.LoadFile(Config.FolderDirectory, From);
+
+                if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out _))
+                {
+                    return false;
+                }
+
+
+                string GridPath = Stamp.GetGridPath(FromInfo.PlayerFolderPath);
+                string FileName = Path.GetFileName(GridPath);
+
+
+
+                FromInfo.Grids.Remove(Stamp);
+                FromInfo.SaveFile();
+
+
+
+                var ToInfo = new PlayerInfo();
+                ToInfo.LoadFile(Config.FolderDirectory, To);
+                ToInfo.Grids.Add(Stamp);
+
+                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, FileName));
+
+            }
+            catch (Exception Ex)
+            {
+                Log.Error(Ex);
                 return false;
             }
 
-
-            if (Index > SelectedPlayerFile.Grids.Count && Index < MaxHangarSlots)
-            {
-                Chat?.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
-                return false;
-            }
 
             return true;
         }
+
+
+
+
+
+
+
+        /* Private Methods */
         private bool RemoveStamp(int ID)
         {
-            if (!IsInputValid(ID))
-                return false;
-
-
             if (!IsAdminCalling)
             {
                 TimeStamp stamp = new TimeStamp();
@@ -480,21 +490,6 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public bool ParseSelectedHangarInput(string GridNameOrNumber, out short SelectedIndex)
-        {
-            SelectedIndex = 0;
-            if (Int16.TryParse(GridNameOrNumber, out SelectedIndex))
-            {
-                return IsInputValid(SelectedIndex);
-            }
-            else
-            {
-                if (SelectedPlayerFile.TryFindGridIndex(GridNameOrNumber, out SelectedIndex))
-                    return IsInputValid(SelectedIndex); ;
-
-                return false;
-            }
-        }
 
         public static bool IsServerSaving(Chat Chat)
         {
@@ -684,7 +679,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool CheckHanagarLimits()
         {
-            if (SelectedPlayerFile.Grids.Count >= MaxHangarSlots)
+            if (SelectedPlayerFile.Grids.Count >= SelectedPlayerFile._MaxHangarSlots)
             {
                 Chat?.Respond("You have reached your hangar limit!");
                 return false;
@@ -714,7 +709,7 @@ namespace QuantumHangar.HangarChecks
             SavePlayerFile();
 
             return true;
-        } 
+        }
 
 
 
@@ -782,9 +777,9 @@ namespace QuantumHangar.HangarChecks
             var sb = new StringBuilder();
 
             if (IsAdminCalling)
-                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
             else
-                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
 
 
             int count = 1;
@@ -809,7 +804,7 @@ namespace QuantumHangar.HangarChecks
             string Prefix = "";
             if (ID == 0)
             {
-                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ MaxHangarSlots}";
+                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ SelectedPlayerFile._MaxHangarSlots}";
                 Response.AppendLine("- - Global Limits - -");
                 Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
                 Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
@@ -836,11 +831,13 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                if (!IsInputValid(ID - 1))
+
+                if (!SelectedPlayerFile.GetGrid(ID, out GridStamp Stamp, out string Error))
+                {
+                    Chat.Respond(Error);
                     return;
+                }
 
-
-                GridStamp Stamp = SelectedPlayerFile.Grids[ID - 1];
                 Prefix = $"Slot {ID} : {Stamp.GridName}";
                 Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
                 Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
@@ -863,13 +860,12 @@ namespace QuantumHangar.HangarChecks
 
         public bool TryGetGridStamp(int ID, out GridStamp Stamp)
         {
-            Stamp = null;
-
-            if (!IsInputValid(ID))
+            if (!SelectedPlayerFile.GetGrid(ID, out Stamp, out string Error))
+            {
+                Chat.Respond(Error);
                 return false;
+            }
 
-
-            Stamp = SelectedPlayerFile.GetGrid(ID);
             return true;
         }
 
@@ -881,7 +877,7 @@ namespace QuantumHangar.HangarChecks
 
             if (!Stamp.TryGetGrids(PlayersFolderPath, out Grids))
                 return false;
-   
+
 
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
             GridSerializer.TransferGridOwnership(Grids, IdentityID, Stamp.TransferOwnerShipOnLoad);
@@ -961,9 +957,14 @@ namespace QuantumHangar.HangarChecks
 
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty] public TimeStamp Timer;
+        [JsonProperty] public int? MaxHangarSlots;
 
-        //This can prob be removed
-        [JsonProperty] public List<GridStamp> GridBackups = new List<GridStamp>();
+
+
+        public int _MaxHangarSlots = 0;
+
+
+
 
         public string FilePath { get; set; }
         public ulong SteamID { get; set; }
@@ -978,12 +979,14 @@ namespace QuantumHangar.HangarChecks
 
         private Settings Config { get { return Hangar.Config; } }
 
+        public string PlayerFolderPath;
+
 
         public bool LoadFile(string FolderPath, ulong SteamID)
         {
 
             this.SteamID = SteamID;
-            string PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
+            PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
             FilePath = Path.Combine(PlayerFolderPath, "PlayerInfo.json");
 
             if (!File.Exists(FilePath))
@@ -995,6 +998,9 @@ namespace QuantumHangar.HangarChecks
                 PlayerInfo ScannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
                 this.Grids = ScannedFile.Grids;
                 this.Timer = ScannedFile.Timer;
+                this.MaxHangarSlots = ScannedFile.MaxHangarSlots;
+
+                GetMaxHangarSlot();
             }
             catch (Exception e)
             {
@@ -1059,17 +1065,101 @@ namespace QuantumHangar.HangarChecks
             return Grids.Any(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
         }
 
-        public bool TryFindGridIndex(string GridName, out short result)
+        public bool TryFindGridIndex(string GridName, out int result)
         {
             short? FoundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
             result = FoundIndex ?? -1;
             return FoundIndex.HasValue;
         }
 
-        public GridStamp GetGrid(int ID)
+        public bool GetGrid<T>(T GridNameOrNumber, out GridStamp Stamp, out string Message)
         {
-            return Grids[ID - 1];
+            Message = string.Empty;
+            Stamp = null;
+
+            if (GridNameOrNumber is int)
+            {
+
+                int Target = Convert.ToInt32(GridNameOrNumber);
+                if (!IsInputValid(Target, out Message))
+                    return false;
+
+
+                Stamp = Grids[Target - 1];
+                return true;
+            }
+            else if (GridNameOrNumber is string)
+            {
+                //IsInputValid(SelectedIndex); ;
+
+                if (!Int32.TryParse(Convert.ToString(GridNameOrNumber), out int SelectedIndex))
+                    return false;
+
+
+                if (!IsInputValid(SelectedIndex, out Message))
+                    return false;
+
+
+                Stamp = Grids[SelectedIndex - 1];
+                return true;
+            }
+            else
+            {
+                //Dafuq
+                return false;
+
+            }
         }
+
+
+        private void GetMaxHangarSlot()
+        {
+
+            if (MaxHangarSlots.HasValue)
+            {
+                _MaxHangarSlots = MaxHangarSlots.Value;
+            }
+            else
+            {
+
+                MyPromoteLevel UserLvl = MySession.Static.GetUserPromoteLevel(SteamID);
+                _MaxHangarSlots = Config.NormalHangarAmount;
+                if (UserLvl == MyPromoteLevel.Scripter)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount;
+                }
+                else if (UserLvl == MyPromoteLevel.Moderator)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount * 2;
+                }
+                else if (UserLvl >= MyPromoteLevel.Admin)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount * 10;
+                }
+            }
+        }
+
+        private bool IsInputValid(int Index, out string Message)
+        {
+            Message = string.Empty;
+
+            if (Index < 0)
+            {
+                Message = "Please input a positive non-zero number";
+                return false;
+            }
+
+
+            if (Index > Grids.Count && Index < _MaxHangarSlots)
+            {
+                Message = "This hangar slot is empty! Select a grid that is in your hangar!";
+                return false;
+            }
+
+            return true;
+        }
+
+
 
         public void SaveFile()
         {
