@@ -884,7 +884,7 @@ namespace QuantumHangar.HangarChecks
    
 
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
-            GridSerializer.TransferGridOwnership(Grids, IdentityID);
+            GridSerializer.TransferGridOwnership(Grids, IdentityID, Stamp.TransferOwnerShipOnLoad);
 
             return true;
         }

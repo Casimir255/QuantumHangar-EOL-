@@ -3,9 +3,11 @@ using NLog;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utilities;
 using Sandbox;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -268,22 +270,11 @@ namespace QuantumHangar.HangarMarket
 
                         var Grids = GridBuilders.ToList();
 
-                        
-
-
-
-
-
-                    
-
-
-
-
 
 
 
                         SendNewProjection.Invoke(proj, new object[] { Grids });
-
+                        proj.AlignToRepairProjector(Grids[0]);
 
                         //proj.SendNewOffset(new Vector3I(boundingBox.Extents), Vector3I.Zero, .25f, false);
                     }
@@ -294,11 +285,135 @@ namespace QuantumHangar.HangarMarket
       
 
 
-
-
         private static string GetNameFormat(ulong Onwer, string GridName)
         {
             return Onwer + "-" + GridName + ".json";
         }
     }
+
+    public static class OrientationAlgebra
+    {
+        private static readonly bool[] ValidOrientations =
+        {
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            false,
+            false,
+        };
+
+        private static readonly Vector3I[] ProjectionRotations =
+        {
+            Vector3I.Zero,
+            Vector3I.Zero,
+            new Vector3I(-2, -2, -1),
+            new Vector3I(-2, -2, 1),
+            new Vector3I(-2, -2, -2),
+            new Vector3I(-2, -2, 0),
+            Vector3I.Zero,
+            Vector3I.Zero,
+            new Vector3I(-2, 0, -1),
+            new Vector3I(-2, 0, 1),
+            new Vector3I(-2, 0, 0),
+            new Vector3I(-2, 0, -2),
+            new Vector3I(-1, -2, 1),
+            new Vector3I(-1, -2, -1),
+            Vector3I.Zero,
+            Vector3I.Zero,
+            new Vector3I(-1, -2, -2),
+            new Vector3I(-1, -2, 0),
+            new Vector3I(-1, 0, 1),
+            new Vector3I(-1, 0, -1),
+            Vector3I.Zero,
+            Vector3I.Zero,
+            new Vector3I(-1, 0, 0),
+            new Vector3I(-1, 0, -2),
+            new Vector3I(-2, 1, 0),
+            new Vector3I(-2, 1, -2),
+            new Vector3I(-2, 1, -1),
+            new Vector3I(-2, 1, 1),
+            Vector3I.Zero,
+            Vector3I.Zero,
+            new Vector3I(-2, -1, -2),
+            new Vector3I(-2, -1, 0),
+            new Vector3I(-2, -1, -1),
+            new Vector3I(-2, -1, 1),
+            Vector3I.Zero,
+            Vector3I.Zero,
+        };
+
+        public static bool ProjectionRotationFromForwardAndUp(Base6Directions.Direction forward, Base6Directions.Direction up, out Vector3I rotation)
+        {
+            var index = ((int)forward * 6 + (int)up) % 36;
+            if (!ValidOrientations[index])
+            {
+                rotation = Vector3I.Zero;
+                return false;
+            }
+
+            rotation = ProjectionRotations[index];
+            return true;
+        }
+    }
+
+    public static class GridExtensions
+    {
+        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
+        {
+
+
+            projector.Orientation.GetQuaternion(out var gridToProjectorQuaternion);
+            var projectorToGridQuaternion = Quaternion.Inverse(gridToProjectorQuaternion);
+            if (!OrientationAlgebra.ProjectionRotationFromForwardAndUp(Base6Directions.GetDirection(projectorToGridQuaternion.Forward), Base6Directions.GetDirection(projectorToGridQuaternion.Up), out var projectionRotation))
+                return false;
+
+            var anchorBlock = projector.CubeGrid.CubeBlocks.FirstOrDefault();
+            if (anchorBlock == null)
+                return false;
+
+            var offsetInsideGrid = projector.Position - anchorBlock.Position;
+            var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
+            projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
+
+            var p = (IMyProjector)projector;
+            p.SetValueBool("KeepProjection", true);
+            p.ProjectionOffset = projectionOffset;
+            p.ProjectionRotation = projectionRotation;
+            p.UpdateOffsetAndRotation();
+
+            return true;
+        }
+    }
+
 }

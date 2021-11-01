@@ -198,9 +198,9 @@ namespace QuantumHangar.Serialization
 
 
 
-        public static void TransferGridOwnership(IEnumerable<MyObjectBuilder_CubeGrid> Grids, long Player)
+        public static void TransferGridOwnership(IEnumerable<MyObjectBuilder_CubeGrid> Grids, long Player, bool Force = false)
         {
-            if (Config.OnLoadTransfer)
+            if (Force || Config.OnLoadTransfer)
             {
                 //Will transfer pcu to new player
                 foreach (MyObjectBuilder_CubeGrid CubeGridDef in Grids)
