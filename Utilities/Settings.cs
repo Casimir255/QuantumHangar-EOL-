@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QuantumHangar.HangarMarket;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -38,8 +39,6 @@ namespace QuantumHangar
         private int _NormalHangarAmount = 2;
         public int NormalHangarAmount { get => _NormalHangarAmount; set => SetValue(ref _NormalHangarAmount, value); }
 
-        private bool _GridMarketEnabled = false;
-        public bool GridMarketEnabled { get => _GridMarketEnabled; set => SetValue(ref _GridMarketEnabled, value); }
 
         private bool _EnableBlackListBlocks = false;
         public bool EnableBlackListBlocks { get => _EnableBlackListBlocks; set => SetValue(ref _EnableBlackListBlocks, value); }
@@ -91,49 +90,12 @@ namespace QuantumHangar
         private bool _BlackListRadioButton = false;
         public bool SBlockLimits { get => _BlackListRadioButton; set => SetValue(ref _BlackListRadioButton, value); }
 
-       
-
-
-
-        private bool _AutosellHangarGrids = false;
-        public bool AutosellHangarGrids { get => _AutosellHangarGrids; set => SetValue(ref _AutosellHangarGrids, value); }
-
-
-        //MarketValue Multipliers
-        private double _StaticGridMarketMultiplier = 1;
-        public double StaticGridMarketMultiplier { get => _StaticGridMarketMultiplier; set => SetValue(ref _StaticGridMarketMultiplier, value); }
-
-        private double _LargeGridMarketMultiplier = 1;
-        public double LargeGridMarketMultiplier { get => _LargeGridMarketMultiplier; set => SetValue(ref _LargeGridMarketMultiplier, value); }
-
-        private double _SmallGridMarketMultiplier = 1;
-        public double SmallGridMarketMultiplier { get => _SmallGridMarketMultiplier; set => SetValue(ref _SmallGridMarketMultiplier, value); }
-
-        private double _AutoSellDiscountPricePercent = .75;
-        public double AutoSellDiscountPricePercent { get => _AutoSellDiscountPricePercent; set => SetValue(ref _AutoSellDiscountPricePercent, value); }
-
-        private int _SellAFKDayAmount = 30;
-        public int SellAFKDayAmount { get => _SellAFKDayAmount; set => SetValue(ref _SellAFKDayAmount, value); }
-
-
-        private bool _AdvancedDebug = false;
-        public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
-
+      
         private bool _EnableSubGrids = false;
         public bool EnableSubGrids { get => _EnableSubGrids; set => SetValue(ref _EnableSubGrids, value); }
 
+        //public HangarMarketConfigs MarketConfigs { get; set; }
 
-        private bool _RequireRestockFee = false;
-        public bool RequireRestockFee { get => _RequireRestockFee; set => SetValue(ref _RequireRestockFee, value); }
-
-        private double _RestockAmount = 1000;
-        public double RestockAmount { get => _RestockAmount; set => SetValue(ref _RestockAmount, value); }
-
-        private int _MarketPort = 8910;
-        public int MarketPort { get => _MarketPort; set => SetValue(ref _MarketPort, value); }
-
-        private ObservableCollection<PublicOffers> _PublicOffers = new ObservableCollection<PublicOffers>();
-        public ObservableCollection<PublicOffers> PublicOffers { get => _PublicOffers; set => SetValue(ref _PublicOffers, value); }
 
         //Saving & Loading around a point:
         private ObservableCollection<ZoneRestrictions> _ZoneRestrictions = new ObservableCollection<ZoneRestrictions>();
@@ -220,6 +182,50 @@ namespace QuantumHangar
         private double _MaxGravityAmount = 0;
         public double MaxGravityAmount { get => _MaxGravityAmount; set => SetValue(ref _MaxGravityAmount, value); }
 
+
+
+
+
+
+
+        private bool _GridMarketEnabled = false;
+        public bool GridMarketEnabled { get => _GridMarketEnabled; set => SetValue(ref _GridMarketEnabled, value); }
+
+
+        private double _StaticGridMarketMultiplier = 1;
+        public double StaticGridMarketMultiplier { get => _StaticGridMarketMultiplier; set => SetValue(ref _StaticGridMarketMultiplier, value); }
+
+        private double _LargeGridMarketMultiplier = 1;
+        public double LargeGridMarketMultiplier { get => _LargeGridMarketMultiplier; set => SetValue(ref _LargeGridMarketMultiplier, value); }
+
+        private double _SmallGridMarketMultiplier = 1;
+        public double SmallGridMarketMultiplier { get => _SmallGridMarketMultiplier; set => SetValue(ref _SmallGridMarketMultiplier, value); }
+
+        private double _AutoSellDiscountPricePercent = .75;
+        public double AutoSellDiscountPricePercent { get => _AutoSellDiscountPricePercent; set => SetValue(ref _AutoSellDiscountPricePercent, value); }
+
+        private int _SellAFKDayAmount = 30;
+        public int SellAFKDayAmount { get => _SellAFKDayAmount; set => SetValue(ref _SellAFKDayAmount, value); }
+
+
+        private bool _AdvancedDebug = false;
+        public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
+
+
+        private bool _RequireRestockFee = false;
+        public bool RequireRestockFee { get => _RequireRestockFee; set => SetValue(ref _RequireRestockFee, value); }
+
+        private double _RestockAmount = 1000;
+        public double RestockAmount { get => _RestockAmount; set => SetValue(ref _RestockAmount, value); }
+
+
+
+        private ObservableCollection<PublicOffers> _PublicOffers = new ObservableCollection<PublicOffers>();
+        public ObservableCollection<PublicOffers> PublicOffers { get => _PublicOffers; set => SetValue(ref _PublicOffers, value); }
+
+
+        private bool _AutosellHangarGrids = false;
+        public bool AutosellHangarGrids { get => _AutosellHangarGrids; set => SetValue(ref _AutosellHangarGrids, value); }
 
     }
 }

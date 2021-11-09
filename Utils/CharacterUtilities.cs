@@ -1,6 +1,7 @@
 ﻿using NLog;
 using QuantumHangar.HangarChecks;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.Screens.Helpers;
 using Sandbox.Game.World;
 using System;
@@ -18,52 +19,7 @@ namespace QuantumHangar.Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public static bool TryUpdatePlayerBalance(PlayerAccount Account)
-        {
-            try
-            {
-
-                long IdentityID = MySession.Static.Players.TryGetIdentityId(Account.SteamID);
-
-                if (IdentityID == 0)
-                {
-                    return false;
-                }
-
-
-                if (Account.AccountAdjustment)
-                {
-                    MyBankingSystem.ChangeBalance(IdentityID, Account.AccountBalance);
-                    return true;
-                }
-
-
-                long OriginalBalance = MyBankingSystem.GetBalance(IdentityID);
-                long BalanceAdjuster = Account.AccountBalance - OriginalBalance;
-
-                if (BalanceAdjuster == 0)
-                {
-                    return true;
-                }
-
-                MyBankingSystem.ChangeBalance(IdentityID, BalanceAdjuster);
-                //Hangar.Debug("Player " + IdentityID + " account has been updated! ");
-
-                return true;
-            }
-            catch
-            {
-
-
-                return false;
-            }
-
-
-
-
-
-
-        }
+    
         public static bool TryGetPlayerBalance(ulong steamID, out long balance)
         {
             try
@@ -84,6 +40,24 @@ namespace QuantumHangar.Utils
 
 
         }
+
+
+        public static bool TryGetIdentityFromSteamID(this MyPlayerCollection Collection,  ulong SteamID, out MyIdentity Player)
+        {
+
+            Player = Collection.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID, 0));
+
+            if (Player == null)
+                return false;
+
+            return true;
+        }
+
+
+
+
+
+
 
         public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {
@@ -162,23 +136,42 @@ namespace QuantumHangar.Utils
             return Vector3D.Zero;
         }
 
-        public static void SendGps(Vector3D Position, string name, long EntityID, double Miniutes = 5)
+
+        // GpsSender is a class to send GPS coordinates to the player.
+        public class GpsSender
         {
 
+            // Normal object to send GPS directly, i.e. in the current game.
+            public GpsSender() { }
 
-            MyGps myGps = new MyGps();
-            myGps.ShowOnHud = true;
-            myGps.Coords = Position;
-            myGps.Name = name;
-            myGps.Description = "Hangar location for loading grid at or around this position";
-            myGps.AlwaysVisible = true;
+            private Action<Vector3D, string, long> _send;
 
-            MyGps gps = myGps;
-            gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + Miniutes);
-            gps.GPSColor = Color.Yellow;
-            MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+            // Delegate how to send the GPS, e.g. via a Nexus message.
+            public GpsSender(Action<Vector3D, string, long> sender)
+            {
+                _send = sender;
+            }
+
+            // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
+            public void SendGps(Vector3D Position, string name, long EntityID)
+            {
+                if (_send != null)
+                {
+                    _send(Position, name, EntityID);
+                    return;
+                }
+                MyGps myGps = new MyGps();
+                myGps.ShowOnHud = true;
+                myGps.Coords = Position;
+                myGps.Name = name;
+                myGps.Description = "Hangar location for loading grid at or around this position";
+                myGps.AlwaysVisible = true;
+
+                MyGps gps = myGps;
+                gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
+                gps.GPSColor = Color.Yellow;
+                MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+            }
         }
-
-        
     }
 }

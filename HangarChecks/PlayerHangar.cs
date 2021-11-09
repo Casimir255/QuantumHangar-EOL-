@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Definitions;
@@ -23,7 +24,7 @@ namespace QuantumHangar.HangarChecks
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
         private readonly Chat Chat;
         public readonly PlayerInfo SelectedPlayerFile;
-        private int MaxHangarSlots = 5;
+
         private bool IsAdminCalling = false;
         private readonly ulong SteamID;
         private readonly long IdentityID;
@@ -50,7 +51,7 @@ namespace QuantumHangar.HangarChecks
 
                 PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
                 SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
-                GetMaxHangarSlot(SteamID);
+
 
             }
             catch (Exception ex)
@@ -60,58 +61,434 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        private void GetMaxHangarSlot(ulong SteamID)
-        {
-            MyPromoteLevel UserLvl = MySession.Static.GetUserPromoteLevel(SteamID);
 
-            MaxHangarSlots = Config.NormalHangarAmount;
-            if (UserLvl == MyPromoteLevel.Scripter)
+
+        public static bool TransferGrid(ulong From, ulong To, string GridName)
+        {
+
+            try
             {
-                MaxHangarSlots = Config.ScripterHangarAmount;
+                var FromInfo = new PlayerInfo();
+                FromInfo.LoadFile(Config.FolderDirectory, From);
+
+                if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out _))
+                {
+                    return false;
+                }
+
+
+                string GridPath = Stamp.GetGridPath(FromInfo.PlayerFolderPath);
+                string FileName = Path.GetFileName(GridPath);
+
+
+
+                FromInfo.Grids.Remove(Stamp);
+                FromInfo.SaveFile();
+
+
+
+                var ToInfo = new PlayerInfo();
+                ToInfo.LoadFile(Config.FolderDirectory, To);
+                ToInfo.Grids.Add(Stamp);
+
+                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, FileName));
+
             }
-            else if (UserLvl == MyPromoteLevel.Moderator)
+            catch (Exception Ex)
             {
-                MaxHangarSlots = Config.ScripterHangarAmount * 2;
+                Log.Error(Ex);
+                return false;
             }
-            else if (UserLvl >= MyPromoteLevel.Admin)
-            {
-                MaxHangarSlots = Config.ScripterHangarAmount * 10;
-            }
+
+
+            return true;
         }
 
 
-        public bool ParseSelectedHangarInput(string GridNameOrNumber, out short SelectedIndex)
-        {
-            SelectedIndex = 0;
-            if (Int16.TryParse(GridNameOrNumber, out SelectedIndex))
-            {
-                return IsInputValid(SelectedIndex);
-            }
-            else
-            {
-                if (SelectedPlayerFile.TryFindGridIndex(GridNameOrNumber, out SelectedIndex))
-                    return IsInputValid(SelectedIndex); ;
 
+
+
+
+
+        /* Private Methods */
+        private bool RemoveStamp(int ID)
+        {
+            if (!IsAdminCalling)
+            {
+                TimeStamp stamp = new TimeStamp();
+                stamp.OldTime = DateTime.Now;
+                stamp.PlayerID = IdentityID;
+                SelectedPlayerFile.Timer = stamp;
+            }
+
+            try
+            {
+                File.Delete(Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID].GridName + ".sbc"));
+                SelectedPlayerFile.Grids.RemoveAt(ID);
+                SelectedPlayerFile.SaveFile();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
                 return false;
             }
         }
-        private bool IsInputValid(int Index)
+        private bool CheckGridLimits(GridStamp Grid)
         {
-            if (Index < 0)
+            //Backwards compatibale
+            if (Config.OnLoadTransfer)
+                return true;
+
+            MyIdentity NewPlayer = MySession.Static.Players.TryGetIdentity(IdentityID);
+            if (NewPlayer == null)
             {
-                Chat?.Respond("Please input a positive non-zero number");
+                Log.Fatal("Unable to get player identity! " + IdentityID);
                 return false;
             }
 
 
-            if (Index > SelectedPlayerFile.Grids.Count && Index < MaxHangarSlots)
+            if (Grid.ShipPCU.Count == 0)
             {
-                Chat?.Respond("This hangar slot is empty! Select a grid that is in your hangar!");
-                return false;
+
+                MyBlockLimits blockLimits = NewPlayer.BlockLimits;
+
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    //Log.Debug("PCU Server limits is 0!");
+                    return true;
+                }
+
+                //Main.Debug("PCU Limit from Server:"+a.PCU);
+                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
+                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                //Hangar.Debug("Current PCU: " + CurrentPcu);
+
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+
+                int pcu = MaxPcu - CurrentPcu;
+                //Main.Debug("MaxPcu: " + pcu);
+                //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
+
+
+                //Hangar.Debug("Current player PCU:" + CurrentPcu);
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
+                {
+                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
+                    Chat.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!");
+                    return false;
+                }
+
+                return true;
+            }
+
+
+            foreach (KeyValuePair<long, int> Player in Grid.ShipPCU)
+            {
+
+                MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
+                if (Identity == null)
+                {
+                    continue;
+                }
+
+
+                MyBlockLimits blockLimits = Identity.BlockLimits;
+                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+
+                if (a.PCU <= 0)
+                {
+                    //PCU Limits on server is 0
+                    //Skip PCU Checks
+                    //Hangar.Debug("PCU Server limits is 0!");
+                    continue;
+                }
+
+                //Main.Debug("PCU Limit from Server:"+a.PCU);
+                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
+                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
+
+                int CurrentPcu = blockLimits.PCUBuilt;
+                //Hangar.Debug("Current PCU: " + CurrentPcu);
+
+                int MaxPcu = blockLimits.PCU + CurrentPcu;
+
+                int pcu = MaxPcu - CurrentPcu;
+                //Main.Debug("MaxPcu: " + pcu);
+                //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
+
+
+                //Hangar.Debug("Current player PCU:" + CurrentPcu);
+
+                //Find the difference
+                if (MaxPcu - CurrentPcu <= Player.Value)
+                {
+                    int Need = Player.Value - (MaxPcu - CurrentPcu);
+                    Chat.Respond("PCU limit reached! " + Identity.DisplayName + " needs an additional " + Need + " PCU to load this grid!");
+                    return false;
+                }
+
             }
 
             return true;
         }
+        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipblueprints)
+        {
+            int BiggestGrid = 0;
+            int blocksToBuild = 0;
+            //failedBlockType = null;
+            //Need dictionary for each player AND their blocks they own. (Players could own stuff on the same grid)
+            Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits = new Dictionary<long, Dictionary<string, int>>();
+
+
+            //Total PCU and Blocks
+            int FinalBlocksCount = 0;
+            int FinalBlocksPCU = 0;
+
+
+            Dictionary<string, int> BlockPairNames = new Dictionary<string, int>();
+            Dictionary<string, int> BlockSubTypeNames = new Dictionary<string, int>();
+
+
+            //Go ahead and check if the block limits is enabled server side! If it isnt... continue!
+            if (!Config.EnableBlackListBlocks)
+            {
+                return true;
+            }
+
+
+            else
+            {
+                //If we are using built in server block limits..
+                if (Config.SBlockLimits)
+                {
+                    //& the server blocklimits is not enabled... Return true
+                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.NONE)
+                    {
+                        return true;
+                    }
+
+
+                    //Cycle each grid in the ship blueprints
+
+                    foreach (var CubeGrid in shipblueprints)
+                    {
+
+                        //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
+                        if (BiggestGrid < CubeGrid.CubeBlocks.Count())
+                        {
+                            BiggestGrid = CubeGrid.CubeBlocks.Count();
+                        }
+                        blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
+
+                        foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
+                        {
+
+                            MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
+
+                            if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
+                            {
+                                //Check for BlockPair or SubType?
+                                string BlockName = "";
+                                if (Config.SBlockLimits)
+                                {
+                                    //Server Block Limits
+                                    BlockName = myCubeBlockDefinition.BlockPairName;
+
+                                }
+                                else
+                                {
+                                    //Custom Block SubType Limits
+                                    BlockName = myCubeBlockDefinition.Id.SubtypeName;
+                                }
+
+                                long blockowner2 = 0L;
+                                blockowner2 = block.BuiltBy;
+
+                                //If the player dictionary already has a Key, we need to retrieve it
+                                if (BlocksAndOwnerForLimits.ContainsKey(blockowner2))
+                                {
+                                    //if the dictionary already contains the same block type
+                                    Dictionary<string, int> dictforuser = BlocksAndOwnerForLimits[blockowner2];
+                                    if (dictforuser.ContainsKey(BlockName))
+                                    {
+                                        dictforuser[BlockName]++;
+                                    }
+                                    else
+                                    {
+                                        dictforuser.Add(BlockName, 1);
+                                    }
+                                    BlocksAndOwnerForLimits[blockowner2] = dictforuser;
+                                }
+                                else
+                                {
+                                    BlocksAndOwnerForLimits.Add(blockowner2, new Dictionary<string, int>
+                            {
+                                {
+                                    BlockName,
+                                    1
+                                }
+                            });
+                                }
+
+                                FinalBlocksPCU += myCubeBlockDefinition.PCU;
+
+
+                                //if()
+
+                            }
+
+
+                        }
+
+                        FinalBlocksCount += CubeGrid.CubeBlocks.Count;
+
+                    }
+
+
+
+
+                    if (MySession.Static.MaxGridSize != 0 && BiggestGrid > MySession.Static.MaxGridSize)
+                    {
+                        Chat.Respond("Biggest grid is over Max grid size! ");
+                        return false;
+                    }
+
+                    //Need too loop player identities in dictionary. Do this via seperate function
+                    if (PlayerIdentityLoop(BlocksAndOwnerForLimits, FinalBlocksCount) == true)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    //BlockLimiter
+                    if (!PluginDependencies.BlockLimiterInstalled)
+                    {
+                        //BlockLimiter is null!
+                        Chat.Respond("Blocklimiter Plugin not installed or Loaded!");
+                        Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
+                        return false;
+                    }
+
+
+                    List<MyObjectBuilder_CubeGrid> grids = new List<MyObjectBuilder_CubeGrid>();
+
+                    foreach (var CubeGrid in shipblueprints)
+                    {
+                        grids.Add(CubeGrid);
+                    }
+
+
+
+                    bool ValueReturn = PluginDependencies.CheckGridLimits(grids, IdentityID);
+
+                    //Convert to value return type
+                    if (!ValueReturn)
+                    {
+                        //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
+                        return true;
+                    }
+                    else
+                    {
+                        Chat.Respond("Grid would be over Server-Blocklimiter limits!");
+                        return false;
+                    }
+                }
+            }
+        }
+        private bool PlayerIdentityLoop(Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits, int blocksToBuild)
+        {
+            foreach (KeyValuePair<long, Dictionary<string, int>> Player in BlocksAndOwnerForLimits)
+            {
+
+                Dictionary<string, int> PlayerBuiltBlocks = Player.Value;
+                MyIdentity myIdentity = MySession.Static.Players.TryGetIdentity(Player.Key);
+                if (myIdentity != null)
+                {
+                    MyBlockLimits blockLimits = myIdentity.BlockLimits;
+                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.PER_FACTION && MySession.Static.Factions.GetPlayerFaction(myIdentity.IdentityId) == null)
+                    {
+                        Chat.Respond("ServerLimits are set PerFaction. You are not in a faction! Contact an Admin!");
+                        return false;
+                    }
+
+                    if (blockLimits != null)
+                    {
+
+
+                        if (MySession.Static.MaxBlocksPerPlayer != 0 && blockLimits.BlocksBuilt + blocksToBuild > blockLimits.MaxBlocks)
+                        {
+                            Chat.Respond("Cannot load grid! You would be over your Max Blocks!");
+                            return false;
+                        }
+
+                        //Double check to see if the list is null
+                        if (PlayerBuiltBlocks != null)
+                        {
+                            foreach (KeyValuePair<string, short> ServerBlockLimits in MySession.Static.BlockTypeLimits)
+                            {
+                                if (PlayerBuiltBlocks.ContainsKey(ServerBlockLimits.Key))
+                                {
+                                    int TotalNumberOfBlocks = PlayerBuiltBlocks[ServerBlockLimits.Key];
+
+                                    if (blockLimits.BlockTypeBuilt.TryGetValue(ServerBlockLimits.Key, out MyBlockLimits.MyTypeLimitData LimitData))
+                                    {
+                                        //Grab their existing block count for the block limit
+                                        TotalNumberOfBlocks += LimitData.BlocksBuilt;
+                                    }
+
+                                    //Compare to see if they would be over!
+                                    short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
+                                    if (TotalNumberOfBlocks > ServerLimit)
+                                    {
+                                        Chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + ServerBlockLimits.Key + " limits! " + TotalNumberOfBlocks + "/" + ServerLimit);
+                                        //Player would be over their block type limits
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+
+                }
+            }
+
+            return true;
+        }
+
+        public bool IsGridForSale(GridStamp Grid, bool Admin = false)
+        {
+            if (Grid.GridForSale)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+
+
+
+
 
 
         public static bool IsServerSaving(Chat Chat)
@@ -302,7 +679,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool CheckHanagarLimits()
         {
-            if (SelectedPlayerFile.Grids.Count >= MaxHangarSlots)
+            if (SelectedPlayerFile.Grids.Count >= SelectedPlayerFile._MaxHangarSlots)
             {
                 Chat?.Respond("You have reached your hangar limit!");
                 return false;
@@ -310,6 +687,28 @@ namespace QuantumHangar.HangarChecks
 
             return true;
 
+        }
+
+
+        public bool SellSelectedGrid(GridStamp Stamp, long Price, string Description)
+        {
+
+            Stamp.GridForSale = true;
+
+
+            MarketListing NewListing = new MarketListing(Stamp);
+            NewListing.SetUserInputs(Description, Price);
+
+            //We will set this into the file. (in the block we will dynamically get palyer name and faction)
+            NewListing.SetPlayerData(SteamID, IdentityID);
+            HangarMarketController.SaveNewMarketFile(NewListing);
+
+
+
+            //Save player file
+            SavePlayerFile();
+
+            return true;
         }
 
 
@@ -352,33 +751,7 @@ namespace QuantumHangar.HangarChecks
             return RemoveStamp(ID - 1);
         }
 
-        private bool RemoveStamp(int ID)
-        {
-            if (!IsInputValid(ID))
-                return false;
 
-
-            if (!IsAdminCalling)
-            {
-                TimeStamp stamp = new TimeStamp();
-                stamp.OldTime = DateTime.Now;
-                stamp.PlayerID = IdentityID;
-                SelectedPlayerFile.Timer = stamp;
-            }
-
-            try
-            {
-                File.Delete(Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID].GridName + ".sbc"));
-                SelectedPlayerFile.Grids.RemoveAt(ID);
-                SelectedPlayerFile.SaveFile();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return false;
-            }
-        }
 
 
         public bool SaveGridsToFile(GridResult Grids, string FileName)
@@ -404,9 +777,9 @@ namespace QuantumHangar.HangarChecks
             var sb = new StringBuilder();
 
             if (IsAdminCalling)
-                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
             else
-                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + MaxHangarSlots + " stored grids:");
+                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
 
 
             int count = 1;
@@ -431,7 +804,7 @@ namespace QuantumHangar.HangarChecks
             string Prefix = "";
             if (ID == 0)
             {
-                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ MaxHangarSlots}";
+                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ SelectedPlayerFile._MaxHangarSlots}";
                 Response.AppendLine("- - Global Limits - -");
                 Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
                 Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
@@ -458,11 +831,13 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                if (!IsInputValid(ID - 1))
+
+                if (!SelectedPlayerFile.GetGrid(ID, out GridStamp Stamp, out string Error))
+                {
+                    Chat.Respond(Error);
                     return;
+                }
 
-
-                GridStamp Stamp = SelectedPlayerFile.Grids[ID-1];
                 Prefix = $"Slot {ID} : {Stamp.GridName}";
                 Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
                 Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
@@ -483,26 +858,29 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public bool LoadGrid(int ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp)
+        public bool TryGetGridStamp(int ID, out GridStamp Stamp)
         {
-            Grids = null;
-            Stamp = null;
-            if (ID - 1 >= SelectedPlayerFile.Grids.Count || ID < 1)
+            if (!SelectedPlayerFile.GetGrid(ID, out Stamp, out string Error))
             {
-                Chat?.Respond("Invalid Index! Grid doent exsist in that slot!");
+                Chat.Respond(Error);
                 return false;
             }
 
+            return true;
+        }
 
-            Stamp = SelectedPlayerFile.GetGrid(ID);
-            string GridPath = Path.Combine(PlayersFolderPath, Stamp.GridName + ".sbc");
 
-            Log.Warn("Attempting to load grid @" + GridPath);
-            if (!GridSerializer.LoadGrid(GridPath, out Grids))
+        public bool LoadGrid(GridStamp Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        {
+            Grids = null;
+
+
+            if (!Stamp.TryGetGrids(PlayersFolderPath, out Grids))
                 return false;
 
+
             PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
-            GridSerializer.TransferGridOwnership(Grids, IdentityID);
+            GridSerializer.TransferGridOwnership(Grids, IdentityID, Stamp.TransferOwnerShipOnLoad);
 
             return true;
         }
@@ -564,346 +942,7 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        private bool CheckGridLimits(GridStamp Grid)
-        {
-            //Backwards compatibale
-            if (Config.OnLoadTransfer)
-                return true;
 
-            MyIdentity NewPlayer = MySession.Static.Players.TryGetIdentity(IdentityID);
-            if (NewPlayer == null)
-            {
-                Log.Fatal("Unable to get player identity! " + IdentityID);
-                return false;
-            }
-
-
-            if (Grid.ShipPCU.Count == 0)
-            {
-
-                MyBlockLimits blockLimits = NewPlayer.BlockLimits;
-
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
-
-                if (a.PCU <= 0)
-                {
-                    //PCU Limits on server is 0
-                    //Skip PCU Checks
-                    //Log.Debug("PCU Server limits is 0!");
-                    return true;
-                }
-
-                //Main.Debug("PCU Limit from Server:"+a.PCU);
-                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
-                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
-
-                int CurrentPcu = blockLimits.PCUBuilt;
-                //Hangar.Debug("Current PCU: " + CurrentPcu);
-
-                int MaxPcu = blockLimits.PCU + CurrentPcu;
-
-                int pcu = MaxPcu - CurrentPcu;
-                //Main.Debug("MaxPcu: " + pcu);
-                //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
-
-
-                //Hangar.Debug("Current player PCU:" + CurrentPcu);
-
-                //Find the difference
-                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
-                {
-                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
-                    Chat.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!");
-                    return false;
-                }
-
-                return true;
-            }
-
-
-            foreach (KeyValuePair<long, int> Player in Grid.ShipPCU)
-            {
-
-                MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
-                if (Identity == null)
-                {
-                    continue;
-                }
-
-
-                MyBlockLimits blockLimits = Identity.BlockLimits;
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
-
-                if (a.PCU <= 0)
-                {
-                    //PCU Limits on server is 0
-                    //Skip PCU Checks
-                    //Hangar.Debug("PCU Server limits is 0!");
-                    continue;
-                }
-
-                //Main.Debug("PCU Limit from Server:"+a.PCU);
-                //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
-                //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
-
-                int CurrentPcu = blockLimits.PCUBuilt;
-                //Hangar.Debug("Current PCU: " + CurrentPcu);
-
-                int MaxPcu = blockLimits.PCU + CurrentPcu;
-
-                int pcu = MaxPcu - CurrentPcu;
-                //Main.Debug("MaxPcu: " + pcu);
-                //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
-
-
-                //Hangar.Debug("Current player PCU:" + CurrentPcu);
-
-                //Find the difference
-                if (MaxPcu - CurrentPcu <= Player.Value)
-                {
-                    int Need = Player.Value - (MaxPcu - CurrentPcu);
-                    Chat.Respond("PCU limit reached! " + Identity.DisplayName + " needs an additional " + Need + " PCU to load this grid!");
-                    return false;
-                }
-
-            }
-
-            return true;
-        }
-
-
-        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipblueprints)
-        {
-            int BiggestGrid = 0;
-            int blocksToBuild = 0;
-            //failedBlockType = null;
-            //Need dictionary for each player AND their blocks they own. (Players could own stuff on the same grid)
-            Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits = new Dictionary<long, Dictionary<string, int>>();
-
-
-            //Total PCU and Blocks
-            int FinalBlocksCount = 0;
-            int FinalBlocksPCU = 0;
-
-
-            Dictionary<string, int> BlockPairNames = new Dictionary<string, int>();
-            Dictionary<string, int> BlockSubTypeNames = new Dictionary<string, int>();
-
-
-            //Go ahead and check if the block limits is enabled server side! If it isnt... continue!
-            if (!Config.EnableBlackListBlocks)
-            {
-                return true;
-            }
-
-
-            else
-            {
-                //If we are using built in server block limits..
-                if (Config.SBlockLimits)
-                {
-                    //& the server blocklimits is not enabled... Return true
-                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.NONE)
-                    {
-                        return true;
-                    }
-
-
-                    //Cycle each grid in the ship blueprints
-
-                    foreach (var CubeGrid in shipblueprints)
-                    {
-
-                        //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
-                        if (BiggestGrid < CubeGrid.CubeBlocks.Count())
-                        {
-                            BiggestGrid = CubeGrid.CubeBlocks.Count();
-                        }
-                        blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
-
-                        foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
-                        {
-
-                            MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
-
-                            if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
-                            {
-                                //Check for BlockPair or SubType?
-                                string BlockName = "";
-                                if (Config.SBlockLimits)
-                                {
-                                    //Server Block Limits
-                                    BlockName = myCubeBlockDefinition.BlockPairName;
-
-                                }
-                                else
-                                {
-                                    //Custom Block SubType Limits
-                                    BlockName = myCubeBlockDefinition.Id.SubtypeName;
-                                }
-
-                                long blockowner2 = 0L;
-                                blockowner2 = block.BuiltBy;
-
-                                //If the player dictionary already has a Key, we need to retrieve it
-                                if (BlocksAndOwnerForLimits.ContainsKey(blockowner2))
-                                {
-                                    //if the dictionary already contains the same block type
-                                    Dictionary<string, int> dictforuser = BlocksAndOwnerForLimits[blockowner2];
-                                    if (dictforuser.ContainsKey(BlockName))
-                                    {
-                                        dictforuser[BlockName]++;
-                                    }
-                                    else
-                                    {
-                                        dictforuser.Add(BlockName, 1);
-                                    }
-                                    BlocksAndOwnerForLimits[blockowner2] = dictforuser;
-                                }
-                                else
-                                {
-                                    BlocksAndOwnerForLimits.Add(blockowner2, new Dictionary<string, int>
-                            {
-                                {
-                                    BlockName,
-                                    1
-                                }
-                            });
-                                }
-
-                                FinalBlocksPCU += myCubeBlockDefinition.PCU;
-
-
-                                //if()
-
-                            }
-
-
-                        }
-
-                        FinalBlocksCount += CubeGrid.CubeBlocks.Count;
-
-                    }
-
-
-
-
-                    if (MySession.Static.MaxGridSize != 0 && BiggestGrid > MySession.Static.MaxGridSize)
-                    {
-                        Chat.Respond("Biggest grid is over Max grid size! ");
-                        return false;
-                    }
-
-                    //Need too loop player identities in dictionary. Do this via seperate function
-                    if (PlayerIdentityLoop(BlocksAndOwnerForLimits, FinalBlocksCount) == true)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                }
-                else
-                {
-                    //BlockLimiter
-                    if (!PluginDependencies.BlockLimiterInstalled)
-                    {
-                        //BlockLimiter is null!
-                        Chat.Respond("Blocklimiter Plugin not installed or Loaded!");
-                        Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
-                        return false;
-                    }
-
-
-                    List<MyObjectBuilder_CubeGrid> grids = new List<MyObjectBuilder_CubeGrid>();
-
-                    foreach (var CubeGrid in shipblueprints)
-                    {
-                        grids.Add(CubeGrid);
-                    }
-
-
-
-                    bool ValueReturn = PluginDependencies.CheckGridLimits(grids, IdentityID);
-
-                    //Convert to value return type
-                    if (!ValueReturn)
-                    {
-                        //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
-                        return true;
-                    }
-                    else
-                    {
-                        Chat.Respond("Grid would be over Server-Blocklimiter limits!");
-                        return false;
-                    }
-                }
-            }
-        }
-
-        private bool PlayerIdentityLoop(Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits, int blocksToBuild)
-        {
-            foreach (KeyValuePair<long, Dictionary<string, int>> Player in BlocksAndOwnerForLimits)
-            {
-
-                Dictionary<string, int> PlayerBuiltBlocks = Player.Value;
-                MyIdentity myIdentity = MySession.Static.Players.TryGetIdentity(Player.Key);
-                if (myIdentity != null)
-                {
-                    MyBlockLimits blockLimits = myIdentity.BlockLimits;
-                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.PER_FACTION && MySession.Static.Factions.GetPlayerFaction(myIdentity.IdentityId) == null)
-                    {
-                        Chat.Respond("ServerLimits are set PerFaction. You are not in a faction! Contact an Admin!");
-                        return false;
-                    }
-
-                    if (blockLimits != null)
-                    {
-
-
-                        if (MySession.Static.MaxBlocksPerPlayer != 0 && blockLimits.BlocksBuilt + blocksToBuild > blockLimits.MaxBlocks)
-                        {
-                            Chat.Respond("Cannot load grid! You would be over your Max Blocks!");
-                            return false;
-                        }
-
-                        //Double check to see if the list is null
-                        if (PlayerBuiltBlocks != null)
-                        {
-                            foreach (KeyValuePair<string, short> ServerBlockLimits in MySession.Static.BlockTypeLimits)
-                            {
-                                if (PlayerBuiltBlocks.ContainsKey(ServerBlockLimits.Key))
-                                {
-                                    int TotalNumberOfBlocks = PlayerBuiltBlocks[ServerBlockLimits.Key];
-
-                                    if (blockLimits.BlockTypeBuilt.TryGetValue(ServerBlockLimits.Key, out MyBlockLimits.MyTypeLimitData LimitData))
-                                    {
-                                        //Grab their existing block count for the block limit
-                                        TotalNumberOfBlocks += LimitData.BlocksBuilt;
-                                    }
-
-                                    //Compare to see if they would be over!
-                                    short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
-                                    if (TotalNumberOfBlocks > ServerLimit)
-                                    {
-                                        Chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + ServerBlockLimits.Key + " limits! " + TotalNumberOfBlocks + "/" + ServerLimit);
-                                        //Player would be over their block type limits
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-
-
-                }
-            }
-
-            return true;
-        }
 
     }
 
@@ -918,9 +957,14 @@ namespace QuantumHangar.HangarChecks
 
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty] public TimeStamp Timer;
+        [JsonProperty] public int? MaxHangarSlots;
 
-        //This can prob be removed
-        [JsonProperty] public List<GridStamp> GridBackups = new List<GridStamp>();
+
+
+        public int _MaxHangarSlots = 0;
+
+
+
 
         public string FilePath { get; set; }
         public ulong SteamID { get; set; }
@@ -935,12 +979,14 @@ namespace QuantumHangar.HangarChecks
 
         private Settings Config { get { return Hangar.Config; } }
 
+        public string PlayerFolderPath;
+
 
         public bool LoadFile(string FolderPath, ulong SteamID)
         {
 
             this.SteamID = SteamID;
-            string PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
+            PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
             FilePath = Path.Combine(PlayerFolderPath, "PlayerInfo.json");
 
             if (!File.Exists(FilePath))
@@ -952,6 +998,9 @@ namespace QuantumHangar.HangarChecks
                 PlayerInfo ScannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
                 this.Grids = ScannedFile.Grids;
                 this.Timer = ScannedFile.Timer;
+                this.MaxHangarSlots = ScannedFile.MaxHangarSlots;
+
+                GetMaxHangarSlot();
             }
             catch (Exception e)
             {
@@ -1016,17 +1065,101 @@ namespace QuantumHangar.HangarChecks
             return Grids.Any(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
         }
 
-        public bool TryFindGridIndex(string GridName, out short result)
+        public bool TryFindGridIndex(string GridName, out int result)
         {
             short? FoundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
             result = FoundIndex ?? -1;
             return FoundIndex.HasValue;
         }
 
-        public GridStamp GetGrid(int ID)
+        public bool GetGrid<T>(T GridNameOrNumber, out GridStamp Stamp, out string Message)
         {
-            return Grids[ID - 1];
+            Message = string.Empty;
+            Stamp = null;
+
+            if (GridNameOrNumber is int)
+            {
+
+                int Target = Convert.ToInt32(GridNameOrNumber);
+                if (!IsInputValid(Target, out Message))
+                    return false;
+
+
+                Stamp = Grids[Target - 1];
+                return true;
+            }
+            else if (GridNameOrNumber is string)
+            {
+                //IsInputValid(SelectedIndex); ;
+
+                if (!Int32.TryParse(Convert.ToString(GridNameOrNumber), out int SelectedIndex))
+                    return false;
+
+
+                if (!IsInputValid(SelectedIndex, out Message))
+                    return false;
+
+
+                Stamp = Grids[SelectedIndex - 1];
+                return true;
+            }
+            else
+            {
+                //Dafuq
+                return false;
+
+            }
         }
+
+
+        private void GetMaxHangarSlot()
+        {
+
+            if (MaxHangarSlots.HasValue)
+            {
+                _MaxHangarSlots = MaxHangarSlots.Value;
+            }
+            else
+            {
+
+                MyPromoteLevel UserLvl = MySession.Static.GetUserPromoteLevel(SteamID);
+                _MaxHangarSlots = Config.NormalHangarAmount;
+                if (UserLvl == MyPromoteLevel.Scripter)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount;
+                }
+                else if (UserLvl == MyPromoteLevel.Moderator)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount * 2;
+                }
+                else if (UserLvl >= MyPromoteLevel.Admin)
+                {
+                    _MaxHangarSlots = Config.ScripterHangarAmount * 10;
+                }
+            }
+        }
+
+        private bool IsInputValid(int Index, out string Message)
+        {
+            Message = string.Empty;
+
+            if (Index < 0)
+            {
+                Message = "Please input a positive non-zero number";
+                return false;
+            }
+
+
+            if (Index > Grids.Count && Index < _MaxHangarSlots)
+            {
+                Message = "This hangar slot is empty! Select a grid that is in your hangar!";
+                return false;
+            }
+
+            return true;
+        }
+
+
 
         public void SaveFile()
         {

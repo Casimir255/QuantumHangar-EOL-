@@ -12,6 +12,8 @@
         <converters:TextToBoolConverter x:Key="TextToBoolConverter"/>
     </UserControl.Resources>
 
+    
+    
     <Grid>
 
         <Grid.ColumnDefinitions>
@@ -109,6 +111,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Column="0" Grid.Row ="3" Text="Enable Plugin:" Margin="3" Grid.ColumnSpan="2"/>
@@ -141,8 +144,11 @@
                             <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row ="11" Text="Transfer Grid on load (Cross-Server without Sync)"  Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" ToolTip="This is useful if you are not using cross server sync plugins. Note there are exploits in doing this"/>
                             <CheckBox Grid.Row="11" Grid.Column="2" Grid.ColumnSpan="3" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding OnLoadTransfer}">(Will transfer Authorship/Ownership)</CheckBox>
 
-                            <TextBlock Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Margin="3" VerticalAlignment="Center" Text="Dig voxels on load (e.g. for underground bases)" ToolTip="If the grid was built inside dug out voxels (e.g. underground bases), voxels may have re-generated and require digging it out to load"/>
+                            <TextBlock Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Margin="3" VerticalAlignment="Center" Text="Dig voxels on load (grid bounding box)" ToolTip="If the grid was built inside dug out voxels (e.g. underground bases), voxels may have re-generated and require digging it out to load"/>
                             <CheckBox Grid.Row="12" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding DigVoxels}"></CheckBox>
+
+                            <TextBlock Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Margin="3" VerticalAlignment="Center" Text="Nexus support (EXPERIMENTAL)" ToolTip="Relay load grid to the right server. Warning: does not yet work for all server types yet, only enable if you have a sectored setup + lobby"/>
+                            <CheckBox Grid.Row="13" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" IsChecked="{Binding NexusAPI}"></CheckBox>
                         </Grid>
                     </GroupBox>
 
@@ -506,7 +512,7 @@
             </TabItem>
 
 
-            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="False">
+            <TabItem x:Name="MConfig" Header="Hangar Market" IsEnabled="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130"/>

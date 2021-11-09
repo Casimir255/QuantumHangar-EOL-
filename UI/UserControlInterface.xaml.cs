@@ -47,6 +47,8 @@ namespace QuantumHangar.UI
 
             Config.PublicOffers.CollectionChanged += PublicOffers_CollectionChanged;
 
+           
+
             InitializeComponent();
         }
 

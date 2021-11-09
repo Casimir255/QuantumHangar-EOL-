@@ -32,27 +32,28 @@ namespace QuantumHangar
 
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if(Config.AutoHangarGrids)
+            if (Config.AutoHangarGrids)
                 RunAutoHangar();
         }
 
-        public static void RunAutoHangar(bool hangerNow = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
+        public static void RunAutoHangar(bool SaveAll = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
-           
+
 
             try
             {
-                AutoHangarWorker(hangerNow, hangerStatic, hangerLarge, hangerSmall, hangerLargest);
-            }catch(Exception ex)
+                AutoHangarWorker(SaveAll, hangerStatic, hangerLarge, hangerSmall, hangerLargest);
+            }
+            catch(Exception ex)
             {
                 Log.Error(ex);
             }
         }
 
-        private static void AutoHangarWorker(bool hangerNow = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
+        private static void AutoHangarWorker(bool SaveAll = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
 
             //Significant performance increase
@@ -63,7 +64,7 @@ namespace QuantumHangar
             List<long> ExportPlayerIdentities = new List<long>();
 
             Log.Warn("AutoHangar: Getting Players!");
-            
+
             foreach (MyIdentity player in MySession.Static.Players.GetAllIdentities())
             {
                 if (player == null)
@@ -79,13 +80,21 @@ namespace QuantumHangar
                 if (SteamID == 0)
                     continue;
 
-                if (hangerNow || LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
+
+                if (!SaveAll)
                 {
-                    //AutoHangarBlacklist
-                    if (hangerNow || !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                    if (LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now)
                     {
-                        ExportPlayerIdentities.Add(player.IdentityId);
+                        //AutoHangarBlacklist
+                        if (!Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
+                        {
+                            ExportPlayerIdentities.Add(player.IdentityId);
+                        }
                     }
+                }
+                else
+                {
+                    ExportPlayerIdentities.Add(player.IdentityId);
                 }
             }
 

@@ -30,6 +30,7 @@ using Torch.Managers.PatchManager;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
 using VRageMath;
 using QuantumHangar.Utils;
+using QuantumHangar.HangarMarket;
 
 namespace QuantumHangar
 {
@@ -39,9 +40,8 @@ namespace QuantumHangar
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
         public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
-
-
         private static string PluginFolderDir { get{ return Config.FolderDirectory; } }
+
 
         public TorchSessionManager TorchSession { get; private set; }
         public static bool ServerRunning { get; private set; }
@@ -68,15 +68,12 @@ namespace QuantumHangar
         public UserControl _control;
         public UserControl GetControl() => _control ?? (_control = new UserControlInterface());
 
+        private HangarMarketController Controller;
+
 
         public override void Init(ITorchBase torch)
         {
-
-
             Settings S = new Settings();
-
-
-
 
             base.Init(torch);
             //Grab Settings
@@ -94,11 +91,9 @@ namespace QuantumHangar
                 TorchSession.SessionStateChanged += SessionChanged;
 
 
-
-
-
             if (Config.GridMarketEnabled)
             {
+                Controller = new HangarMarketController();
                 //Market = new GridMarket(StoragePath);
                 //Market.InitilizeGridMarket();
             }
@@ -109,12 +104,12 @@ namespace QuantumHangar
 
 
 
-
-
             PatchManager manager = DependencyProviderExtensions.GetManager<PatchManager>(Torch.Managers);
             Patcher patcher = new Patcher();
             patcher.Apply(manager.AcquireContext(), this);
             //Load files
+
+
         }
 
 
@@ -132,6 +127,8 @@ namespace QuantumHangar
                     ServerRunning = true;
                     AutoHangar.StartAutoHangar();
 
+
+                    Controller?.ServerStarted();
                     break;
 
                     
@@ -148,6 +145,7 @@ namespace QuantumHangar
 
         public void PluginDispose()
         {
+            Controller?.Close();
             AutoHangar.Dispose();
             PluginDependencies.Dispose();
             /*

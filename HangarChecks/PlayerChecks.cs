@@ -1,4 +1,5 @@
 ﻿using NLog;
+using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
@@ -16,6 +17,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar.HangarChecks
 {
@@ -25,6 +27,7 @@ namespace QuantumHangar.HangarChecks
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Chat Chat;
+        private readonly GpsSender GpsSender;
         public readonly ulong SteamID;
         private readonly long IdentityID;
         private readonly Vector3D PlayerPosition;
@@ -42,6 +45,7 @@ namespace QuantumHangar.HangarChecks
         public PlayerChecks(CommandContext Context)
         {
             Chat = new Chat(Context);
+            GpsSender = new GpsSender();
             SteamID = Context.Player.SteamUserId;
             IdentityID = Context.Player.Identity.IdentityId;
             PlayerPosition = Context.Player.GetPosition();
@@ -51,9 +55,10 @@ namespace QuantumHangar.HangarChecks
         // PlayerChecks as initiated by another server to call LoadGrid.
         // We don't have a command context nor a player character object to work with,
         // but we receive all required data in the Nexus message.
-        public PlayerChecks(Chat chat, ulong steamID, long identityID, Vector3D playerPosition)
+        public PlayerChecks(Chat chat, GpsSender gpsSender, ulong steamID, long identityID, Vector3D playerPosition)
         {
             Chat = chat;
+            GpsSender = gpsSender;
             SteamID = steamID;
             IdentityID = identityID;
             PlayerPosition = playerPosition;
@@ -382,14 +387,26 @@ namespace QuantumHangar.HangarChecks
             if (!PerformMainChecks(false))
                 return;
 
-            if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
+
+            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
+                return;
+
+
+
+            //Check to see if the grid is for sale. We need to let the player know if it is
+            if (!CheckGridForSale(Stamp, ID))
+                return;
+
+
+
+
+            if (!PlayersHanger.LoadGrid(Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids))
             {
                 Log.Error($"Loading grid {ID} failed for {IdentityID}!");
                 Chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
-
-
+              
             if (!PlayersHanger.CheckLimits(Stamp, Grids))
                 return;
 
@@ -426,6 +443,28 @@ namespace QuantumHangar.HangarChecks
 
         }
 
+        public void SellGrid(int ID, long Price, string Description)
+        {
+
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
+
+            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
+                return;
+
+            //Check to see if grid is already for sale
+            if (Stamp.IsGridForSale())
+            {
+                Chat.Respond("This grid is already for sale!");
+                return;
+            }
+
+
+            if (!PlayersHanger.SellSelectedGrid(Stamp, Price, Description))
+                return;
+
+            Chat.Respond("Grid has been succesfully listed!");
+        }
+
         public void RemoveGrid(int ID)
         {
             PlayersHanger = new PlayerHangar(SteamID, Chat);
@@ -438,7 +477,7 @@ namespace QuantumHangar.HangarChecks
             GridUtilities.BiggestGrid(Grids, out MyCubeGrid BiggestGrid);
 
             if (BiggestGrid != null && IdentityID != 0)
-                CharacterUtilities.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
+                GpsSender.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, IdentityID);
         }
 
         private bool CheckZoneRestrictions(bool IsSave)
@@ -516,13 +555,13 @@ namespace QuantumHangar.HangarChecks
 
                 if (IsSave)
                 {
-                    CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
+                    GpsSender.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
                     Chat?.Respond("Nearest save area has been added to your HUD");
                     return false;
                 }
                 else
                 {
-                    CharacterUtilities.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
+                    GpsSender.SendGps(ClosestZone, Config.ZoneRestrictions[ClosestPoint].Name + " (within " + Config.ZoneRestrictions[ClosestPoint].Radius + "m)", IdentityID);
                     //Chat chat = new Chat(Context);
                     Chat?.Respond("Nearest load area has been added to your HUD");
                     return false;
@@ -605,7 +644,7 @@ namespace QuantumHangar.HangarChecks
                     if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) <= Config.DistanceCheck)
                     {
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
-                        CharacterUtilities.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
+                        GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
                         EnemyFoundFlag = true;
                         break;
                     }
@@ -665,7 +704,7 @@ namespace QuantumHangar.HangarChecks
                     {
                         //Stop loop
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
-                        CharacterUtilities.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
+                        GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
                         EnemyFoundFlag = true;
                         break;
                     }
@@ -751,7 +790,7 @@ namespace QuantumHangar.HangarChecks
             if (Distance < Config.LoadRadius)
                 return true;
 
-            CharacterUtilities.SendGps(LoadPoint, "Load Point", IdentityID);
+            GpsSender.SendGps(LoadPoint, "Load Point", IdentityID);
             Chat.Respond("Cannot load! You are " + Math.Round(Distance, 0) + "m away from the load point! Check your GPS points!");
             return false;
         }
@@ -770,6 +809,67 @@ namespace QuantumHangar.HangarChecks
             }
 
             return false;
+        }
+
+
+
+
+
+        private static Dictionary<ulong, int> PlayerConfirmations = new Dictionary<ulong, int>();
+        private bool CheckGridForSale(GridStamp Stamp, int ID)
+        {
+
+            if(!Stamp.GridForSale)
+            {
+                //if grid is not for sale, remove any confirmations
+                PlayerConfirmations.Remove(SteamID);
+                return true;
+            }
+            else
+            {
+
+                if(!PlayerConfirmations.TryGetValue(SteamID, out int Selection))
+                {
+                    //Prompt user
+                    if (Config.RequireRestockFee)
+                    {
+                        Chat.Respond($"This grid is for sale! Run this command again to pay {Config.RequireRestockFee}sc to remove it from the market and load it in!");
+                    }
+                    else
+                    {
+                        Chat.Respond("This grid is for sale! Run this command again to confirm removal of sell offer and load it in!");
+                    }
+
+
+                    PlayerConfirmations.Add(SteamID, ID);
+
+                    return false;
+
+                }
+                else
+                {
+
+                    if(Selection != ID)
+                    {
+                        //If this grid is for sale and doesnt match our first selection need to remove it from the list and call this function again.
+                        PlayerConfirmations.Remove(SteamID);
+                        return CheckGridForSale(Stamp, ID);
+                    }
+
+
+
+                    //Remove market offer
+                    HangarMarketController.RemoveMarketListing(SteamID, Stamp.GridName);
+                    PlayerConfirmations.Remove(SteamID);
+                    return true;
+                }
+            }
+
+
+
+
+
+
         }
     }
 }

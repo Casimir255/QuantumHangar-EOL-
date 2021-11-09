@@ -91,14 +91,19 @@ namespace QuantumHangar.HangarChecks
                 return;
 
             PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
-
-            if (!PlayersHanger.LoadGrid(ID, out IEnumerable<MyObjectBuilder_CubeGrid> Grids, out GridStamp Stamp))
+            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
                 return;
 
 
+            if (!PlayersHanger.LoadGrid(Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids))
+            {
+                Log.Error($"Loading grid {ID} failed for {NameOrSteamID}!");
+                Chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
+                return;
+            }
+
             if (FromSavePos == false && InConsole == true)
                 FromSavePos = true;
-
 
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat);
             if (Spawner.Start(AdminPlayerPosition, FromSavePos))

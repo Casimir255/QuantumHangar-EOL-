@@ -17,6 +17,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using Sandbox.Game.World;
 using NLog;
+using QuantumHangar.Serialization;
 
 namespace QuantumHangar
 {
@@ -41,7 +42,6 @@ namespace QuantumHangar
         RequestAllItems,
         AddOne,
         RemoveOne,
-
         SendDefinition,
         PurchasedGrid,
     }
@@ -54,7 +54,6 @@ namespace QuantumHangar
 
         public static void Save(string dir, object data)
         {
-
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
             FileSaveTask(dir, data);
         }
@@ -63,7 +62,7 @@ namespace QuantumHangar
         {
             try
             {
-                File.WriteAllText(dir, JsonConvert.SerializeObject(data));
+                File.WriteAllText(dir, JsonConvert.SerializeObject(data, Formatting.Indented));
             }
             catch (Exception e)
             {
@@ -105,6 +104,7 @@ namespace QuantumHangar
     {
         //Items we will send to the block on load (Less lag)
 
+
         [ProtoMember(1)] public string Name;
         [ProtoMember(2)] public string Description;
         [ProtoMember(3)] public string Seller = "Sold by Server";
@@ -142,40 +142,6 @@ namespace QuantumHangar
         [ProtoIgnore] public Dictionary<ulong, int> PlayerPurchases = new Dictionary<ulong, int>();
 
     }
-
-    public class PlayerAccount
-    {
-        public string Name;
-        public ulong SteamID;
-        public long AccountBalance;
-        public bool AccountAdjustment;
-
-
-        public PlayerAccount()
-        {
-            Name = null;
-            SteamID = 0;
-            AccountBalance = 0;
-        }
-
-
-        public PlayerAccount(string Name, ulong SteamID, long AccountBalance, bool AccountAdjustment = false)
-        {
-            this.Name = Name;
-            this.SteamID = SteamID;
-            this.AccountBalance = AccountBalance;
-            this.AccountAdjustment = AccountAdjustment;
-        }
-
-
-    }
-
-    public class Accounts
-    {
-
-        public Dictionary<ulong, long> PlayerAccounts = new Dictionary<ulong, long>();
-    }
-
 
     public class MarketData
     {
@@ -243,6 +209,8 @@ namespace QuantumHangar
         public double MarketValue = 0;
         public Dictionary<long, int> ShipPCU = new Dictionary<long, int>();
         public bool ForceSpawnNearPlayer = false;
+        public bool TransferOwnerShipOnLoad = false;
+
 
 
         public string SellerFaction = "N/A";
@@ -369,7 +337,6 @@ namespace QuantumHangar
             GridID = BiggestGrid.EntityId;
             GridSavePosition = BiggestGrid.PositionComp.GetPosition();
         }
-
         public bool CheckGridLimits(Chat Response, MyIdentity TargetIdentity)
         {
             //No need to check limits
@@ -450,9 +417,6 @@ namespace QuantumHangar
 
             return true;
         }
-
-        
-
         public void UpdatePCUCounter(long Player, int Amount)
         {
             if (ShipPCU.ContainsKey(Player))
@@ -463,6 +427,29 @@ namespace QuantumHangar
             {
                 ShipPCU.Add(Player, Amount);
             }
+        }
+
+        public string GetGridPath(string PlayersFolderPath)
+        {
+            return Path.Combine(PlayersFolderPath, GridName + ".sbc");
+        }
+
+
+
+        public bool TryGetGrids(string PlayersFolderPath, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        {
+            Grids = null;
+            string GridPath = Path.Combine(PlayersFolderPath, GridName + ".sbc");
+
+            if (!GridSerializer.LoadGrid(GridPath, out Grids))
+                return false;
+
+            return true;
+        }
+
+        public bool IsGridForSale()
+        {
+            return GridForSale;
         }
 
     }
