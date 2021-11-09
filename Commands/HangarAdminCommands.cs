@@ -65,11 +65,43 @@ namespace QuantumHangar.Commands
             await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
         }
 
-        [Command("autohangar", "Runs Autohangar ( [hangerNow (true/false)] [hangerStatic (true/false)] [hangerLarge (true/false)] [hangerSmall (true/false)] )")]
+        [Command("autohangar", "Runs Autohangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void RunAutoHangar(bool hangerNow = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
+        public async void RunAutoHangar()
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(hangerNow, hangerStatic, hangerLarge, hangerSmall, hangerLargest));
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
+        }
+
+        [Command("autohanger-override", "Runs Autohanger with override values (staticgrids, largegrids, smallgrids, hangerLargest, saveAll)")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void RunAutoHangerOverride(String[] overrides)
+        {
+            bool staticgrids = false;
+            bool largegrids = false;
+            bool smallgrids = false;
+            bool hangerLargest = false;
+            bool saveAll = false;
+
+            foreach (var _override in overrides) {
+                if (_override == "staticgrids")
+                {
+                    staticgrids = true;
+                } else if (_override == "largegrids")
+                {
+                    largegrids = true;
+                } else if (_override == "smallgrids")
+                {
+                    smallgrids = true;
+                } else if (_override == "hangerLargest")
+                {
+                    hangerLargest = true;
+                } else if (_override == "saveAll")
+                {
+                    saveAll = true;
+                }
+            }
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(saveAll, staticgrids, largegrids, smallgrids, hangerLargest));
+
         }
 
         [Command("enable", "Enables Hangar")]
