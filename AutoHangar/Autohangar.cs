@@ -36,7 +36,7 @@ namespace QuantumHangar
                 RunAutoHangar();
         }
 
-        public static void RunAutoHangar(bool SaveAll = false)
+        public static void RunAutoHangar(bool SaveAll = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
@@ -45,15 +45,15 @@ namespace QuantumHangar
 
             try
             {
-                AutoHangarWorker(SaveAll);
+                AutoHangarWorker(SaveAll, hangerStatic, hangerLarge, hangerSmall, hangerLargest);
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 Log.Error(ex);
             }
         }
 
-        private static void AutoHangarWorker(bool SaveAll = false)
+        private static void AutoHangarWorker(bool SaveAll = false, bool hangerStatic = false, bool hangerLarge = false, bool hangerSmall = false, bool hangerLargest = false)
         {
 
             //Significant performance increase
@@ -116,7 +116,7 @@ namespace QuantumHangar
 
                 long LargestGridID = 0;
 
-                if (Config.KeepPlayersLargestGrid)
+                if (!hangerLargest && Config.KeepPlayersLargestGrid)
                 {
                     //First need to find their largets grid
                     int BlocksCount = 0;
@@ -178,7 +178,7 @@ namespace QuantumHangar
 
                     Result.BiggestGrid = BiggestGrid;
 
-                    if (Config.KeepPlayersLargestGrid)
+                    if (!hangerLargest && Config.KeepPlayersLargestGrid)
                     {
                         if (BiggestGrid.EntityId == LargestGridID)
                         {
@@ -191,16 +191,16 @@ namespace QuantumHangar
                     //Grid Size Checks
                     if (BiggestGrid.GridSizeEnum == MyCubeSize.Large)
                     {
-                        if (BiggestGrid.IsStatic && !Config.AutoHangarStaticGrids)
+                        if (!hangerStatic && BiggestGrid.IsStatic && !Config.AutoHangarStaticGrids)
                         {
                             continue;
                         }
-                        else if (!BiggestGrid.IsStatic && !Config.AutoHangarLargeGrids)
+                        else if (!hangerLarge && !BiggestGrid.IsStatic && !Config.AutoHangarLargeGrids)
                         {
                             continue;
                         }
                     }
-                    else if (BiggestGrid.GridSizeEnum == MyCubeSize.Small && !Config.AutoHangarSmallGrids)
+                    else if (!hangerSmall && BiggestGrid.GridSizeEnum == MyCubeSize.Small && !Config.AutoHangarSmallGrids)
                     {
                         continue;
                     }
