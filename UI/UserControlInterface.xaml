@@ -668,7 +668,7 @@
 
                                 <DataGrid x:Name="ServerOffers" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"  VerticalAlignment="Top" ItemsSource="{Binding PublicMarketOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" SelectionChanged="ServerOffers_SelectionChanged">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Width="150" Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />
+                                        <DataGridTextColumn Width="150" Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}"/>
                                         <DataGridTextColumn Width="*" Header="SBCPath" Binding="{Binding Path=FileSBCPath,Mode=TwoWay}"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -701,7 +701,7 @@
 
 
                                         <TextBlock Grid.Column="0" Grid.Row ="0" Text="For Sale:" Margin="3"/>
-                                        <CheckBox Grid.Column="1"  Grid.Row="0"  VerticalAlignment="Center" Margin="3" IsChecked="{Binding Forsale}"/>
+                                        <CheckBox Grid.Column="1"  Grid.Row="0"  VerticalAlignment="Center" Margin="3" IsChecked="{Binding ForSale}"/>
 
                                         <TextBlock Grid.Column="0" Grid.Row ="1" Text="Price:" Margin="3"/>
                                         <TextBox Grid.Column="1" Grid.Row="1" Margin="3" Text="{Binding Price}" ToolTip="Grid Price"/>

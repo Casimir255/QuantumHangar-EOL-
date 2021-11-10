@@ -62,6 +62,8 @@ namespace QuantumHangar.HangarMarket
             {
                 Message Message = new Message(Message.MessageType.MarketOffersUpdate);
                 Message.MarketOffers = HangarMarketController.MarketOffers.Values.ToList();
+                Message.MarketOffers.AddRange(Hangar.Config.PublicMarketOffers);
+
 
                 MyAPIGateway.Multiplayer.SendMessageTo(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message), SteamID);
                 Log.Warn("Sending all market offers back to client!");
@@ -78,6 +80,8 @@ namespace QuantumHangar.HangarMarket
             {
                 Message Message = new Message(Message.MessageType.MarketOffersUpdate);
                 Message.MarketOffers = HangarMarketController.MarketOffers.Values.ToList();
+                Message.MarketOffers.AddRange(Hangar.Config.PublicMarketOffers);
+
 
                 if (Message.MarketOffers == null)
                 {

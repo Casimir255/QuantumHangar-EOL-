@@ -115,7 +115,7 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public static bool TransferGrid(ulong To, string GridPath)
+        public static bool TransferGrid(ulong To, string GridPath, string CustomName = null)
         {
             try
             {
@@ -127,10 +127,13 @@ namespace QuantumHangar.HangarChecks
 
 
                 GridStamp Stamp = new GridStamp(GridPath);
+                if (CustomName != null)
+                    Stamp.GridName = CustomName;
+
                 ToInfo.FormatGridName(Stamp);
 
 
-                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
+                File.Copy(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
                 Stamp.Transfered();
 
 

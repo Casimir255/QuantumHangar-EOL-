@@ -22,6 +22,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using VRage.Game;
 using VRage.ObjectBuilders;
 
@@ -35,9 +36,11 @@ namespace QuantumHangar.UI
         private static readonly Logger Log = LogManager.GetLogger("QuantumHangarUI");
         //private bool GridLoaded = false;
         private static Settings Config { get { return Hangar.Config; } }
-       // private static GridMarket Market { get { return Hangar.Market; } }
+        // private static GridMarket Market { get { return Hangar.Market; } }
 
 
+
+        public static Dispatcher Thread;
 
         public UserControlInterface()
         {
@@ -45,9 +48,10 @@ namespace QuantumHangar.UI
 
             //plugin.PublicOffersAdded.CollectionChanged += PublicOffersAdded_CollectionChanged;
 
-           
 
-           
+
+            Thread = Dispatcher;
+            
 
             InitializeComponent();
         }
@@ -317,6 +321,7 @@ namespace QuantumHangar.UI
         {
             var Listing = new HangarMarket.MarketListing();
             Listing.ServerOffer = true;
+            Listing.ForSale = true;
 
             Hangar.Config.PublicMarketOffers.Add(Listing);
         }

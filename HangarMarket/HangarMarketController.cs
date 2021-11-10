@@ -2,6 +2,7 @@
 using NLog;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Serialization;
+using QuantumHangar.UI;
 using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox;
@@ -300,27 +301,37 @@ namespace QuantumHangar.HangarMarket
             GridPath = string.Empty;
 
 
-            string FileName = GetNameFormat(Owner, GridName);
-            if (!MarketOffers.TryGetValue(FileName, out Offer))
-                return false;
-
+          
 
 
             if (Owner == 0)
             {
                 //This is for if its a server offer
 
-                if(!File.Exists(Offer.FileSBCPath) || Offer.ForSale == false)
+                Offer = Hangar.Config.PublicMarketOffers.FirstOrDefault(x => x.Name == GridName);
+                if (Offer == null)
+                    return false;
+
+
+                if (!File.Exists(Offer.FileSBCPath) || Offer.ForSale == false)
                 {
-                    Hangar.Config.PublicMarketOffers.Remove(Offer);
+                    var Remove = Offer;
+                    UserControlInterface.Thread.Invoke(() => { Hangar.Config.PublicMarketOffers.Remove(Remove); });
                     return false;
                 }
 
+                Offer.ServerOffer = true;
                 GridPath = Offer.FileSBCPath;
 
             }
             else
             {
+
+                string FileName = GetNameFormat(Owner, GridName);
+                if (!MarketOffers.TryGetValue(FileName, out Offer))
+                    return false;
+
+
                 //Check if file exsists
                 if (!File.Exists(Path.Combine(MarketFolderDir, FileName)))
                 {
@@ -330,7 +341,7 @@ namespace QuantumHangar.HangarMarket
                 }
 
 
-                Log.Error("3");
+                //Log.Error("3");
                 var FolderPath = Path.Combine(Hangar.Config.FolderDirectory, Owner.ToString());
                 GridPath = Path.Combine(FolderPath, GridName + ".sbc");
 
@@ -345,7 +356,7 @@ namespace QuantumHangar.HangarMarket
 
 
 
-            Log.Error("4");
+            //Log.Error("4");
 
             return true;
         }
@@ -400,6 +411,8 @@ namespace QuantumHangar.HangarMarket
             if (!ValidGrid(Owner, GridName, out MarketListing Offer, out string GridPath))
                 return;
 
+
+
             if (!MySession.Static.Players.TryGetIdentityFromSteamID(Buyer, out MyIdentity BuyerIdentity))
                 return;
 
@@ -429,13 +442,13 @@ namespace QuantumHangar.HangarMarket
 
         private static void PurchasePlayerGrid(MarketListing Offer, ulong Buyer, MyIdentity BuyerIdentity, ulong Owner)
         {
-            Log.Error("A");
+            //Log.Error("A");
             
 
             if (!MySession.Static.Players.TryGetIdentityFromSteamID(Owner, out MyIdentity OwnerIdentity))
                 return;
 
-            Log.Error("B");
+            //Log.Error("B");
 
            
 
@@ -454,23 +467,28 @@ namespace QuantumHangar.HangarMarket
         private static void PurchaseServerGrid(MarketListing Offer, ulong Buyer, MyIdentity BuyerIdentity)
         {
             //Cannot buy if its over max amount
-            if (Offer.TotalBuys > Offer.TotalAmount)
+            if (Offer.TotalAmount != 0 && Offer.TotalBuys > Offer.TotalAmount)
             {
                 Offer.ForSale = false;
                 return;
             }
 
+            //Log.Error("A");
 
             int Index = Offer.PlayerPurchases.FindIndex(x => x.Key == Buyer);
 
-            if (Index != -1 && Offer.PlayerPurchases[Index].Value >= Offer.TotalPerPlayer)
+            if (Offer.TotalPerPlayer != 0 && Index != -1 && Offer.PlayerPurchases[Index].Value >= Offer.TotalPerPlayer)
             {
+                //Log.Error("B");
                 //Player doesnt have any buys left
                 return;
             }
 
-            if (PlayerHangar.TransferGrid(Buyer, Offer.FileSBCPath))
+            //Log.Error("C");
+            if (PlayerHangar.TransferGrid(Buyer, Offer.FileSBCPath, Offer.Name))
             {
+
+                //Log.Error("Changing Balance");
                 MyBankingSystem.ChangeBalance(BuyerIdentity.IdentityId, -1 * Offer.Price);
                 
                 if(Index == -1)
@@ -483,7 +501,7 @@ namespace QuantumHangar.HangarMarket
                     Offer.PlayerPurchases[Index] = new KeyValuePair<ulong, int>(Buyer, Offer.PlayerPurchases[Index].Value + 1);
                 }
 
-                Hangar.Config.RefreshModel();
+                //Hangar.Config.RefreshModel();
             }
         }
 
