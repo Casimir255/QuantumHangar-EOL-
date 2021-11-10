@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using VRage.Game.ModAPI;
+using System.Collections.ObjectModel;
 
 namespace QuantumHangar.HangarMarket
 {
@@ -17,14 +19,15 @@ namespace QuantumHangar.HangarMarket
     public class MarketListing
     {
 
-        [ProtoMember(1)] public string Name = "Grid";
-        [ProtoMember(2)] public string Description = "Description";
-        [ProtoMember(3)] public string Seller = "Sold by Server";
-        [ProtoMember(4)] public long Price = 0;
+        [ProtoMember(1)] public string Name { get; set; } = "Grid_Name";
+        [ProtoMember(2)] public string Description { get; set; } = "";
+        [ProtoMember(3)] public string Seller { get; set; } = "Sold by Server";
+        [ProtoMember(4)] public long Price { get; set; } = 1000;
+
         [ProtoMember(5)] public double MarketValue = 0;
         [ProtoMember(6)] public ulong SteamID = 0;
         [ProtoMember(7)] public long IdentityID;
-        [ProtoMember(8)] public string SellerFaction = "N/A";
+        [ProtoMember(8)] public string SellerFaction { get; set; } = "N/A";
 
 
 
@@ -44,17 +47,33 @@ namespace QuantumHangar.HangarMarket
 
 
         //Server blocklimits Block
-        [ProtoMember(20)] public Dictionary<string, int> BlockTypeCount = new Dictionary<string, int>();
+        [XmlIgnoreAttribute]
+        [ProtoMember(20)] 
+        public Dictionary<string, int> BlockTypeCount = new Dictionary<string, int>();
 
 
         //Grid Stored Materials
-        [ProtoMember(30)] public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
+        [XmlIgnoreAttribute]
+        [ProtoMember(30)] 
+        public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
+
+
         [ProtoMember(31)] public string GridFileName; //Point to the objectbuilder in the player's file
         [ProtoMember(32)] public byte[] GridDefinition;
 
 
 
-        [ProtoMember(33)] public bool ServerOffer = false;
+
+        //Non Serialized data
+        [ProtoIgnore] public bool ServerOffer = false;
+
+        [ProtoIgnore] public List<KeyValuePair<ulong, int>> PlayerPurchases = new List<KeyValuePair<ulong, int>>();
+        [ProtoIgnore] public string FileSBCPath { get; set; } = "";
+        [ProtoIgnore] public int TotalAmount { get; set; } = 0;
+        [ProtoIgnore] public int TotalPerPlayer { get; set; } = 0;
+        [ProtoIgnore] public int TotalBuys { get; set; } = 0;
+        [ProtoIgnore] public bool ForSale { get; set; } = true;
+
 
 
         public MarketListing() { }

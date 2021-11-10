@@ -212,16 +212,13 @@ namespace QuantumHangar
         public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
 
 
-        private bool _RequireRestockFee = false;
-        public bool RequireRestockFee { get => _RequireRestockFee; set => SetValue(ref _RequireRestockFee, value); }
-
         private double _RestockAmount = 1000;
         public double RestockAmount { get => _RestockAmount; set => SetValue(ref _RestockAmount, value); }
 
 
 
-        private ObservableCollection<PublicOffers> _PublicOffers = new ObservableCollection<PublicOffers>();
-        public ObservableCollection<PublicOffers> PublicOffers { get => _PublicOffers; set => SetValue(ref _PublicOffers, value); }
+        private ObservableCollection<MarketListing> _PublicMarketOffers = new ObservableCollection<MarketListing>();
+        public ObservableCollection<MarketListing> PublicMarketOffers { get => _PublicMarketOffers; set => SetValue(ref _PublicMarketOffers, value); }
 
 
         private bool _AutosellHangarGrids = false;

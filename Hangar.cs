@@ -118,6 +118,11 @@ namespace QuantumHangar
         {
             switch (state)
             {
+
+                case TorchSessionState.Loading:
+                    Hangar.Config.RefreshModel();
+                    break;
+
                 case TorchSessionState.Loaded:
 
                     //MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
@@ -148,6 +153,8 @@ namespace QuantumHangar
             Controller?.Close();
             AutoHangar.Dispose();
             PluginDependencies.Dispose();
+
+            
             /*
 
             //Un register events

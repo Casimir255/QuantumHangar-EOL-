@@ -58,7 +58,6 @@
     <Compile Include="HangarChecks\PlayerHangar.cs" />
     <Compile Include="Commands\HangarMarketCommands.cs" />
     <Compile Include="HangarMarket\ClientCommunication.cs" />
-    <Compile Include="HangarMarket\HangarMarketConfigs.cs" />
     <Compile Include="HangarMarket\HangarMarketController.cs" />
     <Compile Include="HangarMarket\MarketListing.cs" />
     <Compile Include="Properties\Debug.cs" />
@@ -131,6 +130,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml" />
     <Reference Include="Torch">
       <HintPath>$(TorchPath)\Torch.dll</HintPath>
       <Private>False</Private>

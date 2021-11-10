@@ -194,43 +194,6 @@ namespace QuantumHangar.Utils
             return false;
         }
 
-        public static void FormatGridName(PlayerHangar Data, GridStamp result)
-        {
-            try
-            {
-                result.GridName = FileSaver.CheckInvalidCharacters(result.GridName);
-                // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
-
-                if (Data.SelectedPlayerFile.AnyGridsMatch(result.GridName))
-                {
-                    //There is already a grid with that name!
-                    bool NameCheckDone = false;
-                    int a = 1;
-                    while (!NameCheckDone)
-                    {
-                        if (Data.SelectedPlayerFile.AnyGridsMatch(result.GridName + "[" + a + "]"))
-                        {
-                            a++;
-                        }
-                        else
-                        {
-                            //Hangar.Debug("Name check done! " + a);
-                            NameCheckDone = true;
-                            break;
-                        }
-
-                    }
-                    //Main.Debug("Saving grid name: " + GridName);
-                    result.GridName = result.GridName + "[" + a + "]";
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Warn(e);
-            }
-        }
-
-
         public static bool BiggestGrid(IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
@@ -242,10 +205,6 @@ namespace QuantumHangar.Utils
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
             return BiggestGrid != null;
         }
-
-
-
-
     }
 
     public static class GridFinder

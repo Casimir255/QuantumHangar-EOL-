@@ -154,7 +154,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            GridUtilities.FormatGridName(PlayersHanger, GridData);
+            PlayersHanger.SelectedPlayerFile.FormatGridName(GridData);
             GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
             if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
             {
@@ -831,9 +831,9 @@ namespace QuantumHangar.HangarChecks
                 if(!PlayerConfirmations.TryGetValue(SteamID, out int Selection))
                 {
                     //Prompt user
-                    if (Config.RequireRestockFee)
+                    if (Config.RestockAmount != 0)
                     {
-                        Chat.Respond($"This grid is for sale! Run this command again to pay {Config.RequireRestockFee}sc to remove it from the market and load it in!");
+                        Chat.Respond($"This grid is for sale! Run this command again to pay {Config.RestockAmount}sc to remove it from the market and load it in!");
                     }
                     else
                     {

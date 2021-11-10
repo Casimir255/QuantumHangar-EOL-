@@ -68,11 +68,15 @@ namespace QuantumHangar.HangarChecks
 
             try
             {
+                Log.Error("Starting Grid Transfer!");
+
                 var FromInfo = new PlayerInfo();
                 FromInfo.LoadFile(Config.FolderDirectory, From);
 
-                if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out _))
+                if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out string error))
                 {
+
+                    Log.Error("Failed to get grid! "+error);
                     return false;
                 }
 
@@ -89,10 +93,17 @@ namespace QuantumHangar.HangarChecks
 
                 var ToInfo = new PlayerInfo();
                 ToInfo.LoadFile(Config.FolderDirectory, To);
+                ToInfo.FormatGridName(Stamp);
+
+
+                //Call gridstamp transferred as it will force load near player, and transfer on load
+                Stamp.Transfered();
+
                 ToInfo.Grids.Add(Stamp);
+                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
 
-                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, FileName));
-
+                ToInfo.SaveFile();
+                Log.Error("Moved Grid!");
             }
             catch (Exception Ex)
             {
@@ -100,6 +111,36 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
+
+            return true;
+        }
+
+        public static bool TransferGrid(ulong To, string GridPath)
+        {
+            try
+            {
+
+                var ToInfo = new PlayerInfo();
+                ToInfo.LoadFile(Config.FolderDirectory, To);
+
+
+
+
+                GridStamp Stamp = new GridStamp(GridPath);
+                ToInfo.FormatGridName(Stamp);
+
+
+                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
+                Stamp.Transfered();
+
+
+                ToInfo.Grids.Add(Stamp);
+                ToInfo.SaveFile();
+            }catch(Exception ex)
+            {
+                Log.Error(ex);
+                return false;
+            }
 
             return true;
         }
@@ -942,6 +983,7 @@ namespace QuantumHangar.HangarChecks
         }
 
 
+        
 
 
     }
@@ -989,6 +1031,8 @@ namespace QuantumHangar.HangarChecks
             PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
             FilePath = Path.Combine(PlayerFolderPath, "PlayerInfo.json");
 
+            GetMaxHangarSlot();
+
             if (!File.Exists(FilePath))
                 return true;
 
@@ -998,9 +1042,13 @@ namespace QuantumHangar.HangarChecks
                 PlayerInfo ScannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
                 this.Grids = ScannedFile.Grids;
                 this.Timer = ScannedFile.Timer;
-                this.MaxHangarSlots = ScannedFile.MaxHangarSlots;
 
-                GetMaxHangarSlot();
+                if(ScannedFile.MaxHangarSlots.HasValue)
+                    _MaxHangarSlots = ScannedFile.MaxHangarSlots.Value;
+
+
+                PerfromDataScan();
+
             }
             catch (Exception e)
             {
@@ -1008,7 +1056,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            PerfromDataScan();
+            
             return true;
         }
 
@@ -1093,7 +1141,12 @@ namespace QuantumHangar.HangarChecks
                 //IsInputValid(SelectedIndex); ;
 
                 if (!Int32.TryParse(Convert.ToString(GridNameOrNumber), out int SelectedIndex))
-                    return false;
+                {
+                    Stamp = Grids.FirstOrDefault(x => x.GridName == Convert.ToString(GridNameOrNumber));
+                    if (Stamp != null)
+                        return true;
+                }
+                    
 
 
                 if (!IsInputValid(SelectedIndex, out Message))
@@ -1159,6 +1212,42 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
+
+        public void FormatGridName(GridStamp result)
+        {
+            try
+            {
+                result.GridName = FileSaver.CheckInvalidCharacters(result.GridName);
+                // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
+
+                if (AnyGridsMatch(result.GridName))
+                {
+                    //There is already a grid with that name!
+                    bool NameCheckDone = false;
+                    int a = 1;
+                    while (!NameCheckDone)
+                    {
+                        if (AnyGridsMatch(result.GridName + "[" + a + "]"))
+                        {
+                            a++;
+                        }
+                        else
+                        {
+                            //Hangar.Debug("Name check done! " + a);
+                            NameCheckDone = true;
+                            break;
+                        }
+
+                    }
+                    //Main.Debug("Saving grid name: " + GridName);
+                    result.GridName = result.GridName + "[" + a + "]";
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warn(e);
+            }
+        }
 
 
         public void SaveFile()

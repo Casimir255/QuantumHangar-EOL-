@@ -546,34 +546,25 @@
 
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="300"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
-
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
-
-
                                         </Grid.RowDefinitions>
 
 
 
-                                        <TextBlock Grid.Column="0" Grid.Row ="0" Text="Require fee to remove a grid that is on market?" Margin="3" Grid.ColumnSpan="2" ToolTip="Prevents spamming the market/loading a grid for sale"/>
-                                        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding RequireRestockFee}"/>
+                                        <TextBlock Grid.Column="0" Grid.Row ="0" Text="Fee to remove/load grid thats already on the market: " Margin="3" Grid.ColumnSpan="2" ToolTip="Prevents spamming the market/loading a grid for sale"/>
+                                        <TextBox Grid.Column="1" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding RestockAmount}" TextChanged="TextBox_TextChanged"/>
 
-                                        <DockPanel Grid.Column="3" Grid.Row ="0" VerticalAlignment="Center">
-                                            <TextBlock Grid.Column="2" Grid.Row ="3" Text="Cost:" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" DockPanel.Dock="Left"/>
-                                            <TextBox Grid.Column="2" Grid.Row="3" Width="150" HorizontalAlignment="Right" Margin="2" IsEnabled="{Binding RequireRestockFee}" Text="{Binding RestockAmount}" TextChanged="TextBox_TextChanged"/>
-                                        </DockPanel>
+              
 
-                                        <TextBlock Grid.Column="0" Grid.Row ="5" Text="Enable Cross-Server Econ (Will Sync player balances):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                        <CheckBox Grid.Row="5" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" IsChecked="{Binding CrossServerEcon}"/>
 
                                     </Grid>
 
@@ -607,15 +598,15 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Column="0" Grid.Row ="0" Text="Static Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                        <TextBox Grid.Column="2" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding StaticGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+                                        <TextBox Grid.Column="2" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding StaticGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
 
 
                                         <TextBlock Grid.Column="0" Grid.Row ="1" Text="Large Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                        <TextBox Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding LargeGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+                                        <TextBox Grid.Column="2" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding LargeGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
 
 
                                         <TextBlock Grid.Column="0" Grid.Row ="2" Text="Small Grid Value Multiplyer (Estimates grid price):" Margin="3" Grid.ColumnSpan="2" HorizontalAlignment="Left"/>
-                                        <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="2" Text="{Binding SmallGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
+                                        <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding SmallGridMarketMultiplier}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
 
                                     </Grid>
                                 </GroupBox>
@@ -624,7 +615,7 @@
                                     <GroupBox.Header>
                                         <TextBlock>
                                                     <Span FontWeight="Bold">AutoSell Configs</Span>
-                                                    <Span> (Based of block count:  Price=Blocks*Value) </Span>
+                                                    <Span> (Based of Estimated Price:  Price=Est*Percent) </Span>
                                         </TextBlock>
                                     </GroupBox.Header>
                                     <Grid>
@@ -641,32 +632,25 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
-
-
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Column="0" Grid.Row ="1" Text="Autosell Hangar Grids after player logoff time:" Margin="3" Grid.ColumnSpan="2"/>
-                                        <CheckBox x:Name="AutoSellHangarGrids" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding AutosellHangarGrids}"/>
+                                        <CheckBox x:Name="AutoSellHangarGrids" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="3" IsChecked="{Binding AutosellHangarGrids}"/>
 
                                         <TextBlock Grid.Column="0" Grid.Row ="2" Text="Autosell after last login (Days):" Margin="3" Grid.ColumnSpan="2"/>
-                                        <TextBox Grid.Column="2" Grid.Row="2" Width="150" HorizontalAlignment="Left" Margin="3" IsEnabled="{Binding AutosellHangarGrids}" Text="{Binding SellAFKDayAmount}"/>
+                                        <TextBox Grid.Column="2" Grid.Row="2" Width="50" HorizontalAlignment="Left" Margin="3" IsEnabled="{Binding AutosellHangarGrids}" Text="{Binding SellAFKDayAmount}"/>
 
-                                        <TextBlock Grid.Column="0" Grid.Row ="3" Text="Percent of Estimated Price to sell grids (0-1):" Margin="3" Grid.ColumnSpan="2"/>
-
-
-                                        <DockPanel Grid.Column="3" Grid.Row ="3" VerticalAlignment="Center" IsEnabled="{Binding AutosellHangarGrids}">
-                                            <TextBox Text="{Binding ElementName=AutoSellDiscountPricePercent, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" TextAlignment="Right" Width="40" />
-                                            <Slider Maximum="1" Minimum="0" TickPlacement="BottomRight"  TickFrequency=".05" IsSnapToTickEnabled="True" Name="AutoSellDiscountPricePercent" Value="{Binding AutoSellDiscountPricePercent}"/>
-                                        </DockPanel>
+                                        <TextBlock Grid.Column="0" Grid.Row ="3" Text="Percent of Estimated Price to sell grids:" Margin="3" Grid.ColumnSpan="2"/>
+                                        <TextBox Grid.Column="3" Grid.Row="3" Width="50" HorizontalAlignment="Left" Margin="3" IsEnabled="{Binding AutosellHangarGrids}" Text="{Binding AutoSellDiscountPricePercent}" ToolTip="This will be multiplied by grid mass to determine standardized server price"/>
 
                                     </Grid>
                                 </GroupBox>
                             </StackPanel>
                         </TabItem>
+                        
                         <TabItem Header="Server Offers">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="150"/>
                                     <ColumnDefinition Width="*"/>
@@ -674,27 +658,77 @@
                                 <Grid.RowDefinitions>
 
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="200"/>
                                 </Grid.RowDefinitions>
 
-                                <Button Margin="2,2,2,2" Click="Button_Click_1" ToolTip="Scans the PublicOffers Dir for grids">Refresh list</Button>
+                                <Button Margin="2,2,2,2" Click="NewPublicOfferButton" ToolTip="Scans the PublicOffers Dir for grids">New Offer</Button>
+                                <Button Margin="2,2,2,2" Click="UpdateMarketButton" Grid.Column="1" ToolTip="Scans the PublicOffers Dir for grids">Save Market Offers</Button>
 
-                                <Button Margin="2,2,2,2" Click="Button_Click_2" Grid.Column="1" ToolTip="Scans the PublicOffers Dir for grids">Update Market</Button>
-                                <Button  Margin="2,2,2,2" Click="Button_Click_3" Grid.Column="2" ToolTip="Opens the Directory for the ServerOffers Folder">Browse Folder</Button>
 
-                                <DataGrid x:Name="Imported" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"  VerticalAlignment="Top" ItemsSource="{Binding PublicOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" LostFocus="Imported_LostFocus">
+                                <DataGrid x:Name="ServerOffers" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"  VerticalAlignment="Top" ItemsSource="{Binding PublicMarketOffers}"  AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserAddRows = "False" SelectionChanged="ServerOffers_SelectionChanged">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />
-                                        <DataGridTextColumn Header="Price" Binding="{Binding Path=Price,Mode=TwoWay}"/>
-                                        <DataGridTextColumn Header="Seller" Binding="{Binding Path=Seller,Mode=TwoWay}"/>
-                                        <DataGridTextColumn Header="SellerFactionTag" Binding="{Binding Path=SellerFaction,Mode=TwoWay}"/>
-                                        <DataGridTextColumn Header="Description" Binding="{Binding Path=Description,Mode=TwoWay}"/>
-                                        <DataGridTextColumn Header="MaxQuantity" Binding="{Binding Path=TotalAmount,Mode=TwoWay}"/>
-                                        <DataGridTextColumn Header="MaxPerPlayer" Binding="{Binding Path=TotalPerPlayer,Mode=TwoWay}" />
-                                        <DataGridCheckBoxColumn Header="Forsale" Binding="{Binding Path=Forsale,Mode=TwoWay}" />
-                                        <DataGridTextColumn Header="Total Buys" Binding="{Binding Path=NumberOfBuys,Mode=TwoWay}" IsReadOnly="True" />
+                                        <DataGridTextColumn Width="150" Header="Grid name" Binding="{Binding Path=Name,Mode=TwoWay}" IsReadOnly="True" />
+                                        <DataGridTextColumn Width="*" Header="SBCPath" Binding="{Binding Path=FileSBCPath,Mode=TwoWay}"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
+
+                                <GroupBox x:Name="ServerOfferConfigBox" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" >
+
+                                    <GroupBox.Header>
+                                        <Bold>
+                                            Selected Offer Config:
+                                            <Run Text="{Binding Name}"/>
+                                        </Bold>
+                                    </GroupBox.Header>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="0" Text="For Sale:" Margin="3"/>
+                                        <CheckBox Grid.Column="1"  Grid.Row="0"  VerticalAlignment="Center" Margin="3" IsChecked="{Binding Forsale}"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="1" Text="Price:" Margin="3"/>
+                                        <TextBox Grid.Column="1" Grid.Row="1" Margin="3" Text="{Binding Price}" ToolTip="Grid Price"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="2" Text="Seller Name:" Margin="3"/>
+                                        <TextBox Grid.Column="1" Grid.Row="2" Margin="3" Text="{Binding Seller}" ToolTip="Grid Price"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="3" Text="Seller Faction Tag:" Margin="3"/>
+                                        <TextBox Grid.Column="1" Grid.Row="3" Margin="3" Text="{Binding SellerFaction}" ToolTip="Grid Price"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="4" Text="Max Quantity:" Margin="3"/>
+                                        <TextBox Grid.Column="1" Grid.Row="4" Margin="3" Text="{Binding TotalAmount}" ToolTip="Grid Price"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="5" Text="Max Per Player:" Margin="3"/>
+                                        <TextBox Grid.Column="1" Grid.Row="5" Margin="3" Text="{Binding TotalPerPlayer}" ToolTip="Grid Price"/>
+
+                                        <TextBlock Grid.Column="0" Grid.Row ="6" Text="Total Buys:" Margin="3" Grid.ColumnSpan="2"/>
+                                        <TextBlock Grid.Column="1" Grid.Row ="6" Text="{Binding TotalPerPlayer}" Margin="3"/>
+
+
+
+                                        <TextBlock Grid.Column="2" Grid.Row ="0" Text="Description:" Margin="3" Grid.ColumnSpan="2"/>
+                                        <TextBox Grid.Column="2" Grid.Row="1" Margin="3" Text="{Binding Description}" Grid.ColumnSpan="2" Grid.RowSpan="5" ToolTip="Grid Price"/>
+
+
+                                    </Grid>
+                                </GroupBox>
 
                             </Grid>
 

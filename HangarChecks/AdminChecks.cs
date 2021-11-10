@@ -65,12 +65,9 @@ namespace QuantumHangar.HangarChecks
                 return;
 
             GridStamp stamp = Result.GenerateGridStamp();
-            
-
             PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat, true);
 
-
-            GridUtilities.FormatGridName(PlayersHanger, stamp);
+            PlayersHanger.SelectedPlayerFile.FormatGridName(stamp);
             if (PlayersHanger.SaveGridsToFile(Result, stamp.GridName))
             {
 

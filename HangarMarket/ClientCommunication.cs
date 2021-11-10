@@ -37,6 +37,7 @@ namespace QuantumHangar.HangarMarket
                         SetGridPreview(RecievedMessage.Definition);
                         break;
 
+
                     case Message.MessageType.BuySelectedGrid:
                         PruchaseGrid(RecievedMessage.BuyRequest, arg3);
                         break;
@@ -77,6 +78,16 @@ namespace QuantumHangar.HangarMarket
             {
                 Message Message = new Message(Message.MessageType.MarketOffersUpdate);
                 Message.MarketOffers = HangarMarketController.MarketOffers.Values.ToList();
+
+                if (Message.MarketOffers == null)
+                {
+                    Message.MarketOffers = new List<MarketListing>();
+                    Log.Fatal("Marketoffers is null");
+                }
+                else
+                {
+                    Log.Fatal(Message.MarketOffers.Count);
+                }
 
                 MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));
                 Log.Warn("Sending all market offers back to client!");

@@ -42,7 +42,6 @@ namespace QuantumHangar
                 return;
 
 
-
             try
             {
                 AutoHangarWorker(SaveAll, hangerStatic, hangerLarge, hangerSmall, hangerLargest);
@@ -68,17 +67,15 @@ namespace QuantumHangar
             foreach (MyIdentity player in MySession.Static.Players.GetAllIdentities())
             {
                 if (player == null)
-                {
                     continue;
-                }
+                
 
-                DateTime LastLogin;
-                LastLogin = player.LastLoginTime;
-
+            
+                DateTime LastLogin = player.LastLoginTime;
                 ulong SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
-
                 if (SteamID == 0)
                     continue;
+
 
 
                 if (!SaveAll)
@@ -207,7 +204,9 @@ namespace QuantumHangar
 
 
                     GridStamp Stamp = Result.GenerateGridStamp();
-                    GridUtilities.FormatGridName(PlayersHangar, Stamp);
+                    PlayersHangar.SelectedPlayerFile.FormatGridName(Stamp);
+
+                 
 
 
 

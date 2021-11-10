@@ -45,19 +45,14 @@ namespace QuantumHangar.UI
 
             //plugin.PublicOffersAdded.CollectionChanged += PublicOffersAdded_CollectionChanged;
 
-            Config.PublicOffers.CollectionChanged += PublicOffers_CollectionChanged;
+           
 
            
 
             InitializeComponent();
         }
 
-        private void PublicOffers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            
-            //Plugin.Config.RefreshModel();
-            //throw new NotImplementedException();
-        }
+
 
         private void TabController_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -74,71 +69,12 @@ namespace QuantumHangar.UI
 
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-
-            /*
-
-            //Refresh list
-            string[] subdirectoryEntries = null;
-
-            try
-            {
-                subdirectoryEntries = Directory.GetFiles(Market.ServerOffersDir, "*.sbc");
-            }
-            catch (Exception b)
-            {
-                //Prevent from continuing
-                Hangar.Debug("Unable to get ServerOffersFolder!", b, Hangar.ErrorType.Fatal);
-                return;
-            }
-
-            //Get only filenames
-            string[] FolderGrids = new string[subdirectoryEntries.Count()];
-            for(int i = 0; i< subdirectoryEntries.Count(); i++)
-            {
-                FolderGrids[i] = System.IO.Path.GetFileNameWithoutExtension(subdirectoryEntries[i]);
-            }
-
-
-            for(int i = 0; i< Config.PublicOffers.Count; i++)
-            {
-                if (!FolderGrids.Contains(Config.PublicOffers[i].Name))
-                {
-                    Config.PublicOffers.RemoveAt(i);
-                }
-            }
-
-
-            for(int i = 0; i < FolderGrids.Count(); i++)
-            {
-                if(!Config.PublicOffers.Any(x=> x.Name == FolderGrids[i])){
-
-                    string FileName = FolderGrids[i];
-
-                    Hangar.Debug("Adding item: " + FileName);
-
-                    PublicOffers offer = new PublicOffers();
-                    offer.Name = FileName;
-                    Config.PublicOffers.Add(offer);
-                    Config.RefreshModel();
-                }
-            }
-
-            */
-
-        }
 
         private void Imported_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.RefreshModel();
         }
 
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-            var t = Task.Run(() => UpdatePublicOffers());
-            //This will force the market to update the market items
-        }
 
         private void UpdatePublicOffers()
         {
@@ -230,11 +166,7 @@ namespace QuantumHangar.UI
 
 
 
-        private void Button_Click_3(object sender, RoutedEventArgs e)
-        {
 
-            //Process.Start(Market.ServerOffersDir);
-        }
 
 
 
@@ -357,6 +289,36 @@ namespace QuantumHangar.UI
         private void PlayerBlacklistLostFocus(object sender, RoutedEventArgs e)
         {
             Config.RefreshModel();
+        }
+
+        private void ServerOffers_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            /* Server offers selection changes */
+            
+            if(ServerOffers.SelectedItem == null)
+            {
+                ServerOfferConfigBox.DataContext = null;
+                ServerOfferConfigBox.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                ServerOfferConfigBox.DataContext = ServerOffers.SelectedItem;
+                ServerOfferConfigBox.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void UpdateMarketButton(object sender, RoutedEventArgs e)
+        {
+            //Fire save event for the model. Torch doesnt like datacontext crap
+            Hangar.Config.RefreshModel();
+        }
+
+        private void NewPublicOfferButton(object sender, RoutedEventArgs e)
+        {
+            var Listing = new HangarMarket.MarketListing();
+            Listing.ServerOffer = true;
+
+            Hangar.Config.PublicMarketOffers.Add(Listing);
         }
     }
 
