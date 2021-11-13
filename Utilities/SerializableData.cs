@@ -227,6 +227,9 @@ namespace QuantumHangar
                 GridPCU += SingleGrid.BlocksPCU;
             }
 
+            if (Grids[0].BigOwners.Count > 0)
+                Grids[0].GridSystems.JumpSystem.GetMaxJumpDistance(Grids[0].BigOwners[0]);
+
             //Get Total Build Percent
             GridBuiltPercent = DisassembleRatio / NumberofBlocks;
             MarketValue = EstimatedValue;
