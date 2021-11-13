@@ -23,27 +23,12 @@ using VRageMath;
 
 namespace QuantumHangar.Utils
 {
-    public class GridUtilities
+    public static class GridUtilities
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        private static bool KeepProjectionsOnSave = false;
-        private static bool KeepOriginalOwner = true;
 
         private static Settings Config { get {return Hangar.Config;} }
 
-
-
-        private readonly string FolderPath;
-        private readonly ulong SteamID;
-        private readonly Chat Chat;
-
-        public GridUtilities(Chat Chat, ulong UserSteamID)
-        {
-            FolderPath = Path.Combine(Config.FolderDirectory, UserSteamID.ToString());
-            Directory.CreateDirectory(FolderPath);
-            SteamID = UserSteamID;
-            this.Chat = Chat;
-        }
 
 
 
@@ -147,7 +132,7 @@ namespace QuantumHangar.Utils
                         gridList.Add(grid);
                     }
 
-                    if (gridList.Count != 0 && IsPlayerIdCorrect(playerId, gridList))
+                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
                         grids.Add(gridList);
                 });
 
@@ -168,7 +153,7 @@ namespace QuantumHangar.Utils
                         gridList.Add(grid);
                     }
 
-                    if (gridList.Count != 0 && IsPlayerIdCorrect(playerId, gridList))
+                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
                         grids.Add(gridList);
                 });
             }
@@ -176,12 +161,12 @@ namespace QuantumHangar.Utils
             return grids;
         }
 
-        private static bool IsPlayerIdCorrect(long playerId, List<MyCubeGrid> gridList)
+        private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> Grids, long playerId)
         {
 
-            MyCubeGrid Grid = null;
 
-            BiggestGrid(gridList, out Grid);
+
+            Grids.BiggestGrid(out MyCubeGrid Grid);
 
 
             /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
@@ -194,16 +179,14 @@ namespace QuantumHangar.Utils
             return false;
         }
 
-        public static bool BiggestGrid(IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
-            return BiggestGrid != null;
         }
 
-        public static bool BiggestGrid(IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
-            return BiggestGrid != null;
         }
     }
 
@@ -211,8 +194,6 @@ namespace QuantumHangar.Utils
     {
         //Thanks LordTylus, I was too lazy to create my own little utils
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
-
         public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
         {
 
@@ -436,7 +417,6 @@ namespace QuantumHangar.Utils
                                 }
                                 else
                                 {
-
                                     list.Add(group, distance);
                                 }
                             }

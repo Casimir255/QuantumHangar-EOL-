@@ -59,7 +59,7 @@ namespace QuantumHangar.HangarMarket
 
         // We use this to read new offers
         private FileSystemWatcher MarketWatcher;
-        private ClientCommunication Communication;
+        public static ClientCommunication Communication { get; private set; }
 
         private static MethodInfo SendNewProjection;
 
@@ -82,7 +82,7 @@ namespace QuantumHangar.HangarMarket
             foreach (var OfferPath in MarketFileOffers)
             {
                 string FileName = Path.GetFileName(OfferPath);
-                Log.Error($"Adding File: {FileName}");
+                // Log.Error($"Adding File: {FileName}");
 
 
 
@@ -143,8 +143,6 @@ namespace QuantumHangar.HangarMarket
                 return;
 
 
-            
-
             //Loop through queue and add new items
             while (NewFileQueue.Count != 0)
             {
@@ -156,7 +154,7 @@ namespace QuantumHangar.HangarMarket
 
 
                     if (MarketOffers.TryAdd(Path.GetFileName(FilePath), Offer))
-                        Log.Error("Added this file to the dictionary!");
+                        //Log.Error("Added this file to the dictionary!");
 
                     NewFileQueue.Dequeue();
                 }
@@ -175,13 +173,8 @@ namespace QuantumHangar.HangarMarket
                 }
             }
 
-
-
             //Send new offer update to all clients
             Communication.UpdateAllOffers();
-
-
-
         }
 
         public void ServerStarted()
@@ -215,8 +208,8 @@ namespace QuantumHangar.HangarMarket
 
             //Log.Warn($"File {e.FullPath} deleted! {e.Name}");
 
-            if (MarketOffers.TryRemove(e.Name, out _))
-                Log.Error("Removed this file from the dictionary!");
+            MarketOffers.TryRemove(e.Name, out _);
+                //Log.Error("Removed this file from the dictionary!");
 
 
             //Send new offer update to all clients
@@ -235,11 +228,6 @@ namespace QuantumHangar.HangarMarket
 
 
         }
-
-
-
-
-
 
 
 
@@ -262,20 +250,16 @@ namespace QuantumHangar.HangarMarket
 
 
         }
-
-
-
-
         public static void RemoveMarketListing(ulong Owner, string Name)
         {
             string FileName = GetNameFormat(Owner, Name);
+            MarketOffers.TryGetValue(FileName, out MarketListing Listing);
+
+            if (Listing != null)
+                GirdOfferRemoved(Listing);
 
             File.Delete(Path.Combine(MarketFolderDir, FileName));
-
-
         }
-
-
         public static bool SaveNewMarketFile(MarketListing NewListing)
         {
             //Saves a new market listing
@@ -299,9 +283,6 @@ namespace QuantumHangar.HangarMarket
         private static bool ValidGrid(ulong Owner, string GridName, out MarketListing Offer, out string GridPath)
         {
             GridPath = string.Empty;
-
-
-          
 
 
             if (Owner == 0)
@@ -360,8 +341,6 @@ namespace QuantumHangar.HangarMarket
 
             return true;
         }
-
-
         public static void SetGridPreview(long EntityID, ulong Owner, string GridName)
         {
 
@@ -402,11 +381,10 @@ namespace QuantumHangar.HangarMarket
             }
 
         }
-
         public static void PurchaseGridOffer(ulong Buyer, ulong Owner, string GridName)
         {
 
-            Log.Error($"Buyer {Buyer}, Owner {Owner}, GridName {GridName}");
+            Log.Error($"BuyerRequest: {Buyer}, Owner {Owner}, GridName {GridName}");
 
             if (!ValidGrid(Owner, GridName, out MarketListing Offer, out string GridPath))
                 return;
@@ -458,6 +436,7 @@ namespace QuantumHangar.HangarMarket
             //Transfer grid
             if (PlayerHangar.TransferGrid(Owner, Buyer, Offer.Name))
             {
+                Chat.Send($"Successfully purchased {Offer.Name} from {OwnerIdentity.DisplayName}! Check your hangar!", Buyer);
                 MyBankingSystem.ChangeBalance(BuyerIdentity.IdentityId, -1 * Offer.Price);
                 MyBankingSystem.ChangeBalance(OwnerIdentity.IdentityId, Offer.Price);
             }
@@ -469,6 +448,7 @@ namespace QuantumHangar.HangarMarket
             //Cannot buy if its over max amount
             if (Offer.TotalAmount != 0 && Offer.TotalBuys > Offer.TotalAmount)
             {
+                Chat.Send($"This grid is no longer for sale!", Buyer);
                 Offer.ForSale = false;
                 return;
             }
@@ -479,6 +459,8 @@ namespace QuantumHangar.HangarMarket
 
             if (Offer.TotalPerPlayer != 0 && Index != -1 && Offer.PlayerPurchases[Index].Value >= Offer.TotalPerPlayer)
             {
+                Chat.Send($"You have reached your buy limit for this offer!", Buyer);
+
                 //Log.Error("B");
                 //Player doesnt have any buys left
                 return;
@@ -490,8 +472,12 @@ namespace QuantumHangar.HangarMarket
 
                 //Log.Error("Changing Balance");
                 MyBankingSystem.ChangeBalance(BuyerIdentity.IdentityId, -1 * Offer.Price);
-                
-                if(Index == -1)
+
+                Chat.Send($"Successfully purchased {Offer.Name}! Check your hangar!", Buyer);
+
+                GridOfferBought(Offer, Buyer);
+
+                if (Index == -1)
                 {
                     Offer.PlayerPurchases.Add(new KeyValuePair<ulong, int>(Buyer, 1));
                 }
@@ -504,8 +490,6 @@ namespace QuantumHangar.HangarMarket
                 //Hangar.Config.RefreshModel();
             }
         }
-
-
         private static string GetNameFormat(ulong Onwer, string GridName)
         {
             if(Onwer == 0)
@@ -517,6 +501,140 @@ namespace QuantumHangar.HangarMarket
                 return Onwer + "-" + GridName + ".json";
             }
         }
+
+
+
+
+
+        /* Following are for discord status messages */
+        public static void NewGridOfferListed(MarketListing NewOffer) 
+        {
+            if (!NexusSupport.RunningNexus)
+                return;
+
+
+            string Title = "Hangar Market - New Offer";
+
+
+            StringBuilder Msg = new StringBuilder();
+            Msg.AppendLine($"GridName: {NewOffer.Name}");
+            Msg.AppendLine($"Price: {NewOffer.Price}sc");
+            Msg.AppendLine($"PCU: {NewOffer.PCU}");
+            Msg.AppendLine($"Mass: {NewOffer.GridMass}kg");
+            Msg.AppendLine($"Jump Distance: {NewOffer.JumpDistance}m");
+            Msg.AppendLine($"Number Of Blocks: {NewOffer.NumberofBlocks}");
+            Msg.AppendLine($"PowerOutput: {NewOffer.MaxPowerOutput/1000}kW");
+            Msg.AppendLine($"Built-Percent: {NewOffer.GridBuiltPercent*100}%");
+            Msg.AppendLine($"Total Grids: {NewOffer.NumberOfGrids}");
+            Msg.AppendLine($"Static Grids: {NewOffer.StaticGrids}");
+            Msg.AppendLine($"Large Grids: {NewOffer.LargeGrids}");
+            Msg.AppendLine($"Small Grids: {NewOffer.SmallGrids}");
+
+
+            Msg.AppendLine();
+            Msg.AppendLine($"Description: {NewOffer.Description}");
+
+            if (!MySession.Static.Players.TryGetIdentityFromSteamID(NewOffer.SteamID, out MyIdentity Player))
+                return;
+
+            var Fac = MySession.Static.Factions.GetPlayerFaction(Player.IdentityId);
+
+            string Footer;
+
+            if(Fac != null)
+            {
+                Footer = $"Seller: [{Fac.Tag}] {Player.DisplayName}";
+            }
+            else
+            {
+                Footer = $"Seller: {Player.DisplayName}";
+            }
+
+            
+            NexusAPI.SendEmbedMessageToDiscord(Hangar.Config.MarketUpdateChannel, Title, Msg.ToString(), Footer, "#FFFF00");
+        }
+        public static void GirdOfferRemoved(MarketListing NewOffer)
+        {
+            if (!NexusSupport.RunningNexus)
+                return;
+
+            string Title = "Hangar Market - Offer Removed";
+
+
+            if (!MySession.Static.Players.TryGetIdentityFromSteamID(NewOffer.SteamID, out MyIdentity Player))
+                return;
+
+            StringBuilder Msg = new StringBuilder();
+            Msg.AppendLine($"Grid {NewOffer.Name} is no longer for sale!");
+           
+
+            var Fac = MySession.Static.Factions.GetPlayerFaction(Player.IdentityId);
+
+            string Footer;
+
+            if (Fac != null)
+            {
+                Footer = $"Seller: [{Fac.Tag}] {Player.DisplayName}";
+            }
+            else
+            {
+                Footer = $"Seller: {Player.DisplayName}";
+            }
+
+
+            NexusAPI.SendEmbedMessageToDiscord(Hangar.Config.MarketUpdateChannel, Title, Msg.ToString(), Footer, "#FFFF00");
+        }
+
+        public static void GridOfferBought(MarketListing NewOffer, ulong Buyer)
+        {
+
+            if (!NexusSupport.RunningNexus)
+                return;
+
+            string Title = "Hangar Market - Offer Purchased";
+
+
+
+            if (!MySession.Static.Players.TryGetIdentityFromSteamID(NewOffer.SteamID, out MyIdentity Seller))
+                return;
+
+
+            if (!MySession.Static.Players.TryGetIdentityFromSteamID(NewOffer.SteamID, out MyIdentity BuyerIdentity))
+                return;
+
+
+
+
+
+            var Fac = MySession.Static.Factions.GetPlayerFaction(Seller.IdentityId);
+            var BuyerFac = MySession.Static.Factions.GetPlayerFaction(BuyerIdentity.IdentityId);
+            string Footer;
+
+            if (Fac != null)
+            {
+                Footer = $"Seller: [{Fac.Tag}] {Seller.DisplayName}";
+            }
+            else
+            {
+                Footer = $"Seller: {Seller.DisplayName}";
+            }
+
+
+
+            StringBuilder Msg = new StringBuilder();
+            if (BuyerFac != null)
+            {
+                Msg.AppendLine($"Grid {NewOffer.Name} was purchased by [{BuyerFac.Tag}] {BuyerIdentity.DisplayName} for {NewOffer.Price}sc!");
+            }
+            else
+            {
+                Msg.AppendLine($"Grid {NewOffer.Name} was purchased by {BuyerIdentity.DisplayName} for {NewOffer.Price}sc!");
+            }
+
+
+            NexusAPI.SendEmbedMessageToDiscord(Hangar.Config.MarketUpdateChannel, Title, Msg.ToString(), Footer, "#FFFF00");
+        }
+
     }
 
 }

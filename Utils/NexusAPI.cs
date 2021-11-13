@@ -54,6 +54,12 @@ namespace QuantumHangar.Utils
             return OnlinePlayers;
         }
 
+        private static List<object[]> GetAllServersObject()
+        {
+            List<object[]> Servers = new List<object[]>();
+            return Servers;
+
+        }
         private static List<object[]> GetAllOnlineServersObject()
         {
             List<object[]> Servers = new List<object[]>();
@@ -92,6 +98,7 @@ namespace QuantumHangar.Utils
             return 0;
         }
 
+
         public static List<Player> GetAllOnlinePlayers()
         {
             List<object[]> Objs = GetAllOnlinePlayersObject();
@@ -104,6 +111,18 @@ namespace QuantumHangar.Utils
             return Players;
         }
 
+
+        public static List<Server> GetAllServers()
+        {
+            List<object[]> Objs = GetAllServersObject();
+
+            List<Server> Servers = new List<Server>();
+            foreach (var obj in Objs)
+            {
+                Servers.Add(new Server((string)obj[0], (int)obj[1], (int)obj[2], (string)obj[3]));
+            }
+            return Servers;
+        }
         public static List<Server> GetAllOnlineServers()
         {
             List<object[]> Objs = GetAllOnlineServersObject();
@@ -116,21 +135,18 @@ namespace QuantumHangar.Utils
             return Servers;
         }
 
+
+
         public static bool IsServerOnline(int ServerID)
         {
             return false;
         }
-
-
         public static void BackupGrid(List<MyObjectBuilder_CubeGrid> GridObjectBuilders, long OnwerIdentity)
         {
             return;
         }
-
-        public static void SendMessageToDiscord(string message, string ChannelID = null)
-        {
-            return;
-        }
+        public static void SendChatMessageToDiscord(ulong ChannelID, string Author, string Message) { }
+        public static void SendEmbedMessageToDiscord(ulong ChannelID, string EmbedTitle, string EmbedMsg, string EmbedFooter, string EmbedColor = null) { }
 
         public void SendMessageToServer(int ServerID, byte[] Message)
         {
@@ -195,16 +211,37 @@ namespace QuantumHangar.Utils
             }
         }
 
-        public class Server
+        public partial class Server
         {
             public readonly string Name;
             public readonly int ServerID;
+            public readonly int ServerType;
+            public readonly string ServerIP;
+
             public readonly int MaxPlayers;
             public readonly float ServerSS;
             public readonly int TotalGrids;
             public readonly List<ulong> ReservedPlayers;
 
+            /*  Possible Server Types
+             * 
+             *  0 - SyncedSectored
+             *  1 - SyncedNon-Sectored
+             *  2 - Non-Synced & Non-Sectored
+             * 
+             */
 
+
+            public Server(string Name, int ServerID, int ServerType, string IP)
+            {
+                this.Name = Name;
+                this.ServerID = ServerID;
+                this.ServerType = ServerType;
+                this.ServerIP = IP;
+            }
+
+
+            //Online Server
             public Server(string Name, int ServerID, int MaxPlayers, float SimSpeed, int TotalGrids, List<ulong> ReservedPlayers)
             {
                 this.Name = Name;
@@ -216,6 +253,7 @@ namespace QuantumHangar.Utils
             }
 
         }
+
 
         [ProtoContract]
         public class CrossServerMessage

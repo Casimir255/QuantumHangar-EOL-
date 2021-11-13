@@ -155,7 +155,6 @@ namespace QuantumHangar.HangarChecks
 
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(GridData);
-            GridUtilities GridUtils = new GridUtilities(Chat, SteamID);
             if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
             {
 

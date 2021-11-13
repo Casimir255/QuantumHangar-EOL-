@@ -4,10 +4,12 @@ using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Engine.Multiplayer;
 using Sandbox.Engine.Voxels;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
@@ -567,6 +569,9 @@ namespace QuantumHangar
         private bool _mod;
         private Action<string, Color, string> _send;
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(Chat));
+        private static string Author = "Hangar";
+        private static Color ChatColor = Color.Yellow;
+
 
         // Respond to a command.
         public Chat(CommandContext context, bool Mod = false)
@@ -594,7 +599,7 @@ namespace QuantumHangar
             }
             else
             {
-                Send(response, Color.Yellow, "Hangar");
+                Send(response, ChatColor, Author);
             }
         }
 
@@ -611,6 +616,22 @@ namespace QuantumHangar
                 _send(response, color, sender);
                 return;
             }
+        }
+
+        public static void Send(string response, ulong Target)
+        {
+
+            var scripted = new ScriptedChatMsg()
+            {
+                Author = Author,
+                Text = response,
+                Font = MyFontEnum.White,
+                Color = ChatColor,
+                Target = Sync.Players.TryGetIdentityId(Target)
+            };
+            
+            Log.Info($"{Author} (to {Torch.Managers.ChatManager.ChatManagerServer.GetMemberName(Target)}): {response}");
+            MyMultiplayerBase.SendScriptedChatMessage(ref scripted);
         }
     }
 }

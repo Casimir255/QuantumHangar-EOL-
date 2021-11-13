@@ -405,7 +405,9 @@ namespace QuantumHangar
                 return false;
             }
 
-            if (!GridUtilities.BiggestGrid(Grids, out BiggestGrid))
+
+            Grids.BiggestGrid(out BiggestGrid);
+            if (BiggestGrid == null)
             {
                 Response.Respond("Grid incompatible!");
                 return false;

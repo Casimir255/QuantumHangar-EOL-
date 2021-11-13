@@ -216,6 +216,9 @@ namespace QuantumHangar
         public double RestockAmount { get => _RestockAmount; set => SetValue(ref _RestockAmount, value); }
 
 
+        private ulong _MarketUpdateChannel = 0;
+        public ulong MarketUpdateChannel { get => _MarketUpdateChannel; set => SetValue(ref _MarketUpdateChannel, value); }
+
 
         private ObservableCollection<MarketListing> _PublicMarketOffers = new ObservableCollection<MarketListing>();
         public ObservableCollection<MarketListing> PublicMarketOffers { get => _PublicMarketOffers; set => SetValue(ref _PublicMarketOffers, value); }

@@ -86,11 +86,7 @@ namespace QuantumHangar.HangarMarket
                 if (Message.MarketOffers == null)
                 {
                     Message.MarketOffers = new List<MarketListing>();
-                    Log.Fatal("Marketoffers is null");
-                }
-                else
-                {
-                    Log.Fatal(Message.MarketOffers.Count);
+                    //Log.Fatal("Marketoffers is null");
                 }
 
                 MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));

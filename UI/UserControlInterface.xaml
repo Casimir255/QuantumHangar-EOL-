@@ -563,8 +563,9 @@
                                         <TextBlock Grid.Column="0" Grid.Row ="0" Text="Fee to remove/load grid thats already on the market: " Margin="3" Grid.ColumnSpan="2" ToolTip="Prevents spamming the market/loading a grid for sale"/>
                                         <TextBox Grid.Column="1" Grid.Row="0" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding RestockAmount}" TextChanged="TextBox_TextChanged"/>
 
-              
 
+                                        <TextBlock Grid.Column="0" Grid.Row ="1" Text="Nexus Discord Market Channel: " Margin="3" Grid.ColumnSpan="2" ToolTip="Displays buy/sell messages through discord"/>
+                                        <TextBox Grid.Column="1" Grid.Row="1" Width="150" HorizontalAlignment="Left" Margin="3" Text="{Binding MarketUpdateChannel}" TextChanged="TextBox_TextChanged"/>
 
                                     </Grid>
 

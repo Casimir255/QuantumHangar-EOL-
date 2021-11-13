@@ -752,6 +752,7 @@ namespace QuantumHangar.HangarChecks
             //Save player file
             SavePlayerFile();
 
+            HangarMarketController.NewGridOfferListed(NewListing);
             return true;
         }
 

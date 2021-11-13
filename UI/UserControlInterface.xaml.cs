@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using QuantumHangar.HangarMarket;
 using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox.Game.World;
@@ -315,6 +316,7 @@ namespace QuantumHangar.UI
         {
             //Fire save event for the model. Torch doesnt like datacontext crap
             Hangar.Config.RefreshModel();
+            HangarMarketController.Communication.UpdateAllOffers();
         }
 
         private void NewPublicOfferButton(object sender, RoutedEventArgs e)

@@ -4,6 +4,7 @@ using QuantumHangar.HangarChecks;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.ModAPI;
 using System;
+using System.Linq;
 using Torch.API.Plugins;
 using VRage.Game;
 using VRageMath;
@@ -16,16 +17,37 @@ namespace QuantumHangar.Utils
         private const ushort QuantumHangarNexusModID = 0x24fc;
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        private static NexusAPI _api = new NexusAPI(QuantumHangarNexusModID);
+        public static NexusAPI API { get; } = new NexusAPI(QuantumHangarNexusModID);
+
         private static GpsSender gpsSender = new GpsSender();
 
-        private static int ThisServerID;
+        private static int ThisServerID = -1;
+        public static bool RunningNexus { get; private set; } = false;
+        private static bool RequireTransfer = true;
+
+
 
         public static void Init()
         {
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(QuantumHangarNexusModID, ReceivePacket);
             ThisServerID = NexusAPI.GetThisServer().ServerID;
             Log.Info("QuantumHangar -> Nexus integration has been initilized with serverID " + ThisServerID);
+
+
+            if (!NexusAPI.IsRunningNexus())
+                return;
+
+            Log.Error("Running Nexus!");
+
+            RunningNexus = true;
+            NexusAPI.Server ThisServer = NexusAPI.GetAllServers().FirstOrDefault(x => x.ServerID == ThisServerID);
+
+            if(ThisServer.ServerType >= 1)
+            {
+                RequireTransfer = true;
+                Log.Info("QuantumHangar -> This server is Non-Sectored!");
+            }
+
         }
 
         public static void Dispose()
@@ -50,10 +72,13 @@ namespace QuantumHangar.Utils
         // must try again later when the target server is online.
         public static bool RelayLoadIfNecessary(Vector3D spawnPos, int ID, bool loadNearPlayer, Chat Chat, ulong SteamID, long IdentityID, Vector3D PlayerPosition)
         {
-            if (!NexusAPI.IsRunningNexus()) return false;
+            //Dont contiue if we arent running nexus, or we dont require transfer due to non-Sectored instances
+            if (!RunningNexus || !RequireTransfer)
+                return false;
 
             var target = NexusAPI.GetServerIDFromPosition(spawnPos);
-            if (target == ThisServerID) return false;
+            if (target == ThisServerID) 
+                return false;
 
             if (!NexusAPI.IsServerOnline(target))
             {
@@ -62,7 +87,6 @@ namespace QuantumHangar.Utils
             }
 
             Chat?.Respond("Sending hangar load command to the corresponding server, please wait...");
-
             NexusHangarMessage msg = new NexusHangarMessage
             {
                 Type = NexusHangarMessageType.LoadGrid,
@@ -74,9 +98,7 @@ namespace QuantumHangar.Utils
                 ServerID = ThisServerID
             };
 
-            _api.SendMessageToServer(target, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(msg));
-
-
+            API.SendMessageToServer(target, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(msg));
             return true;
         }
 
@@ -125,7 +147,7 @@ namespace QuantumHangar.Utils
                             Color = color,
                             Sender = sender,
                         };
-                        _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
+                        API.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
                     });
 
                     var gpsOverNexus = new GpsSender((position, name, entityID) =>
@@ -137,7 +159,7 @@ namespace QuantumHangar.Utils
                             Position = position,
                             EntityID = entityID,
                         };
-                        _api.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
+                        API.SendMessageToServer(msg.ServerID, MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
                     });
 
                     PlayerChecks User = new PlayerChecks(chatOverNexus, gpsOverNexus, msg.SteamID, msg.IdentityID, msg.PlayerPosition);
@@ -147,6 +169,9 @@ namespace QuantumHangar.Utils
 
             Log.Error("Invalid Nexus cross-server message for Quantum Hangar (unrecognized type: " + msg.Type + ")");
         }
+
+
+        
     }
 
     public enum NexusHangarMessageType
