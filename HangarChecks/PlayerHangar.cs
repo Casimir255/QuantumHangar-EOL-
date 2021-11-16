@@ -27,7 +27,7 @@ namespace QuantumHangar.HangarChecks
 
         private bool IsAdminCalling = false;
         private readonly ulong SteamID;
-        private readonly long IdentityID;
+        private readonly MyIdentity Identity;
 
 
         public string PlayersFolderPath { get; private set; }
@@ -41,8 +41,9 @@ namespace QuantumHangar.HangarChecks
             try
             {
 
+                MySession.Static.Players.TryGetIdentityFromSteamID(SteamID, out Identity);
+
                 this.SteamID = SteamID;
-                this.IdentityID = MySession.Static.Players.TryGetIdentityId(SteamID);
 
                 this.IsAdminCalling = IsAdminCalling;
                 Chat = Respond;
@@ -120,10 +121,16 @@ namespace QuantumHangar.HangarChecks
             try
             {
 
+                if (!File.Exists(GridPath))
+                {
+                    Log.Error($"{GridPath} doesnt exsist! Was this removed prematurely?");
+                    return false;
+                }
+
                 var ToInfo = new PlayerInfo();
                 ToInfo.LoadFile(Config.FolderDirectory, To);
 
-
+                
 
 
                 GridStamp Stamp = new GridStamp(GridPath);
@@ -161,7 +168,7 @@ namespace QuantumHangar.HangarChecks
             {
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
-                stamp.PlayerID = IdentityID;
+                stamp.PlayerID = Identity.IdentityId;
                 SelectedPlayerFile.Timer = stamp;
             }
 
@@ -184,18 +191,13 @@ namespace QuantumHangar.HangarChecks
             if (Config.OnLoadTransfer)
                 return true;
 
-            MyIdentity NewPlayer = MySession.Static.Players.TryGetIdentity(IdentityID);
-            if (NewPlayer == null)
-            {
-                Log.Fatal("Unable to get player identity! " + IdentityID);
-                return false;
-            }
+
 
 
             if (Grid.ShipPCU.Count == 0)
             {
 
-                MyBlockLimits blockLimits = NewPlayer.BlockLimits;
+                MyBlockLimits blockLimits = Identity.BlockLimits;
 
                 MyBlockLimits a = MySession.Static.GlobalBlockLimits;
 
@@ -438,7 +440,7 @@ namespace QuantumHangar.HangarChecks
 
 
 
-                    bool ValueReturn = PluginDependencies.CheckGridLimits(grids, IdentityID);
+                    bool ValueReturn = PluginDependencies.CheckGridLimits(grids, Identity.IdentityId);
 
                     //Convert to value return type
                     if (!ValueReturn)
@@ -742,9 +744,9 @@ namespace QuantumHangar.HangarChecks
 
             MarketListing NewListing = new MarketListing(Stamp);
             NewListing.SetUserInputs(Description, Price);
-
+            NewListing.Seller = Identity.DisplayName;
             //We will set this into the file. (in the block we will dynamically get palyer name and faction)
-            NewListing.SetPlayerData(SteamID, IdentityID);
+            NewListing.SetPlayerData(SteamID, Identity.IdentityId);
             HangarMarketController.SaveNewMarketFile(NewListing);
 
 
@@ -789,8 +791,6 @@ namespace QuantumHangar.HangarChecks
             int Index = SelectedPlayerFile.Grids.FindIndex(x => x == Stamp);
             return RemoveStamp(Index);
         }
-
-
         public bool RemoveGridStamp(int ID)
         {
             return RemoveStamp(ID - 1);
@@ -801,7 +801,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool SaveGridsToFile(GridResult Grids, string FileName)
         {
-            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, IdentityID);
+            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Identity.IdentityId);
         }
 
         public void ListAllGrids()
@@ -830,7 +830,15 @@ namespace QuantumHangar.HangarChecks
             int count = 1;
             foreach (var grid in SelectedPlayerFile.Grids)
             {
-                sb.AppendLine(" [" + count + "] - " + grid.GridName);
+                if (grid.GridForSale)
+                {
+                    sb.AppendLine(" [$" + count + "$] - " + grid.GridName);
+                }
+                else
+                {
+                    sb.AppendLine(" [" + count + "] - " + grid.GridName);
+                }
+
                 count++;
             }
 
@@ -913,8 +921,6 @@ namespace QuantumHangar.HangarChecks
 
             return true;
         }
-
-
         public bool LoadGrid(GridStamp Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
         {
             Grids = null;
@@ -924,12 +930,11 @@ namespace QuantumHangar.HangarChecks
                 return false;
 
 
-            PluginDependencies.BackupGrid(Grids.ToList(), IdentityID);
-            GridSerializer.TransferGridOwnership(Grids, IdentityID, Stamp.TransferOwnerShipOnLoad);
+            PluginDependencies.BackupGrid(Grids.ToList(), Identity.IdentityId);
+            GridSerializer.TransferGridOwnership(Grids, Identity.IdentityId, Stamp.TransferOwnerShipOnLoad);
 
             return true;
         }
-
 
         public void UpdateHangar()
         {
@@ -975,7 +980,6 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-
         public bool CheckLimits(GridStamp Grid, IEnumerable<MyObjectBuilder_CubeGrid> Blueprint)
         {
 
@@ -985,11 +989,6 @@ namespace QuantumHangar.HangarChecks
             return true;
 
         }
-
-
-        
-
-
     }
 
 

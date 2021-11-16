@@ -1,6 +1,8 @@
 ﻿using NLog;
 using ProtoBuf;
 using QuantumHangar.HangarChecks;
+using Sandbox;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -66,7 +68,7 @@ namespace QuantumHangar.HangarMarket
 
 
                 MyAPIGateway.Multiplayer.SendMessageTo(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message), SteamID);
-                Log.Warn("Sending all market offers back to client!");
+                //Log.Warn("Sending all market offers back to client!");
             }
             catch (Exception ex)
             {
@@ -78,6 +80,12 @@ namespace QuantumHangar.HangarMarket
         {
             try
             {
+
+                if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
+                    return;
+
+
+
                 Message Message = new Message(Message.MessageType.MarketOffersUpdate);
                 Message.MarketOffers = HangarMarketController.MarketOffers.Values.ToList();
                 Message.MarketOffers.AddRange(Hangar.Config.PublicMarketOffers);
@@ -90,7 +98,7 @@ namespace QuantumHangar.HangarMarket
                 }
 
                 MyAPIGateway.Multiplayer.SendMessageToOthers(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));
-                Log.Warn("Sending all market offers back to client!");
+                //Log.Warn("Sending all market offers back to client!");
             }
             catch (Exception ex)
             {
@@ -104,6 +112,8 @@ namespace QuantumHangar.HangarMarket
             //Need to have a cooldown on this shit
             Log.Warn($"Client requested to set grid preview of {Definition.GridName}!");
 
+
+            
 
             //Get grid.
             HangarMarketController.SetGridPreview(Definition.ProjectorEntityID, Definition.OwnerSteamID, Definition.GridName);

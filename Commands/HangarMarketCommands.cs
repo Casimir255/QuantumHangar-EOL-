@@ -19,6 +19,10 @@ namespace QuantumHangar.HangarMarket
         [Permission(MyPromoteLevel.None)]
         public async void SellGrid(int ID, long price, string description)
         {
+            if (!Hangar.Config.PluginEnabled)
+                return;
+
+
             if (Context.Player == null || !Hangar.Config.GridMarketEnabled)
             {
                 Context.Respond("This is a player only command!");
@@ -35,7 +39,7 @@ namespace QuantumHangar.HangarMarket
         [Permission(MyPromoteLevel.None)]
         public void MarketList()
         {
-            if (!Hangar.Config.GridMarketEnabled)
+            if (!Hangar.Config.GridMarketEnabled || !Hangar.Config.PluginEnabled)
                 return;
 
 
@@ -49,4 +53,48 @@ namespace QuantumHangar.HangarMarket
             Response.Respond(Builder.ToString());
         }
     }
+
+
+
+    [Torch.Commands.Category("h")]
+    public class HangarMarketCommandsSimp : CommandModule
+    {
+        [Command("sell", "Sells the grid")]
+        [Permission(MyPromoteLevel.None)]
+        public async void SellGrid(int ID, long price, string description)
+        {
+            if (!Hangar.Config.PluginEnabled)
+                return;
+
+            if (Context.Player == null || !Hangar.Config.GridMarketEnabled)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+
+            PlayerChecks User = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
+        }
+
+
+        [Command("marketlist", "Lists all grids for sale")]
+        [Permission(MyPromoteLevel.None)]
+        public void MarketList()
+        {
+            if (!Hangar.Config.GridMarketEnabled || !Hangar.Config.PluginEnabled)
+                return;
+
+
+            StringBuilder Builder = new StringBuilder();
+            foreach (var Value in HangarMarketController.MarketOffers.Values)
+            {
+                Builder.AppendLine($"{Value.Name} - {Value.Price}");
+            }
+
+            Chat Response = new Chat(Context);
+            Response.Respond(Builder.ToString());
+        }
+    }
+
 }
