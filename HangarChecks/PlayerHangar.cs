@@ -85,6 +85,7 @@ namespace QuantumHangar.HangarChecks
                 string GridPath = Stamp.GetGridPath(FromInfo.PlayerFolderPath);
                 string FileName = Path.GetFileName(GridPath);
 
+              
 
 
                 FromInfo.Grids.Remove(Stamp);

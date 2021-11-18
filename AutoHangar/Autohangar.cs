@@ -32,7 +32,7 @@ namespace QuantumHangar
 
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (Config.AutoHangarGrids || Config.PluginEnabled)
+            if (Config.AutoHangarGrids && Config.PluginEnabled)
                 RunAutoHangar();
         }
 
