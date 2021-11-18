@@ -101,6 +101,9 @@ namespace QuantumHangar.HangarChecks
                 Stamp.Transfered();
 
                 ToInfo.Grids.Add(Stamp);
+                
+                //Make sure to create directory
+                Directory.CreateDirectory(ToInfo.PlayerFolderPath);
                 File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
 
                 ToInfo.SaveFile();
@@ -139,6 +142,8 @@ namespace QuantumHangar.HangarChecks
 
                 ToInfo.FormatGridName(Stamp);
 
+                //Make sure to create the directory!
+                Directory.CreateDirectory(ToInfo.PlayerFolderPath);
 
                 File.Copy(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
                 Stamp.Transfered();
