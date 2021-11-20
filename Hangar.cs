@@ -131,8 +131,6 @@ namespace QuantumHangar
                     PluginDependencies.InitPluginDependencies(Plugins);
                     ServerRunning = true;
                     AutoHangar.StartAutoHangar();
-
-
                     Controller?.ServerStarted();
                     break;
 
@@ -153,17 +151,6 @@ namespace QuantumHangar
             Controller?.Close();
             AutoHangar.Dispose();
             PluginDependencies.Dispose();
-
-            
-            /*
-
-            //Un register events
-            if (Config.GridMarketEnabled && Market != null)
-            {
-                Market.Dispose();
-            }
-
-            */
         }
     }
 

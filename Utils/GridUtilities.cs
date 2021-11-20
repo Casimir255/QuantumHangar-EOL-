@@ -29,9 +29,6 @@ namespace QuantumHangar.Utils
 
         private static Settings Config { get {return Hangar.Config;} }
 
-
-
-
         public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> Grids)
         {
 
@@ -156,6 +153,8 @@ namespace QuantumHangar.Utils
                     if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
                         grids.Add(gridList);
                 });
+
+                
             }
 
             return grids;
@@ -163,9 +162,6 @@ namespace QuantumHangar.Utils
 
         private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> Grids, long playerId)
         {
-
-
-
             Grids.BiggestGrid(out MyCubeGrid Grid);
 
 
@@ -187,6 +183,15 @@ namespace QuantumHangar.Utils
         public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
+        }
+
+
+        public static void Close(this IEnumerable<MyCubeGrid> Grids)
+        {
+            foreach(var grid in Grids)
+            {
+                grid.Close();
+            }
         }
     }
 

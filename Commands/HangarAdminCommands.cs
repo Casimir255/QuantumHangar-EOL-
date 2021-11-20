@@ -69,7 +69,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void RunAutoHangar()
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(false, Hangar.Config.AutoHangarStaticGrids, Hangar.Config.AutoHangarLargeGrids, Hangar.Config.AutoHangarSmallGrids, Hangar.Config.KeepPlayersLargestGrid));
         }
 
         [Command("autohanger-override", "Runs Autohanger with override values (staticgrids, largegrids, smallgrids, hangerLargest, saveAll)")]
@@ -180,7 +180,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void RunAutoHangar()
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar());
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(false, Hangar.Config.AutoHangarStaticGrids, Hangar.Config.AutoHangarLargeGrids, Hangar.Config.AutoHangarSmallGrids, Hangar.Config.KeepPlayersLargestGrid));
         }
 
         [Command("autohanger-override", "Runs Autohanger with override values (staticgrids, largegrids, smallgrids, hangerLargest, saveAll)")]
