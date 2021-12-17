@@ -34,7 +34,7 @@ namespace QuantumHangar.Serialization
             }
             else
             {
-                CloseAllGrids(Grids);
+                Grids.Close();
                 //ClearAllAttachments(GridTask.Result);
                 SaveGridToFile(Path, GridName, GridTask.Result);
                 PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
@@ -120,21 +120,6 @@ namespace QuantumHangar.Serialization
             return MyObjectBuilderSerializer.SerializeXML(Path.Combine(SavePath, GridName + ".sbc"), false, builderDefinition);
         }
 
-        public static void CloseAllGrids(IEnumerable<MyCubeGrid> Grids)
-        {
-            StringBuilder Builder = new StringBuilder();
-            Builder.AppendLine("Closing the following grids: ");
-            foreach (var Grid in Grids)
-            {
-                Builder.Append(Grid.DisplayName + ", ");
-                Grid.Close();
-            }
-
-            Builder.AppendLine("Reason: Was Hangared");
-
-            //Grids.ForEach(x => x.Close());
-        }
-
         public static bool LoadGrid(string Path, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
         {
             Grids = Enumerable.Empty<MyObjectBuilder_CubeGrid>();
@@ -194,10 +179,6 @@ namespace QuantumHangar.Serialization
         }
 
 
-
-
-
-
         public static void TransferGridOwnership(IEnumerable<MyObjectBuilder_CubeGrid> Grids, long Player, bool Force = false)
         {
             if (Force || Config.OnLoadTransfer)
@@ -214,7 +195,5 @@ namespace QuantumHangar.Serialization
             }
 
         }
-
-
     }
 }

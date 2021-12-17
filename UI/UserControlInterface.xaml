@@ -584,7 +584,7 @@
                                 <GroupBox>
                                     <GroupBox.Header>
                                         <TextBlock>
-                                                    <Span FontWeight="Bold">Estimaded Market Values</Span>
+                                                    <Span FontWeight="Bold">Estimated Market Values</Span>
                                                     <Span> (Based on block count:  Price=Blocks*Value) </Span>
                                         </TextBlock>
                                     </GroupBox.Header>
@@ -657,7 +657,8 @@
                             </StackPanel>
                         </TabItem>
                         
-                        <TabItem Header="Server Offers">
+                        
+                        <TabItem Header="Server Offers" Visibility="Hidden">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="100"/>

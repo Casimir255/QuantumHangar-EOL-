@@ -186,12 +186,19 @@ namespace QuantumHangar.Utils
         }
 
 
-        public static void Close(this IEnumerable<MyCubeGrid> Grids)
+        public static void Close(this IEnumerable<MyCubeGrid> Grids, string Reason = "Grid was Hangared")
         {
-            foreach(var grid in Grids)
+            StringBuilder Builder = new StringBuilder();
+            Builder.AppendLine("Closing the following grids: ");
+            foreach (var Grid in Grids)
             {
-                grid.Close();
+                Builder.Append(Grid.DisplayName + ", ");
+                Grid.Close();
             }
+
+            Builder.AppendLine("Reason: " + Reason);
+
+            Log.Info(Builder.ToString());
         }
     }
 

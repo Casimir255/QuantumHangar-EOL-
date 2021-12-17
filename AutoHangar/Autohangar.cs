@@ -30,14 +30,13 @@ namespace QuantumHangar
             UpdateTimer.Start();
         }
 
+
+
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (Config.AutoHangarGrids && Config.PluginEnabled)
                 RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
         }
-
-
-
 
         public static void RunAutoHangar(bool SaveAll, bool hangarStatic = false, bool hangarLarge = false, bool hangarSmall = false, bool hangarLargest = false)
         {
@@ -210,6 +209,10 @@ namespace QuantumHangar
                 stopWatch.Stop();
             }
         }
+
+
+
+
 
 
 

@@ -220,8 +220,8 @@ namespace QuantumHangar
         public ulong MarketUpdateChannel { get => _MarketUpdateChannel; set => SetValue(ref _MarketUpdateChannel, value); }
 
 
-        private ObservableCollection<MarketListing> _PublicMarketOffers = new ObservableCollection<MarketListing>();
-        public ObservableCollection<MarketListing> PublicMarketOffers { get => _PublicMarketOffers; set => SetValue(ref _PublicMarketOffers, value); }
+        //private ObservableCollection<MarketListing> _PublicMarketOffers = new ObservableCollection<MarketListing>();
+        //public ObservableCollection<MarketListing> PublicMarketOffers { get => _PublicMarketOffers; set => SetValue(ref _PublicMarketOffers, value); }
 
 
         private bool _AutosellHangarGrids = false;

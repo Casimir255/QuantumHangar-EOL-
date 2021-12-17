@@ -120,38 +120,28 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public static bool TransferGrid(ulong To, string GridPath, string CustomName = null)
+        public static bool TransferGrid(PlayerInfo To, GridStamp Stamp)
         {
             try
             {
 
-                if (!File.Exists(GridPath))
-                {
-                    Log.Error($"{GridPath} doesnt exsist! Was this removed prematurely?");
-                    return false;
-                }
 
-                var ToInfo = new PlayerInfo();
-                ToInfo.LoadFile(Config.FolderDirectory, To);
-
-                
-
-
-                GridStamp Stamp = new GridStamp(GridPath);
-                if (CustomName != null)
-                    Stamp.GridName = CustomName;
-
-                ToInfo.FormatGridName(Stamp);
+                string GridName = Stamp.GridName;
+                To.FormatGridName(Stamp);
 
                 //Make sure to create the directory!
-                Directory.CreateDirectory(ToInfo.PlayerFolderPath);
+                Directory.CreateDirectory(To.PlayerFolderPath);
 
-                File.Copy(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
+                File.Copy(Stamp.OriginalGridPath, Path.Combine(To.PlayerFolderPath, Stamp.GridName + ".sbc"));
                 Stamp.Transfered();
 
+                To.ServerOfferPurchased(GridName);
 
-                ToInfo.Grids.Add(Stamp);
-                ToInfo.SaveFile();
+                To.Grids.Add(Stamp);
+                To.SaveFile();
+
+
+
             }catch(Exception ex)
             {
                 Log.Error(ex);
@@ -174,7 +164,6 @@ namespace QuantumHangar.HangarChecks
             {
                 TimeStamp stamp = new TimeStamp();
                 stamp.OldTime = DateTime.Now;
-                stamp.PlayerID = Identity.IdentityId;
                 SelectedPlayerFile.Timer = stamp;
             }
 
@@ -523,7 +512,6 @@ namespace QuantumHangar.HangarChecks
 
             return true;
         }
-
         public bool IsGridForSale(GridStamp Grid, bool Admin = false)
         {
             if (Grid.GridForSale)
@@ -553,7 +541,6 @@ namespace QuantumHangar.HangarChecks
 
             return false;
         }
-
         public bool CheckPlayerTimeStamp()
         {
             //Check timestamp before continuing!
@@ -583,7 +570,6 @@ namespace QuantumHangar.HangarChecks
 
             return true;
         }
-
         public bool ExtensiveLimitChecker(GridStamp Stamp)
         {
             //Begin Single Slot Save!
@@ -728,7 +714,6 @@ namespace QuantumHangar.HangarChecks
 
             return true;
         }
-
         public bool CheckHanagarLimits()
         {
             if (SelectedPlayerFile.Grids.Count >= SelectedPlayerFile._MaxHangarSlots)
@@ -740,7 +725,6 @@ namespace QuantumHangar.HangarChecks
             return true;
 
         }
-
 
         public bool SellSelectedGrid(GridStamp Stamp, long Price, string Description)
         {
@@ -1009,7 +993,7 @@ namespace QuantumHangar.HangarChecks
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty] public TimeStamp Timer;
         [JsonProperty] public int? MaxHangarSlots;
-
+        [JsonProperty] public Dictionary<string, int> ServerOfferPurchases = new Dictionary<string, int>();
 
 
         public int _MaxHangarSlots = 0;
@@ -1051,6 +1035,7 @@ namespace QuantumHangar.HangarChecks
                 PlayerInfo ScannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
                 this.Grids = ScannedFile.Grids;
                 this.Timer = ScannedFile.Timer;
+                this.ServerOfferPurchases = ScannedFile.ServerOfferPurchases;
 
                 if(ScannedFile.MaxHangarSlots.HasValue)
                     _MaxHangarSlots = ScannedFile.MaxHangarSlots.Value;
@@ -1257,6 +1242,36 @@ namespace QuantumHangar.HangarChecks
                 Log.Warn(e);
             }
         }
+
+        public void ServerOfferPurchased(string name)
+        {
+
+            string Val = name.Trim();
+            //Log.Info("SetServerOfferCount: " + Val);
+
+            if (ServerOfferPurchases.ContainsKey(Val))
+            {
+                ServerOfferPurchases[Val] = ServerOfferPurchases[Val] + 1;
+            }
+            else
+            {
+                ServerOfferPurchases.Add(Val, 1);
+            }
+        }
+
+        public int GetServerOfferPurchaseCount(string name)
+        {
+            string Val = name.Trim();
+
+            //Log.Info("GetServerOfferCount: " + Val);
+            if(ServerOfferPurchases.ContainsKey(Val))
+            {
+                return ServerOfferPurchases[Val];
+            }
+
+            return 0;
+        }
+
 
 
         public void SaveFile()

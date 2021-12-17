@@ -106,7 +106,6 @@ namespace QuantumHangar
 
     public class TimeStamp
     {
-        public long PlayerID;
         public DateTime OldTime;
     }
 
@@ -147,6 +146,9 @@ namespace QuantumHangar
 
         [JsonIgnore]
         private Settings Config { get { return Hangar.Config; } }
+
+        [JsonIgnore]
+        public string OriginalGridPath { get; }
 
         public GridStamp(List<MyCubeGrid> Grids)
         {
@@ -238,6 +240,7 @@ namespace QuantumHangar
         public GridStamp() { }
 
         public GridStamp(string file) {
+            OriginalGridPath = file;
             GridName = Path.GetFileNameWithoutExtension(file);
             ForceSpawnNearPlayer = true;
             GridSavePosition = Vector3D.Zero;
@@ -376,6 +379,7 @@ namespace QuantumHangar
             ForceSpawnNearPlayer = true;
             GridSavePosition = Vector3D.Zero;
             TransferOwnerShipOnLoad = true;
+            GridForSale = false;
         }
 
     }

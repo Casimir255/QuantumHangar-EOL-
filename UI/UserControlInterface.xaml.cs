@@ -325,7 +325,7 @@ namespace QuantumHangar.UI
             Listing.ServerOffer = true;
             Listing.ForSale = true;
 
-            Hangar.Config.PublicMarketOffers.Add(Listing);
+            //Hangar.Config.PublicMarketOffers.Add(Listing);
         }
     }
 

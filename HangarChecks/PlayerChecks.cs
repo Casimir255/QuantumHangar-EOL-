@@ -3,6 +3,7 @@ using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
@@ -608,20 +609,34 @@ namespace QuantumHangar.HangarChecks
 
             MyFaction PlayersFaction = MySession.Static.Factions.GetPlayerFaction(IdentityID);
             bool EnemyFoundFlag = false;
+
+
+
+
             if (Config.DistanceCheck > 0)
             {
                 //Check enemy location! If under limit return!
-                foreach (MyCharacter OnlinePlayer in MyEntities.GetEntities().OfType<MyCharacter>())
+
+                foreach (MyPlayer P in MySession.Static.Players.GetOnlinePlayers())
                 {
-                    if (OnlinePlayer == null || OnlinePlayer.MarkedForClose)
+                    if (P.Character == null || P.Character.MarkedForClose)
                         continue;
 
-                    long PlayerID = OnlinePlayer.GetPlayerIdentityId();
+                    Vector3D Pos;
+                    if (P.Character.IsUsing is MyCryoChamber || P.Character.IsUsing is MyCockpit)
+                    {
+                        Pos = (P.Character.IsUsing as MyCockpit).PositionComp.GetPosition();
+                    }
+                    else
+                    {
+                        Pos = P.GetPosition();
+                    }
+
+
+                    long PlayerID = P.Identity.IdentityId;
                     if (PlayerID == 0L) continue;
                     if (PlayerID == IdentityID)
                         continue;
-
-
 
                     MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(PlayerID);
                     if (PlayersFaction != null && TargetPlayerFaction != null)
@@ -635,18 +650,20 @@ namespace QuantumHangar.HangarChecks
                             continue;
                     }
 
-                    if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) == 0)
+
+                    if (Vector3D.Distance(Position, Pos) == 0)
                     {
                         continue;
                     }
 
-                    if (Vector3D.Distance(Position, OnlinePlayer.PositionComp.GetPosition()) <= Config.DistanceCheck)
+                    if (Vector3D.Distance(Position, Pos) <= Config.DistanceCheck)
                     {
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
                         GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
                         EnemyFoundFlag = true;
                         break;
                     }
+
                 }
             }
 
