@@ -42,7 +42,6 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoHangar\Autohangar.cs" />
@@ -185,8 +184,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
-      xcopy /y /d "$(ProjectDir)manifest.xml" "$(ProjectDir)$(OutDir)"
-      powershell Compress-Archive -Path "$(ProjectDir)$(OutDir)*" -DestinationPath "$(ProjectDir)$(OutDir)QuantumHangar.zip" -Force
     </PostBuildEvent>
   </PropertyGroup>
 </Project>

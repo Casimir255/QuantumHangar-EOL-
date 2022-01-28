@@ -10,6 +10,7 @@ using Torch;
 
 namespace QuantumHangar
 {
+
     public class Settings : ViewModel
     {
         private bool _Enabled = false;

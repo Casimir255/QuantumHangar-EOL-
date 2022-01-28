@@ -404,6 +404,7 @@ namespace QuantumHangar
 
         public static Settings Config { get { return Hangar.Config; } }
 
+
         public bool GetGrids(Chat Response, MyCharacter character, string GridNameOrEntity = null)
         {
             if (!GridUtilities.FindGridList(GridNameOrEntity, character, out Grids))
@@ -421,9 +422,17 @@ namespace QuantumHangar
             }
 
 
-            if (!IsAdmin && !BiggestGrid.BigOwners.Contains(character.GetPlayerIdentityId()))
+
+            var FatBlocks = BiggestGrid.GetFatBlocks().ToList();
+            int TotalFatBlocks = FatBlocks.Count;
+            long OwnerID = character.GetPlayerIdentityId();
+            int OwnedFatBlocks = FatBlocks.Count(x => x.OwnerId == OwnerID);
+            double Percent = Math.Round((double)OwnedFatBlocks / TotalFatBlocks * 100, 3);
+            int TotalBlocksLeftNeeded = (TotalFatBlocks/2) + 1 - (OwnedFatBlocks);
+
+            if (!IsAdmin && Percent <= 50)
             {
-                Response.Respond("You are not the owner of the biggest grid!");
+                Response.Respond($"You own {Percent}% of the biggest grid! Need {TotalBlocksLeftNeeded} more blocks to be the majority owner!");
                 return false;
             }
                 
@@ -436,7 +445,7 @@ namespace QuantumHangar
             
             if (!GetOwner(BiggestOwner, out OwnerSteamID))
             {
-                Response.Respond("Unable to get owners SteamID");
+                Response.Respond("Unable to get owners SteamID! Are you an NPC?");
                 return false;
             }
 
@@ -470,7 +479,6 @@ namespace QuantumHangar
                 return false;
             }
                 
-
 
             return true;
         }

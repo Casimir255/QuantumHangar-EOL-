@@ -37,6 +37,8 @@ namespace QuantumHangar
     public class Hangar : TorchPluginBase, IWpfPlugin
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
+
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
         public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
@@ -73,7 +75,7 @@ namespace QuantumHangar
 
         public override void Init(ITorchBase torch)
         {
-            Settings S = new Settings();
+            //Settings S = new Settings();
 
             base.Init(torch);
             //Grab Settings

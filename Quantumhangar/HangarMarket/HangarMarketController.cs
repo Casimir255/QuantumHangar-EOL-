@@ -415,10 +415,6 @@ namespace QuantumHangar.HangarMarket
             if (!MySession.Static.Players.TryGetIdentityFromSteamID(Owner, out MyIdentity OwnerIdentity))
                 return;
 
-            //Log.Error("B");
-
-
-
             //Have a successfull buy
             RemoveMarketListing(Owner, Offer.Name);
 
