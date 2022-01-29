@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\Desktop\TorchServers\torch-server\Plugins\QuantumHangar\</OutputPath>
+    <OutputPath>..\..\..\..\Desktop\TorchServers\torch-server\Plugins\QuantumHangar\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>

@@ -160,6 +160,12 @@ namespace QuantumHangar.HangarChecks
         /* Private Methods */
         private bool RemoveStamp(int ID)
         {
+            if(!SelectedPlayerFile.IsInputValid(ID, out string Error))
+            {
+                Chat.Respond(Error);
+                return false;
+            }
+
             if (!IsAdminCalling)
             {
                 TimeStamp stamp = new TimeStamp();
@@ -1186,7 +1192,7 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        private bool IsInputValid(int Index, out string Message)
+        public bool IsInputValid(int Index, out string Message)
         {
             Message = string.Empty;
 
@@ -1197,7 +1203,7 @@ namespace QuantumHangar.HangarChecks
             }
 
 
-            if (Index > Grids.Count && Index < _MaxHangarSlots)
+            if (Index > Grids.Count || Index <= 0)
             {
                 Message = "This hangar slot is empty! Select a grid that is in your hangar!";
                 return false;

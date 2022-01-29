@@ -19,6 +19,8 @@ using Sandbox.Game.World;
 using NLog;
 using QuantumHangar.Serialization;
 using QuantumHangar.HangarMarket;
+using VRage.ObjectBuilders;
+using VRage.Game.Entity.EntityComponents;
 
 namespace QuantumHangar
 {
@@ -395,6 +397,26 @@ namespace QuantumHangar
         public ulong OwnerSteamID;
 
         private bool IsAdmin = false;
+
+
+        /* Following are types that dont have an ownership tied with them */
+        public static List<MyObjectBuilderType> NoOwnerTypes = new List<MyObjectBuilderType>() 
+        { 
+            MyObjectBuilderType.Parse("MyObjectBuilder_CubeBlock"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_PistonTop"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_MotorSuspension"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_Conveyor"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_ReflectorLight"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_Thrust"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_ConveyorConnector"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_InteriorLight"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_Passage"),
+            MyObjectBuilderType.Parse("MyObjectBuilder_ExhaustBlock")
+        };
+
+
+  
+
         public GridResult(bool Admin = false)
         {
             IsAdmin = Admin;
@@ -424,9 +446,31 @@ namespace QuantumHangar
 
 
             var FatBlocks = BiggestGrid.GetFatBlocks().ToList();
-            int TotalFatBlocks = FatBlocks.Count;
             long OwnerID = character.GetPlayerIdentityId();
-            int OwnedFatBlocks = FatBlocks.Count(x => x.OwnerId == OwnerID);
+
+            int TotalFatBlocks = 0;
+            int OwnedFatBlocks = 0;
+
+   
+            foreach(var fat in FatBlocks)
+            {
+                //Only count blocks with ownership
+                if (fat.IDModule == null)
+                    continue;
+
+           
+                //WTF happened here?
+                if (fat.OwnerId == 0)
+                    Log.Error($"{fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+
+
+                TotalFatBlocks++;
+
+                if (fat.OwnerId == OwnerID)
+                    OwnedFatBlocks++;
+            }
+
+
             double Percent = Math.Round((double)OwnedFatBlocks / TotalFatBlocks * 100, 3);
             int TotalBlocksLeftNeeded = (TotalFatBlocks/2) + 1 - (OwnedFatBlocks);
 

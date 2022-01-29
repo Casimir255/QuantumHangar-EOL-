@@ -189,12 +189,18 @@ namespace QuantumHangar.HangarMarket
 
         private void MarketWatcher_Renamed(object sender, RenamedEventArgs e)
         {
+            if (".json" != Path.GetExtension(e.Name))
+                return;
+
             Log.Warn($"File {e.FullPath} renamed!");
         }
 
         private void MarketWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             //Market offer changed
+            if (".json" != Path.GetExtension(e.Name))
+                return;
+
             if (e.ChangeType != WatcherChangeTypes.Changed)
                 return;
 
@@ -204,6 +210,10 @@ namespace QuantumHangar.HangarMarket
 
         private void MarketWatcher_Deleted(object sender, FileSystemEventArgs e)
         {
+
+            if (".json" != Path.GetExtension(e.Name))
+                return;
+
             //Market offer deleted
 
             //Log.Warn($"File {e.FullPath} deleted! {e.Name}");
@@ -222,7 +232,8 @@ namespace QuantumHangar.HangarMarket
             //New market offer created
             //Log.Warn($"File {e.FullPath} created! {e.Name}");
 
-
+            if (".json" != Path.GetExtension(e.Name))
+                return;
 
             NewFileQueue.Enqueue(e.FullPath);
 

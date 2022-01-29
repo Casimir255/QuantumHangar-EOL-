@@ -38,6 +38,7 @@ namespace QuantumHangar
                 RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
         }
 
+
         public static void RunAutoHangar(bool SaveAll, bool hangarStatic = false, bool hangarLarge = false, bool hangarSmall = false, bool hangarLargest = false)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
@@ -209,12 +210,6 @@ namespace QuantumHangar
                 stopWatch.Stop();
             }
         }
-
-
-
-
-
-
 
 
         public static void Dispose()
