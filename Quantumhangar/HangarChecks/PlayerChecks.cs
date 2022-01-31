@@ -656,7 +656,7 @@ namespace QuantumHangar.HangarChecks
                         continue;
                     }
 
-                    if (Vector3D.Distance(Position, Pos) <= Config.DistanceCheck)
+                    if (Vector3D.Distance(Position, Pos) <= Config.DistanceCheck  && !Config.AllowLoadNearEnemy)
                     {
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
                         GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
@@ -716,7 +716,7 @@ namespace QuantumHangar.HangarChecks
                     }
 
 
-                    if (!FoundAlly)
+                    if (!FoundAlly && !Config.AllowLoadNearEnemy)
                     {
                         //Stop loop
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
