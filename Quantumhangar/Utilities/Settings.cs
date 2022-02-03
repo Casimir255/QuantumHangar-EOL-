@@ -228,5 +228,8 @@ namespace QuantumHangar
         private bool _AutosellHangarGrids = false;
         public bool AutosellHangarGrids { get => _AutosellHangarGrids; set => SetValue(ref _AutosellHangarGrids, value); }
 
+
+        private bool _AllowLoadNearEnemy = false;
+        public bool AllowLoadNearEnemy { get => _AllowLoadNearEnemy; set => SetValue(ref _AllowLoadNearEnemy, value); }
     }
 }
