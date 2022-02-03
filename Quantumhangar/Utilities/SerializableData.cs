@@ -52,14 +52,35 @@ namespace QuantumHangar
 
     public class FileSaver
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         //A regex invalidCharCollection
         private static Regex InvalidNameScanner = new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))));
 
-        public static void Save(string dir, object data)
+        public static void SaveAsync(string dir, object data)
         {
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
-            FileSaveTask(dir, data);
+            WriteAsync(dir, data);
         }
+
+
+
+        public static async void WriteAsync(string dir, object data)
+        {
+            try
+            {
+                using (var sw = new StreamWriter(dir))
+                {
+                    await sw.WriteAsync(JsonConvert.SerializeObject(data, Formatting.Indented));
+                }
+
+                Log.Info("Done saving!");
+
+            }catch (Exception ex)
+            {
+                Log.Fatal(ex);
+            }
+        }
+
 
         private static void FileSaveTask(string dir, object data)
         {

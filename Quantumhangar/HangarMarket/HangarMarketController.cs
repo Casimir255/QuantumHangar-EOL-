@@ -187,6 +187,7 @@ namespace QuantumHangar.HangarMarket
             Communication?.close();
         }
 
+
         private void MarketWatcher_Renamed(object sender, RenamedEventArgs e)
         {
             if (".json" != Path.GetExtension(e.Name))
@@ -246,10 +247,6 @@ namespace QuantumHangar.HangarMarket
         private static void GetReadMarketFile(string FilePath, out MarketListing Listing)
         {
             //Reads market file from path
-
-
-
-
 
             using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var sr = new StreamReader(fs, Encoding.UTF8);

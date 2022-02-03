@@ -18,14 +18,18 @@ namespace QuantumHangar
 {
     public static class AutoHangar
     {
-        private static Timer UpdateTimer = new Timer(1800000);
+        //1800000
+        private static Timer UpdateTimer = new Timer(30000);
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static Settings Config { get { return Hangar.Config; } }
 
 
+        public static bool ScheduleAutoHangar = false;
+        private static Stopwatch Watcher = new Stopwatch();
 
         public static void StartAutoHangar()
         {
+            //Every 30min schedule autohangar
             UpdateTimer.Elapsed += UpdateTimer_Elapsed;
             UpdateTimer.Start();
         }
@@ -34,8 +38,20 @@ namespace QuantumHangar
 
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (Config.AutoHangarGrids && Config.PluginEnabled)
-                RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
+            //if (Config.AutoHangarGrids && Config.PluginEnabled)
+            //    RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
+
+            ScheduleAutoHangar = true;
+        }
+
+
+        public static void UpdateAutoHangar()
+        {
+            if (!ScheduleAutoHangar)
+                return;
+
+            RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
+            ScheduleAutoHangar = false;
         }
 
 
@@ -44,14 +60,12 @@ namespace QuantumHangar
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
-            //Significant performance increase
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
 
-  
+            Watcher.Reset();
+
             List<long> ExportPlayerIdentities = new List<long>();
 
-            Log.Warn("AutoHangar Starting!");
+  
 
             try
             {
@@ -83,7 +97,7 @@ namespace QuantumHangar
 
                 }
 
-                Log.Warn("AutoHangar: Total players to check:" + ExportPlayerIdentities.Count());
+                Log.Warn($"AutoHangar Running! Total players to check {ExportPlayerIdentities.Count()}");
 
 
 
@@ -197,8 +211,9 @@ namespace QuantumHangar
                     PlayersHangar.SavePlayerFile();
                 }
 
-                TimeSpan ts = stopWatch.Elapsed;
-                Log.Warn("Finished Hangaring: " + GridCounter + " grids! Action took: " + ts.ToString());
+                TimeSpan ts = Watcher.Elapsed;
+                Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {ts.ToString()}");
+
             }
             catch(Exception ex)
             {
@@ -207,7 +222,7 @@ namespace QuantumHangar
             finally
             {
                 ExportPlayerIdentities.Clear();
-                stopWatch.Stop();
+                Watcher.Stop();
             }
         }
 

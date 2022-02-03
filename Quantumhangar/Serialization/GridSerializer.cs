@@ -11,9 +11,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VRage.Game;
 using VRage.ObjectBuilders;
+using VRage.Utils;
 
 namespace QuantumHangar.Serialization
 {
@@ -25,20 +27,42 @@ namespace QuantumHangar.Serialization
         public static bool SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName, long OwnerIdentity)
         {
 
-            //Log.Info(Grids.Count());
-            Task<IEnumerable<MyObjectBuilder_CubeGrid>> GridTask = GameEvents.InvokeAsync<IEnumerable<MyCubeGrid>, IEnumerable<MyObjectBuilder_CubeGrid>>(GetObjectBuilders, Grids);
-            if (!GridTask.Wait(5000))
+            Thread CurrentThread = Thread.CurrentThread;
+            if (CurrentThread == MyUtils.MainThread)
             {
-                Log.Info("Grid saving timed out!");
-                return false;
+                //Log.Warn("Running on game thread!");
+
+                IEnumerable<MyObjectBuilder_CubeGrid> grids = GetObjectBuilders(Grids);
+                Grids.Close();
+
+
+                Task.Run(() => {
+                    SaveGridToFile(Path, GridName, grids);
+                    PluginDependencies.BackupGrid(grids.ToList(), OwnerIdentity);
+                });
+
+                return true;
+
             }
             else
             {
-                Grids.Close();
-                //ClearAllAttachments(GridTask.Result);
-                SaveGridToFile(Path, GridName, GridTask.Result);
-                PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
-                return true;
+                //Log.Warn("Not running on game thread!");
+
+                //Log.Info(Grids.Count());
+                Task<IEnumerable<MyObjectBuilder_CubeGrid>> GridTask = GameEvents.InvokeAsync<IEnumerable<MyCubeGrid>, IEnumerable<MyObjectBuilder_CubeGrid>>(GetObjectBuilders, Grids);
+                if (!GridTask.Wait(5000))
+                {
+                    Log.Info("Grid saving timed out!");
+                    return false;
+                }
+                else
+                {
+                    Grids.Close();
+                    //ClearAllAttachments(GridTask.Result);
+                    SaveGridToFile(Path, GridName, GridTask.Result);
+                    PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
+                    return true;
+                }
             }
         }
 

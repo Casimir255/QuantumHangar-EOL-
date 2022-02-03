@@ -10,11 +10,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using VRage.Utils;
 
 namespace QuantumHangar.HangarChecks
 {
@@ -77,7 +79,7 @@ namespace QuantumHangar.HangarChecks
                 if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out string error))
                 {
 
-                    Log.Error("Failed to get grid! "+error);
+                    Log.Error("Failed to get grid! " + error);
                     return false;
                 }
 
@@ -85,7 +87,7 @@ namespace QuantumHangar.HangarChecks
                 string GridPath = Stamp.GetGridPath(FromInfo.PlayerFolderPath);
                 string FileName = Path.GetFileName(GridPath);
 
-              
+
 
 
                 FromInfo.Grids.Remove(Stamp);
@@ -102,7 +104,7 @@ namespace QuantumHangar.HangarChecks
                 Stamp.Transfered();
 
                 ToInfo.Grids.Add(Stamp);
-                
+
                 //Make sure to create directory
                 Directory.CreateDirectory(ToInfo.PlayerFolderPath);
                 File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
@@ -142,7 +144,8 @@ namespace QuantumHangar.HangarChecks
 
 
 
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Log.Error(ex);
                 return false;
@@ -160,7 +163,7 @@ namespace QuantumHangar.HangarChecks
         /* Private Methods */
         private bool RemoveStamp(int ID)
         {
-            if(!SelectedPlayerFile.IsInputValid(ID, out string Error))
+            if (!SelectedPlayerFile.IsInputValid(ID, out string Error))
             {
                 Chat.Respond(Error);
                 return false;
@@ -1043,7 +1046,7 @@ namespace QuantumHangar.HangarChecks
                 this.Timer = ScannedFile.Timer;
                 this.ServerOfferPurchases = ScannedFile.ServerOfferPurchases;
 
-                if(ScannedFile.MaxHangarSlots.HasValue)
+                if (ScannedFile.MaxHangarSlots.HasValue)
                     _MaxHangarSlots = ScannedFile.MaxHangarSlots.Value;
 
 
@@ -1056,7 +1059,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            
+
             return true;
         }
 
@@ -1146,7 +1149,7 @@ namespace QuantumHangar.HangarChecks
                     if (Stamp != null)
                         return true;
                 }
-                    
+
 
 
                 if (!IsInputValid(SelectedIndex, out Message))
@@ -1270,7 +1273,7 @@ namespace QuantumHangar.HangarChecks
             string Val = name.Trim();
 
             //Log.Info("GetServerOfferCount: " + Val);
-            if(ServerOfferPurchases.ContainsKey(Val))
+            if (ServerOfferPurchases.ContainsKey(Val))
             {
                 return ServerOfferPurchases[Val];
             }
@@ -1282,7 +1285,7 @@ namespace QuantumHangar.HangarChecks
 
         public void SaveFile()
         {
-            FileSaver.Save(FilePath, this);
+            FileSaver.SaveAsync(FilePath, this);
         }
 
 

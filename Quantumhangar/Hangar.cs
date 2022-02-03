@@ -146,6 +146,27 @@ namespace QuantumHangar
             }
         }
 
+        // 60 frames =~ 1 sec, run update about every min
+        int MaxUpdateTime = 60 * 60;
+        int CurrentFrameCount = 0;
+
+        public override void Update()
+        {
+            if (CurrentFrameCount >= MaxUpdateTime)
+            {
+                Update1Min();
+                CurrentFrameCount = 0;
+                return;
+            }
+
+            CurrentFrameCount++;
+        }
+
+        public void Update1Min()
+        {
+            AutoHangar.UpdateAutoHangar();
+        }
+
 
 
         public void PluginDispose()
