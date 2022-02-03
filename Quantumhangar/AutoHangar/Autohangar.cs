@@ -19,7 +19,7 @@ namespace QuantumHangar
     public static class AutoHangar
     {
         //1800000
-        private static Timer UpdateTimer = new Timer(30000);
+        private static Timer UpdateTimer = new Timer(1800000);
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         public static Settings Config { get { return Hangar.Config; } }
 
