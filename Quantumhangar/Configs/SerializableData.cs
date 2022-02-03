@@ -476,13 +476,13 @@ namespace QuantumHangar
             foreach(var fat in FatBlocks)
             {
                 //Only count blocks with ownership
-                if (fat.IDModule == null)
+                if (!fat.IsFunctional || fat.IDModule == null)
                     continue;
 
            
                 //WTF happened here?
                 if (fat.OwnerId == 0)
-                    Log.Error($"{fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+                    Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
 
 
                 TotalFatBlocks++;

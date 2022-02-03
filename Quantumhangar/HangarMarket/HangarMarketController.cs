@@ -323,7 +323,7 @@ namespace QuantumHangar.HangarMarket
   
                 string FolderPath;
                 //Log.Error("3");
-                FolderPath = Path.Combine(Hangar.Config.FolderDirectory, Owner.ToString());
+                FolderPath = Path.Combine(Hangar.MainPlayerDirectory, Owner.ToString());
                 GridPath = Path.Combine(FolderPath, GridName + ".sbc");
             }
 
@@ -448,7 +448,7 @@ namespace QuantumHangar.HangarMarket
 
 
             var ToInfo = new PlayerInfo();
-            ToInfo.LoadFile(Config.FolderDirectory, Buyer);
+            ToInfo.LoadFile(Hangar.MainPlayerDirectory, Buyer);
 
             //Log.Error("TotalBuys: " + ToInfo.GetServerOfferPurchaseCount(Offer.Name));
             if (Offer.TotalPerPlayer != 0 && ToInfo.GetServerOfferPurchaseCount(Offer.Name) >= Offer.TotalPerPlayer)

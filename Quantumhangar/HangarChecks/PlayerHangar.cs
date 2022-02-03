@@ -52,8 +52,8 @@ namespace QuantumHangar.HangarChecks
                 SelectedPlayerFile = new PlayerInfo();
 
 
-                PlayersFolderPath = Path.Combine(Config.FolderDirectory, SteamID.ToString());
-                SelectedPlayerFile.LoadFile(Config.FolderDirectory, SteamID);
+                PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, SteamID.ToString());
+                SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, SteamID);
 
 
             }
@@ -74,7 +74,7 @@ namespace QuantumHangar.HangarChecks
                 Log.Error("Starting Grid Transfer!");
 
                 var FromInfo = new PlayerInfo();
-                FromInfo.LoadFile(Config.FolderDirectory, From);
+                FromInfo.LoadFile(Hangar.MainPlayerDirectory, From);
 
                 if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out string error))
                 {
@@ -96,7 +96,7 @@ namespace QuantumHangar.HangarChecks
 
 
                 var ToInfo = new PlayerInfo();
-                ToInfo.LoadFile(Config.FolderDirectory, To);
+                ToInfo.LoadFile(Hangar.MainPlayerDirectory, To);
                 ToInfo.FormatGridName(Stamp);
 
 

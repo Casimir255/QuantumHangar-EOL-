@@ -38,24 +38,15 @@ namespace QuantumHangar
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
         public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
-        private static string PluginFolderDir { get{ return Config.FolderDirectory; } }
 
 
         public TorchSessionManager TorchSession { get; private set; }
         public static bool ServerRunning { get; private set; }
 
-        //public static GridMarket Market;
-
-        //Used to compare times
-        public DateTime AutoHangarStamp;
-        public DateTime AutoVoxelStamp;
-
-        private int TickCounter = 0;
-     
+        public static string MainPlayerDirectory { get; private set; }
 
 
         public enum ErrorType
@@ -86,7 +77,12 @@ namespace QuantumHangar
             if (Config.FolderDirectory == null || Config.FolderDirectory == "")
             {
                 Config.FolderDirectory = Path.Combine(StoragePath, "QuantumHangar");
+                Directory.CreateDirectory(Config.FolderDirectory);
             }
+
+            MainPlayerDirectory = Path.Combine(Config.FolderDirectory, "PlayerHangars");
+            Directory.CreateDirectory(MainPlayerDirectory);
+
 
             TorchSession = Torch.Managers.GetManager<TorchSessionManager>();
             if (TorchSession != null)
@@ -96,8 +92,6 @@ namespace QuantumHangar
             if (Config.GridMarketEnabled)
             {
                 Controller = new HangarMarketController();
-                //Market = new GridMarket(StoragePath);
-                //Market.InitilizeGridMarket();
             }
             else
             {
@@ -111,7 +105,30 @@ namespace QuantumHangar
             patcher.Apply(manager.AcquireContext(), this);
             //Load files
 
+            MigrateHangar();
+        }
 
+        private void MigrateHangar()
+        {
+  
+
+            string[] dirs = Directory.GetDirectories(Config.FolderDirectory, "*", SearchOption.TopDirectoryOnly);
+      
+            foreach (string dir in dirs)
+            {
+                DirectoryInfo info = new DirectoryInfo(dir);
+
+                if(UInt64.TryParse(info.Name, out _))
+                {
+                    Log.Warn("Moving!");
+
+                    string Destination = Path.Combine(MainPlayerDirectory, info.Name);
+                    Log.Warn($"Destination: {Destination}");
+
+                    Directory.Move(dir, Destination);
+
+                }
+            }
         }
 
 

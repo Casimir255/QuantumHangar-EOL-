@@ -44,6 +44,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Antidupe\AntiDupe.cs" />
     <Compile Include="AutoHangar\Autohangar.cs" />
     <Compile Include="Commands\HangarCommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />

@@ -141,7 +141,7 @@ namespace QuantumHangar.HangarChecks
         {
 
             //Get All hangar folders
-            foreach(var folder in Directory.GetDirectories(Config.FolderDirectory))
+            foreach(var folder in Directory.GetDirectories(Hangar.MainPlayerDirectory))
             {
                string PlayerID = Path.GetFileName(folder);
 
