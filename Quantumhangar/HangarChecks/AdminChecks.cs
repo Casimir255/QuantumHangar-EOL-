@@ -106,7 +106,7 @@ namespace QuantumHangar.HangarChecks
             if (Spawner.Start(AdminPlayerPosition, FromSavePos))
             {
                 Chat?.Respond("Spawning Complete!");
-                PlayersHanger.RemoveGridStamp(Stamp);
+                PlayersHanger.RemoveGridStamp(ID);
             }
             else
             {

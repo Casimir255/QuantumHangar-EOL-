@@ -163,12 +163,16 @@ namespace QuantumHangar.HangarChecks
         /* Private Methods */
         private bool RemoveStamp(int ID)
         {
+            Log.Warn($"HitA: {ID}");
+
+            //Input valid for ID - X
             if (!SelectedPlayerFile.IsInputValid(ID, out string Error))
             {
                 Chat.Respond(Error);
                 return false;
             }
 
+            Log.Warn("HitB");
             if (!IsAdminCalling)
             {
                 TimeStamp stamp = new TimeStamp();
@@ -176,11 +180,19 @@ namespace QuantumHangar.HangarChecks
                 SelectedPlayerFile.Timer = stamp;
             }
 
+            Log.Warn("HitC");
             try
             {
-                File.Delete(Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID].GridName + ".sbc"));
-                SelectedPlayerFile.Grids.RemoveAt(ID);
+
+                string a = Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID - 1].GridName + ".sbc");
+                Log.Info(a);
+
+                File.Delete(a);
+                SelectedPlayerFile.Grids.RemoveAt(ID - 1);
                 SelectedPlayerFile.SaveFile();
+
+
+
                 return true;
             }
             catch (Exception ex)
@@ -784,15 +796,9 @@ namespace QuantumHangar.HangarChecks
 
 
 
-
-        public bool RemoveGridStamp(GridStamp Stamp)
-        {
-            int Index = SelectedPlayerFile.Grids.FindIndex(x => x == Stamp);
-            return RemoveStamp(Index);
-        }
         public bool RemoveGridStamp(int ID)
         {
-            return RemoveStamp(ID - 1);
+            return RemoveStamp(ID);
         }
 
 
@@ -1197,16 +1203,19 @@ namespace QuantumHangar.HangarChecks
 
         public bool IsInputValid(int Index, out string Message)
         {
+            //Is input valid for index 1 - X
+
+
             Message = string.Empty;
 
-            if (Index < 0)
+            if (Index <= 0)
             {
                 Message = "Please input a positive non-zero number";
                 return false;
             }
 
-
-            if (Index > Grids.Count || Index <= 0)
+           
+            if (Index > Grids.Count)
             {
                 Message = "This hangar slot is empty! Select a grid that is in your hangar!";
                 return false;
@@ -1283,9 +1292,11 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public void SaveFile()
+        public async void SaveFile()
         {
-            FileSaver.SaveAsync(FilePath, this);
+
+            Log.Info("Save!");
+             await FileSaver.SaveAsync(FilePath, this);
         }
 
 

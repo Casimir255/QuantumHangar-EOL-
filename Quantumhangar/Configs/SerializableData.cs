@@ -56,15 +56,15 @@ namespace QuantumHangar
         //A regex invalidCharCollection
         private static Regex InvalidNameScanner = new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))));
 
-        public static void SaveAsync(string dir, object data)
+        public static async Task SaveAsync(string dir, object data)
         {
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
-            WriteAsync(dir, data);
+            await WriteAsync(dir, data);
         }
 
 
 
-        public static async void WriteAsync(string dir, object data)
+        public static async Task WriteAsync(string dir, object data)
         {
             try
             {
@@ -481,8 +481,8 @@ namespace QuantumHangar
 
            
                 //WTF happened here?
-                if (fat.OwnerId == 0)
-                    Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+                //if (fat.OwnerId == 0)
+                 //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
 
 
                 TotalFatBlocks++;
