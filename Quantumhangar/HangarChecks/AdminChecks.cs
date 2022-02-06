@@ -59,24 +59,35 @@ namespace QuantumHangar.HangarChecks
             GridResult Result = new GridResult(true);
 
 
-  
+
             //Gets grids player is looking at
             if (!Result.GetGrids(Chat, AdminUserCharacter, NameOrIdentity))
                 return;
 
+
+            if (Result.OwnerSteamID == 0)
+            {
+                Chat?.Respond("Unable to get major grid owner!");
+                return;
+            }
+
+
             GridStamp stamp = Result.GenerateGridStamp();
             PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat, true);
+
+            string Name = Result.OwnerSteamID.ToString();
+            if (MySession.Static.Players.TryGetIdentityFromSteamID(Result.OwnerSteamID, out MyIdentity identity))
+                Name = identity.DisplayName;
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(stamp);
             if (PlayersHanger.SaveGridsToFile(Result, stamp.GridName))
             {
-
                 PlayersHanger.SaveGridStamp(stamp, true);
-                Chat?.Respond("Save Complete!");
+                Chat?.Respond($"{stamp.GridName} was saved to {Name}'s hangar!");
             }
             else
             {
-                Chat?.Respond("Saved Failed!");
+                Chat?.Respond($"{stamp.GridName} failed to send to {Name}'s hangar!");
                 return;
             }
 
@@ -99,13 +110,20 @@ namespace QuantumHangar.HangarChecks
                 return;
             }
 
+
+            Vector3D LoadPos = Stamp.GridSavePosition;
             if (FromSavePos == false && InConsole == true)
                 FromSavePos = true;
 
+            if (!FromSavePos)
+                LoadPos = AdminPlayerPosition;
+
+
+
             ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat);
-            if (Spawner.Start(AdminPlayerPosition, FromSavePos))
+            if (Spawner.Start(LoadPos, FromSavePos))
             {
-                Chat?.Respond("Spawning Complete!");
+                Chat?.Respond($"Spawning Completed! \n Location: {LoadPos}");
                 PlayersHanger.RemoveGridStamp(ID);
             }
             else
@@ -141,11 +159,12 @@ namespace QuantumHangar.HangarChecks
         {
 
             //Get All hangar folders
-            foreach(var folder in Directory.GetDirectories(Hangar.MainPlayerDirectory))
+            foreach (var folder in Directory.GetDirectories(Hangar.MainPlayerDirectory))
             {
-               string PlayerID = Path.GetFileName(folder);
+                string PlayerID = Path.GetFileName(folder);
 
                 ulong ID = UInt64.Parse(PlayerID);
+
 
                 if (ID == 0)
                     continue;
@@ -168,7 +187,7 @@ namespace QuantumHangar.HangarChecks
             PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
             if (PlayersHanger.RemoveGridStamp(Index))
                 Chat.Respond("Successfully removed grid!");
-           
+
         }
 
         public bool AdminTryGetPlayerSteamID(string NameOrSteamID, out ulong PSteamID)
@@ -207,7 +226,7 @@ namespace QuantumHangar.HangarChecks
 
             if (!SteamID.HasValue)
             {
-                Chat?.Respond(NameOrSteamID +" doest exist! Check logs for more details!");
+                Chat?.Respond(NameOrSteamID + " doest exist! Check logs for more details!");
                 PSteamID = 0;
                 return false;
             }

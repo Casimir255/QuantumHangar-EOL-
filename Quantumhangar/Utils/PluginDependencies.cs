@@ -86,6 +86,7 @@ namespace QuantumHangar.Utils
             try
             {
                 BackupGridBuilders?.Invoke(GridBackupRef, new object[] { Grids, User });
+
             }catch(Exception ex)
             {
                 Log.Error(ex, "GridBackup threw an error!");

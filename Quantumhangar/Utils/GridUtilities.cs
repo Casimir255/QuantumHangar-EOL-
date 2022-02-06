@@ -1,4 +1,5 @@
 ﻿using NLog;
+using ParallelTasks;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utilities;
 using Sandbox.Common.ObjectBuilders;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Torch.Commands;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -27,7 +27,7 @@ namespace QuantumHangar.Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        private static Settings Config { get {return Hangar.Config;} }
+        private static Settings Config { get { return Hangar.Config; } }
 
         public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> Grids)
         {
@@ -37,7 +37,7 @@ namespace QuantumHangar.Utils
             if (string.IsNullOrEmpty(gridNameOrEntityId) && character == null)
                 return false;
 
-       
+
 
             if (Config.EnableSubGrids)
             {
@@ -113,30 +113,30 @@ namespace QuantumHangar.Utils
             if (includeConnectedGrids)
             {
 
-                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups.ToList(), group =>
-                {
+                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
+               {
 
-                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
+                   List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
-                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
-                    {
+                   foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                   {
 
-                        MyCubeGrid grid = groupNodes.NodeData;
+                       MyCubeGrid grid = groupNodes.NodeData;
 
-                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
-                            continue;
+                       if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
+                           continue;
 
-                        gridList.Add(grid);
-                    }
+                       gridList.Add(grid);
+                   }
 
-                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
-                        grids.Add(gridList);
-                });
+                   if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
+                       grids.Add(gridList);
+               });
 
             }
             else
             {
-                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups.ToList(), group =>
+                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
                 {
                     List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
@@ -154,7 +154,7 @@ namespace QuantumHangar.Utils
                         grids.Add(gridList);
                 });
 
-                
+
             }
 
             return grids;
@@ -403,7 +403,7 @@ namespace QuantumHangar.Utils
             {
                 foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
                 {
-                    
+
                     MyCubeGrid cubeGrid = groupNodes.NodeData;
                     if (cubeGrid != null)
                     {

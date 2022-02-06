@@ -146,13 +146,11 @@ namespace QuantumHangar
                     }
 
 
-
-
-
                     ulong id = MySession.Static.Players.TryGetSteamId(player);
                     PlayerHangar PlayersHangar = new PlayerHangar(id, null);
 
 
+         
                     foreach (List<MyCubeGrid> grids in gridGroups)
                     {
                         if (grids.Count == 0)
@@ -170,11 +168,13 @@ namespace QuantumHangar
                             continue;
                         }
 
+       
+
                         //Skip this grid set if its the largest grid and we have keep the largest grid ingame enabled
                         if (LargestGridID != -1 && LargestGridID.Value == LargestGrid.EntityId)
                             continue;
 
-
+   
 
                         //Now see if we should hangar this shit
                         if (LargestGrid.GridSizeEnum == MyCubeSize.Large && LargestGrid.IsStatic && !hangarStatic)
@@ -194,7 +194,7 @@ namespace QuantumHangar
                         GridStamp Stamp = Result.GenerateGridStamp();
                         PlayersHangar.SelectedPlayerFile.FormatGridName(Stamp);
 
-
+    
                         if (PlayersHangar.SaveGridsToFile(Result, Stamp.GridName))
                         {
                             //Load player file and update!
@@ -211,8 +211,8 @@ namespace QuantumHangar
                     PlayersHangar.SavePlayerFile();
                 }
 
-                TimeSpan ts = Watcher.Elapsed;
-                Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {ts.ToString()}");
+                Watcher.Stop();
+                Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {Watcher.Elapsed}");
 
             }
             catch(Exception ex)

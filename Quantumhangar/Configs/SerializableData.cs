@@ -465,40 +465,42 @@ namespace QuantumHangar
             }
 
 
-
-            var FatBlocks = BiggestGrid.GetFatBlocks().ToList();
-            long OwnerID = character.GetPlayerIdentityId();
-
-            int TotalFatBlocks = 0;
-            int OwnedFatBlocks = 0;
-
-   
-            foreach(var fat in FatBlocks)
+            if (!IsAdmin)
             {
-                //Only count blocks with ownership
-                if (!fat.IsFunctional || fat.IDModule == null)
-                    continue;
+                var FatBlocks = BiggestGrid.GetFatBlocks().ToList();
+                long OwnerID = character.GetPlayerIdentityId();
 
-           
-                //WTF happened here?
-                //if (fat.OwnerId == 0)
-                 //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+                int TotalFatBlocks = 0;
+                int OwnedFatBlocks = 0;
 
 
-                TotalFatBlocks++;
+                foreach (var fat in FatBlocks)
+                {
+                    //Only count blocks with ownership
+                    if (!fat.IsFunctional || fat.IDModule == null)
+                        continue;
 
-                if (fat.OwnerId == OwnerID)
-                    OwnedFatBlocks++;
-            }
+
+                    //WTF happened here?
+                    //if (fat.OwnerId == 0)
+                    //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
 
 
-            double Percent = Math.Round((double)OwnedFatBlocks / TotalFatBlocks * 100, 3);
-            int TotalBlocksLeftNeeded = (TotalFatBlocks/2) + 1 - (OwnedFatBlocks);
+                    TotalFatBlocks++;
 
-            if (!IsAdmin && Percent <= 50)
-            {
-                Response.Respond($"You own {Percent}% of the biggest grid! Need {TotalBlocksLeftNeeded} more blocks to be the majority owner!");
-                return false;
+                    if (fat.OwnerId == OwnerID)
+                        OwnedFatBlocks++;
+                }
+
+
+                double Percent = Math.Round((double)OwnedFatBlocks / TotalFatBlocks * 100, 3);
+                int TotalBlocksLeftNeeded = (TotalFatBlocks / 2) + 1 - (OwnedFatBlocks);
+
+                if (Percent <= 50)
+                {
+                    Response.Respond($"You own {Percent}% of the biggest grid! Need {TotalBlocksLeftNeeded} more blocks to be the majority owner!");
+                    return false;
+                }
             }
                 
 

@@ -1,5 +1,6 @@
 ﻿using Havok;
 using NLog;
+using ParallelTasks;
 using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox;
@@ -118,7 +119,7 @@ namespace QuantumHangar
             }
             else
             {
-                _Response.Respond("Parrallel Grid Spawner Timed out!");
+                _Response.Respond("Parallel Grid Spawner Timed out!");
                 return false;
             }
         }
@@ -334,7 +335,7 @@ namespace QuantumHangar
 
             //Now need to create a delta change from the initial position to the target position
             Vector3D Delta = TargetPos - _BiggestGrid.PositionAndOrientation.Value.Position;
-            Parallel.ForEach(_grids, grid =>
+            ParallelTasks.Parallel.ForEach(_grids, grid =>
             {
                 Vector3D CurrentPos = grid.PositionAndOrientation.Value.Position;
                 //MatrixD worldMatrix = MatrixD.CreateWorld(CurrentPos + Delta, grid.PositionAndOrientation.Value.Orientation.Forward, grid.PositionAndOrientation.Value.Orientation.Up,);
@@ -373,7 +374,7 @@ namespace QuantumHangar
         {
             //This really doesnt need to be ran on the game thread since we are still altering the grid before spawn
 
-            Parallel.ForEach(_grids, grid =>
+            ParallelTasks.Parallel.ForEach(_grids, grid =>
             {
 
                 grid.LinearVelocity = new SerializableVector3();
@@ -475,7 +476,7 @@ namespace QuantumHangar
             MatrixD rotationMatrix = MatrixD.Identity;
 
             //Find biggest grid and get their postion matrix
-            Parallel.ForEach(_grids, grid =>
+            ParallelTasks.Parallel.ForEach(_grids, grid =>
             {
                 //Option to clone the BP
                 //array[i] = (MyObjectBuilder_CubeGrid)TotalGrids[i].Clone();
@@ -491,7 +492,7 @@ namespace QuantumHangar
             MyEntities.IgnoreMemoryLimits = true;
 
             //Update each grid in the array
-            Parallel.ForEach(_grids, grid =>
+            ParallelTasks.Parallel.ForEach(_grids, grid =>
             {
                 if (grid.PositionAndOrientation.HasValue)
                 {

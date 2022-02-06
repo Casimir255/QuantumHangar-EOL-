@@ -34,7 +34,7 @@ namespace QuantumHangar.Commands
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public async void LoadGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
         {
             AdminChecks User = new AdminChecks(Context);
             await HangarCommandSystem.RunAdminTaskAsync(() => User.LoadGrid(NameOrSteamID, ID, FromSavePos));
@@ -116,7 +116,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void SaveAllGrids()
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true));
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, true, true, true, true));
         }
 
     }
@@ -226,7 +226,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void SaveAllGrids()
         {
-            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true));
+            await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, true, true, true, true));
         }
 
 

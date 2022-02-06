@@ -53,6 +53,8 @@ namespace QuantumHangar.HangarChecks
 
 
                 PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, SteamID.ToString());
+                
+
                 SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, SteamID);
 
 
@@ -943,6 +945,12 @@ namespace QuantumHangar.HangarChecks
 
         public void UpdateHangar()
         {
+            if (!Directory.Exists(PlayersFolderPath))
+            {
+                Chat?.Respond("This players hangar doesnt exsist! Skipping sync!");
+                return;
+            }
+
             IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
             if (myFiles.Count() == 0)
@@ -954,7 +962,10 @@ namespace QuantumHangar.HangarChecks
             int AddedGrids = 0;
             foreach (var file in myFiles)
             {
-                if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(file)))
+
+                string name = Path.GetFileNameWithoutExtension(file);
+                Log.Info(name);
+                if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(name)))
                     continue;
 
                 AddedGrids++;
@@ -975,7 +986,7 @@ namespace QuantumHangar.HangarChecks
             SelectedPlayerFile.Grids.AddRange(NewGrids);
             SelectedPlayerFile.SaveFile();
 
-            Chat?.Respond("Removed " + RemovedGrids + " grids and added " + AddedGrids + " new grids to hangar");
+            Chat?.Respond($"Removed {RemovedGrids} grids and added {AddedGrids} new grids to hangar for player {SteamID}");
 
 
         }
@@ -1119,12 +1130,12 @@ namespace QuantumHangar.HangarChecks
 
         public bool AnyGridsMatch(string GridName)
         {
-            return Grids.Any(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
+            return Grids.Any(x => x.GridName.Equals(GridName, StringComparison.Ordinal));
         }
 
         public bool TryFindGridIndex(string GridName, out int result)
         {
-            short? FoundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(GridName, StringComparison.CurrentCultureIgnoreCase));
+            short? FoundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(GridName, StringComparison.Ordinal));
             result = FoundIndex ?? -1;
             return FoundIndex.HasValue;
         }
