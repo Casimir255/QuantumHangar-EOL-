@@ -12,6 +12,7 @@ using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
+using Sandbox.Game.World.Generator;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -102,6 +103,8 @@ namespace QuantumHangar
             //This should return more than a bool (we only need to run on game thread to find a safe spot)
 
             Task<bool> Spawn = GameEvents.InvokeAsync<bool, bool>(CalculateSafePositionAndSpawn, LoadInOriginalPosition);
+
+
             if (Spawn.Wait(Timeout))
             {
                 if (Spawn.Result)
@@ -239,8 +242,142 @@ namespace QuantumHangar
         {
             //Log.info($"BoundingSphereD: {SphereD.Center}, {SphereD.Radius}");
             //Log.info($"MyOrientedBoundingBoxD: {BoxD.Center}, {BoxD.GetAABB()}");
+            MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target, out float val);
+            if (val == 0)
+            {
+                //following method is what SEworldgen uses. We only really need to use this in space
+                return FindSuitableJumpLocationSpace(Target);
+            }
 
             return MyEntities.FindFreePlaceCustom(Target, (float)SphereD.Radius, 90, 10, 1.5f, 10);
+        }
+
+
+        private Vector3D? FindSuitableJumpLocationSpace(Vector3D desiredLocation)
+        {
+
+            List<MyObjectSeed> m_objectsInRange = new List<MyObjectSeed>();
+            List<BoundingBoxD> m_obstaclesInRange = new List<BoundingBoxD>();
+            List<MyEntity> m_entitiesInRange = new List<MyEntity>();
+
+
+            BoundingSphereD Inflated = SphereD;
+            Inflated.Radius *= 1.5;
+            Inflated.Center = desiredLocation;
+
+            Vector3D vector3D = desiredLocation;
+  
+            MyProceduralWorldGenerator.Static.OverlapAllAsteroidSeedsInSphere(Inflated, m_objectsInRange);
+            foreach (MyObjectSeed item3 in m_objectsInRange)
+            {
+                m_obstaclesInRange.Add(item3.BoundingVolume);
+            }
+            m_objectsInRange.Clear();
+
+            MyProceduralWorldGenerator.Static.GetAllInSphere<MyStationCellGenerator>(Inflated, m_objectsInRange);
+            foreach (MyObjectSeed item4 in m_objectsInRange)
+            {
+                MyStation myStation = item4.UserData as MyStation;
+                if (myStation != null)
+                {
+                    BoundingBoxD item = new BoundingBoxD(myStation.Position - MyStation.SAFEZONE_SIZE, myStation.Position + MyStation.SAFEZONE_SIZE);
+                    if (item.Contains(vector3D) != 0)
+                    {
+                        m_obstaclesInRange.Add(item);
+                    }
+                }
+            }
+            m_objectsInRange.Clear();
+
+
+            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref Inflated, m_entitiesInRange);
+            foreach (MyEntity item5 in m_entitiesInRange)
+            {
+
+
+                if (!(item5 is MyPlanet))
+                {
+                    m_obstaclesInRange.Add(item5.PositionComp.WorldAABB.GetInflated(Inflated.Radius));
+                }
+            }
+
+            int num = 10;
+            int num2 = 0;
+            BoundingBoxD? boundingBoxD = null;
+            bool flag = false;
+            bool flag2 = false;
+            while (num2 < num)
+            {
+                num2++;
+                flag = false;
+                foreach (BoundingBoxD item6 in m_obstaclesInRange)
+                {
+                    ContainmentType containmentType = item6.Contains(vector3D);
+                    if (containmentType == ContainmentType.Contains || containmentType == ContainmentType.Intersects)
+                    {
+                        if (!boundingBoxD.HasValue)
+                        {
+                            boundingBoxD = item6;
+                        }
+                        boundingBoxD = boundingBoxD.Value.Include(item6);
+                        boundingBoxD = boundingBoxD.Value.Inflate(1.0);
+                        vector3D = ClosestPointOnBounds(boundingBoxD.Value, vector3D);
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    flag2 = true;
+                    break;
+                }
+            }
+            m_obstaclesInRange.Clear();
+            m_entitiesInRange.Clear();
+            m_objectsInRange.Clear();
+            if (flag2)
+            {
+                return vector3D;
+            }
+            return null;
+        }
+        private Vector3D ClosestPointOnBounds(BoundingBoxD b, Vector3D p)
+        {
+            Vector3D vector3D = (p - b.Center) / b.HalfExtents;
+            switch (vector3D.AbsMaxComponent())
+            {
+                case 0:
+                    if (vector3D.X > 0.0)
+                    {
+                        p.X = b.Max.X;
+                    }
+                    else
+                    {
+                        p.X = b.Min.X;
+                    }
+                    break;
+                case 1:
+                    if (vector3D.Y > 0.0)
+                    {
+                        p.Y = b.Max.Y;
+                    }
+                    else
+                    {
+                        p.Y = b.Min.Y;
+                    }
+                    break;
+                case 2:
+                    if (vector3D.Z > 0.0)
+                    {
+                        p.Z = b.Max.Z;
+                    }
+                    else
+                    {
+                        p.Z = b.Min.Z;
+                    }
+                    break;
+            }
+            return p;
         }
 
 
@@ -360,9 +497,6 @@ namespace QuantumHangar
             _callback?.Invoke(_spawned);
 
         }
-
-
-
 
 
         /*  Align to gravity code.

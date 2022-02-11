@@ -58,6 +58,8 @@ namespace QuantumHangar
 
         public static async Task SaveAsync(string dir, object data)
         {
+            
+
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
             await WriteAsync(dir, data);
         }
