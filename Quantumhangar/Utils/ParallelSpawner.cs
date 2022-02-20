@@ -78,7 +78,7 @@ namespace QuantumHangar
             // Fix for recent keen update. (if grids have projected grids saved then they will get the infinite streaming bug)
             foreach (var cubeGrid in _grids)
             {
-                cubeGrid.PlayerPresenceTier = MyUpdateTiersPlayerPresence.Normal;
+                //cubeGrid.PlayerPresenceTier = MyUpdateTiersPlayerPresence.Normal;
                 cubeGrid.CreatePhysics = true;
 
                 // Set biggest grid in grid group

@@ -20,11 +20,13 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()
         {
+
             if (Context.Player == null)
             {
                 Context.Respond("This is a player only command!");
                 return;
             }
+
 
             PlayerChecks User = new PlayerChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => User.SaveGrid(), Context);

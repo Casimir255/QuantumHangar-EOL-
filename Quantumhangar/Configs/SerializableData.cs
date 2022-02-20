@@ -504,6 +504,12 @@ namespace QuantumHangar
                     return false;
                 }
             }
+            else
+            {
+                //Compute biggest owner
+
+
+            }
                 
 
             if (BiggestGrid.BigOwners.Count == 0)

@@ -53,8 +53,6 @@ namespace QuantumHangar.HangarChecks
 
 
                 PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, SteamID.ToString());
-                
-
                 SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, SteamID);
 
 
@@ -1306,7 +1304,6 @@ namespace QuantumHangar.HangarChecks
         public async void SaveFile()
         {
             Directory.CreateDirectory(PlayerFolderPath);
-            Log.Info("Save!");
              await FileSaver.SaveAsync(FilePath, this);
         }
 
