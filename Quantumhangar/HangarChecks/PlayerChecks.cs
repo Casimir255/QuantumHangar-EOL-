@@ -410,7 +410,7 @@ namespace QuantumHangar.HangarChecks
             if (!PlayersHanger.CheckLimits(Stamp, Grids))
                 return;
 
-            if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition))
+            if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
                 return;
 
             if (!RequireLoadCurrency(Stamp))
@@ -656,7 +656,7 @@ namespace QuantumHangar.HangarChecks
                         continue;
                     }
 
-                    if (Vector3D.Distance(Position, Pos) <= Config.DistanceCheck  && !Config.AllowLoadNearEnemy)
+                    if (Vector3D.Distance(Position, Pos) <= Config.DistanceCheck)
                     {
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
                         GpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", IdentityID);
@@ -716,7 +716,7 @@ namespace QuantumHangar.HangarChecks
                     }
 
 
-                    if (!FoundAlly && !Config.AllowLoadNearEnemy)
+                    if (!FoundAlly)
                     {
                         //Stop loop
                         Chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
