@@ -46,7 +46,7 @@ namespace QuantumHangar
         public static void UpdateAutoHangar()
         {
 
-            Log.Info("Hit");
+            //Log.Info("Hit");
             if (!ScheduleAutoHangar)
                 return;
 
