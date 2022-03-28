@@ -38,15 +38,15 @@ namespace QuantumHangar
 
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            //if (Config.AutoHangarGrids && Config.PluginEnabled)
-            //    RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
-
-            ScheduleAutoHangar = true;
+            if (Config.AutoHangarGrids && Config.PluginEnabled)
+                ScheduleAutoHangar = true;
         }
 
 
         public static void UpdateAutoHangar()
         {
+
+            Log.Info("Hit");
             if (!ScheduleAutoHangar)
                 return;
 
