@@ -155,7 +155,7 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-
+        
 
 
 
@@ -1001,6 +1001,33 @@ namespace QuantumHangar.HangarChecks
                 return false;
 
             return true;
+
+        }
+
+
+        public bool ParseInput(string selection, out int ID)
+        {
+
+            if (Int32.TryParse(selection, out ID))
+                return true;
+            else
+            {
+
+                for (int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+                {
+                    GridStamp s = SelectedPlayerFile.Grids[i];
+                    if (s.GridName == selection)
+                    {
+                        ID = i+1;
+                        return true;
+                    }
+                }
+
+
+
+
+                return false;
+            }
 
         }
     }

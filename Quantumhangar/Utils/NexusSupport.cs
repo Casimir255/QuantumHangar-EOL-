@@ -163,7 +163,9 @@ namespace QuantumHangar.Utils
                     });
 
                     PlayerChecks User = new PlayerChecks(chatOverNexus, gpsOverNexus, msg.SteamID, msg.IdentityID, msg.PlayerPosition);
-                    User.LoadGrid(msg.LoadGridID, msg.LoadNearPlayer);
+
+
+                    User.LoadGrid(msg.LoadGridID.ToString(), msg.LoadNearPlayer);
                     return;
             }
 

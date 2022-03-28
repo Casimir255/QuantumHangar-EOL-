@@ -376,16 +376,30 @@ namespace QuantumHangar.HangarChecks
             PlayersHanger.ListAllGrids();
         }
 
-        public void DetailedInfo(int ID)
+        public void DetailedInfo(string input)
         {
+            if (!PlayersHanger.ParseInput(input, out int ID))
+            {
+                Chat.Respond($"Grid {input} could not be found!");
+                return;
+            }
+
             PlayersHanger = new PlayerHangar(SteamID, Chat);
             PlayersHanger.DetailedReport(ID);
         }
 
-        public void LoadGrid(int ID, bool LoadNearPlayer)
+        public void LoadGrid(string input, bool LoadNearPlayer)
         {
             if (!PerformMainChecks(false))
                 return;
+
+
+            if(!PlayersHanger.ParseInput(input, out int ID))
+            {
+                Chat.Respond($"Grid {input} could not be found!");
+                return;
+            }
+
 
 
             if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
@@ -465,8 +479,14 @@ namespace QuantumHangar.HangarChecks
             Chat.Respond("Grid has been succesfully listed!");
         }
 
-        public void RemoveGrid(int ID)
+        public void RemoveGrid(string input)
         {
+            if (!PlayersHanger.ParseInput(input, out int ID))
+            {
+                Chat.Respond($"Grid {input} could not be found!");
+                return;
+            }
+
             PlayersHanger = new PlayerHangar(SteamID, Chat);
             if (PlayersHanger.RemoveGridStamp(ID))
                 Chat.Respond("Successfully removed grid!");
