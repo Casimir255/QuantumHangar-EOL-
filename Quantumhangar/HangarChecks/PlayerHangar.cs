@@ -163,7 +163,7 @@ namespace QuantumHangar.HangarChecks
         /* Private Methods */
         private bool RemoveStamp(int ID)
         {
-            Log.Warn($"HitA: {ID}");
+            //Log.Warn($"HitA: {ID}");
 
             //Input valid for ID - X
             if (!SelectedPlayerFile.IsInputValid(ID, out string Error))
@@ -172,7 +172,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            Log.Warn("HitB");
+            //Log.Warn("HitB");
             if (!IsAdminCalling)
             {
                 TimeStamp stamp = new TimeStamp();
@@ -180,7 +180,7 @@ namespace QuantumHangar.HangarChecks
                 SelectedPlayerFile.Timer = stamp;
             }
 
-            Log.Warn("HitC");
+            //Log.Warn("HitC");
             try
             {
 
