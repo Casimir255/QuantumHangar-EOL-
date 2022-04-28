@@ -170,7 +170,7 @@ namespace QuantumHangar.Utils
                 MyGps gps = myGps;
                 gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
                 gps.GPSColor = Color.Yellow;
-                MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+                MySession.Static.Gpss.SendAddGpsRequest(EntityID, ref gps, 0L, true);
             }
         }
     }
