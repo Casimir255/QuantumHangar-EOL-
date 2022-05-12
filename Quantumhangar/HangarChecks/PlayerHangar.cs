@@ -804,9 +804,9 @@ namespace QuantumHangar.HangarChecks
 
 
 
-        public bool SaveGridsToFile(GridResult Grids, string FileName)
+        public async Task<bool> SaveGridsToFile(GridResult Grids, string FileName)
         {
-            return GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Identity.IdentityId);
+            return await GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Identity.IdentityId);
         }
 
         public void ListAllGrids()

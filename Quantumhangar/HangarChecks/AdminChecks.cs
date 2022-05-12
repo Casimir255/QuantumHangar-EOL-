@@ -52,7 +52,7 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        public void SaveGrid(string NameOrIdentity = "")
+        public async void SaveGrid(string NameOrIdentity = "")
         {
 
 
@@ -80,7 +80,9 @@ namespace QuantumHangar.HangarChecks
                 Name = identity.DisplayName;
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(stamp);
-            if (PlayersHanger.SaveGridsToFile(Result, stamp.GridName))
+
+            bool val = await PlayersHanger.SaveGridsToFile(Result, stamp.GridName);
+            if (val)
             {
                 PlayersHanger.SaveGridStamp(stamp, true);
                 Chat?.Respond($"{stamp.GridName} was saved to {Name}'s hangar!");

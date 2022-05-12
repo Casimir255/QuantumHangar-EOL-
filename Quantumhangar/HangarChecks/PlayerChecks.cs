@@ -114,7 +114,7 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public void SaveGrid()
+        public async void SaveGrid()
         {
 
             if (!PerformMainChecks(true))
@@ -156,7 +156,9 @@ namespace QuantumHangar.HangarChecks
 
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(GridData);
-            if (PlayersHanger.SaveGridsToFile(Result, GridData.GridName))
+
+            bool val = await PlayersHanger.SaveGridsToFile(Result, GridData.GridName);
+            if (val)
             {
 
                 PlayersHanger.SaveGridStamp(GridData);
@@ -710,12 +712,15 @@ namespace QuantumHangar.HangarChecks
                         continue;
 
 
+                    
 
                     //if the player isnt big owner, we need to scan for faction mates
                     bool FoundAlly = true;
                     foreach (long Owner in Grid.BigOwners)
                     {
                         MyFaction TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(Owner);
+             
+
                         if (PlayersFaction != null && TargetPlayerFaction != null)
                         {
                             if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)

@@ -41,7 +41,6 @@ namespace QuantumHangar.Utils
 
         }
 
-
         public static bool TryGetIdentityFromSteamID(this MyPlayerCollection Collection,  ulong SteamID, out MyIdentity Player)
         {
 
@@ -52,12 +51,6 @@ namespace QuantumHangar.Utils
 
             return true;
         }
-
-
-
-
-
-
 
         public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {
@@ -170,7 +163,7 @@ namespace QuantumHangar.Utils
                 MyGps gps = myGps;
                 gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
                 gps.GPSColor = Color.Yellow;
-                MySession.Static.Gpss.SendAddGps(EntityID, ref gps, 0L, true);
+                MySession.Static.Gpss.SendAddGpsRequest(EntityID, ref gps, 0L, true);
             }
         }
     }

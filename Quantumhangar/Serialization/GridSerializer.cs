@@ -24,7 +24,7 @@ namespace QuantumHangar.Serialization
         private static Settings Config { get { return Hangar.Config; } }
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public static bool SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName, long OwnerIdentity)
+        public static async Task<bool> SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName, long OwnerIdentity)
         {
 
             Thread CurrentThread = Thread.CurrentThread;
@@ -36,7 +36,7 @@ namespace QuantumHangar.Serialization
                 Grids.Close();
 
 
-                Task.Run(() => {
+                await Task.Run(() => {
                     SaveGridToFile(Path, GridName, grids);
                     PluginDependencies.BackupGrid(grids.ToList(), OwnerIdentity);
                 });

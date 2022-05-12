@@ -115,5 +115,25 @@ namespace QuantumHangar.Utilities
             }, caller);
             return ctx.Task;
         }
+
+
+        public static Task<T6> InvokeAsync<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6> action, T1 arg, T2 arg2, T3 arg3, T4 arg4, T5 arg5, [CallerMemberName] string caller = "")
+        {
+            //Jimm thank you. This is the best
+            var ctx = new TaskCompletionSource<T6>();
+            MySandboxGame.Static.Invoke(() =>
+            {
+                try
+                {
+                    ctx.SetResult(action.Invoke(arg, arg2, arg3, arg4, arg5));
+                }
+                catch (Exception e)
+                {
+                    ctx.SetException(e);
+                }
+
+            }, caller);
+            return ctx.Task;
+        }
     }
 }

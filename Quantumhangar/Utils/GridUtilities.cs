@@ -65,7 +65,6 @@ namespace QuantumHangar.Utils
                         Grids.Add(Grid);
                     }
                 }
-
             }
             else
             {
@@ -113,31 +112,35 @@ namespace QuantumHangar.Utils
             if (includeConnectedGrids)
             {
 
-                Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
-               {
 
-                   List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
-                   foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
-                   {
+                foreach (var group in MyCubeGridGroups.Static.Physical.Groups.ToList())
+                {
+                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
-                       MyCubeGrid grid = groupNodes.NodeData;
+                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                    {
 
-                       if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
-                           continue;
+                        MyCubeGrid grid = groupNodes.NodeData;
 
-                       gridList.Add(grid);
-                   }
+                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
+                            continue;
 
-                   if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
-                       grids.Add(gridList);
-               });
+                        gridList.Add(grid);
+                    }
+
+                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
+                        grids.Add(gridList);
+                }
 
             }
             else
             {
-                Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
+
+                foreach (var group in MyCubeGridGroups.Static.Mechanical.Groups.ToList())
                 {
+
+
                     List<MyCubeGrid> gridList = new List<MyCubeGrid>();
 
                     foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
@@ -152,7 +155,9 @@ namespace QuantumHangar.Utils
 
                     if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
                         grids.Add(gridList);
-                });
+
+
+                }
 
 
             }
@@ -183,6 +188,49 @@ namespace QuantumHangar.Utils
         public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
         {
             BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
+        }
+
+        public static long GetBiggestOwner(this MyCubeGrid grid)
+        {
+
+            var FatBlocks = grid.GetFatBlocks().ToList();
+
+            int TotalFatBlocks = 0;
+
+
+            Dictionary<long, int> owners = new Dictionary<long, int>();
+            foreach (var fat in FatBlocks)
+            {
+                //Only count blocks with ownership
+                if (!fat.IsFunctional || fat.IDModule == null)
+                    continue;
+
+
+                //WTF happened here?
+                //if (fat.OwnerId == 0)
+                //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+
+
+                TotalFatBlocks++;
+
+
+                if (fat.OwnerId != 0)
+                {
+                    if (!owners.ContainsKey(fat.OwnerId))
+                    {
+                        owners.Add(fat.OwnerId, 1);
+                    }
+                    else
+                    {
+                        owners[fat.OwnerId] += 1;
+                    }
+                }
+            }
+
+            if (owners.Count == 0)
+                return 0;
+  
+            return owners.FirstOrDefault(x => x.Value == owners.Values.Max()).Key;
         }
 
 
