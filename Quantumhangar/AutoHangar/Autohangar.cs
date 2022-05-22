@@ -59,19 +59,13 @@ namespace QuantumHangar
         }
 
 
-        public static async void RunAutoHangar(bool SaveAll, bool hangarStatic = true, bool hangarLarge = true, bool hangarSmall = true, bool hangarLargest = true)
+        public static void RunAutoHangar(bool SaveAll, bool hangarStatic = true, bool hangarLarge = true, bool hangarSmall = true, bool hangarLargest = true)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
 
-
-            Watcher.Reset();
-            Watcher.Start();
-
             List<long> ExportPlayerIdentities = new List<long>();
-
-
 
             try
             {
@@ -136,15 +130,6 @@ namespace QuantumHangar
                     grids.BiggestGrid(out MyCubeGrid LargestGrid);
                     long biggestOwner = LargestGrid.GetBiggestOwner();
 
-
-                    //remove respawn grids
-                    if (LargestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
-                    {
-                        //Close all grids
-                        grids.Close("Autohangar deleted respawn pod");
-                        continue;
-                    }
-
                     //No need to autohangar if the largest owner is an NPC
                     if (MySession.Static.Players.IdentityIsNpc(biggestOwner))
                         continue;
@@ -174,11 +159,10 @@ namespace QuantumHangar
                     }
                 }
 
+              
+                Task.Run(() => SaveAutohangarGrids(scannedGrids));
 
-                int GridCounter = await SaveAutohangarGrids(scannedGrids);
-             
-                Watcher.Stop();
-                Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {Watcher.Elapsed}");
+
 
             }
             catch (Exception ex)
@@ -197,9 +181,13 @@ namespace QuantumHangar
             int GridCounter = 0;
 
 
+
             try
             {
-                
+                Watcher.Reset();
+                Watcher.Start();
+
+
                 //Now that we have our complete collection, lets loop through the grids
                 foreach (KeyValuePair<long, List<AutoHangarItem>> kvp in scannedGrids)
                 {
@@ -216,18 +204,37 @@ namespace QuantumHangar
                         continue;
 
 
+
+
+
+
+
                     //Grab Players Hangar
                     ulong id = MySession.Static.Players.TryGetSteamId(kvp.Key);
                     PlayerHangar PlayersHangar = new PlayerHangar(id, null);
 
                     foreach (AutoHangarItem item in allGrids)
                     {
+
+                        //remove respawn grids
+                        if (item.largestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
+                        {
+                            //Close all grids
+                            item.grids.Close("Autohangar deleted respawn pod");
+                            continue;
+                        }
+
+
+
                         GridResult Result = new GridResult();
                         Result.Grids = item.grids;
                         Result.BiggestGrid = item.largestGrid;
 
+
                         GridStamp Stamp = Result.GenerateGridStamp();
                         PlayersHangar.SelectedPlayerFile.FormatGridName(Stamp);
+
+
 
 
                         bool val = await PlayersHangar.SaveGridsToFile(Result, Stamp.GridName);
@@ -248,6 +255,9 @@ namespace QuantumHangar
                     PlayersHangar.SavePlayerFile();
                 }
 
+                Watcher.Stop();
+                Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {Watcher.Elapsed}");
+
                 return GridCounter;
 
             }
@@ -256,6 +266,7 @@ namespace QuantumHangar
                 Log.Error(ex);
             }
 
+            Watcher.Stop();
             return GridCounter;
         }
 
