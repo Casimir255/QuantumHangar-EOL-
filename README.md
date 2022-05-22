@@ -1,4 +1,7 @@
-# QuantumHangar
+# QuantumHangar [EOL]
+
+This plugin is now marked as EOL. Its taking too much out of me to maintain and deal with the constant issues or lack of features for their servers. With my full time job now, I just want to sit back and enjoy playing games with my friends. This wasnt a lifetime endeavor and was just a fun thing to make in the moment. I will still accept PR's and maintain on keen updates, but thats about it. If someone does a few PR's, and they are good, I will transfer this repo to them. Just make sure to shoot me a pm about it so we can talk about it.
+
 
 **This plugin creates a server-side hangar for your grids. (Grid Garage)**  I recently wanted to create a hangar plugin such that players had the ability to buy and sell player-made ships in a server or cross-server environment. For those wanting similar things, look no further for this was a pain-in-the-ass to make and took way too much of my time. I finally got everything working and looking halfway decent. And I'm not even freaking finished. That's right. There is probably more to come... more... **FEATURES**. The cursed word of doom for my time and patience.
 
