@@ -379,14 +379,15 @@ namespace QuantumHangar.HangarChecks
         }
 
         public void DetailedInfo(string input)
-        {
+        {           
+            PlayersHanger = new PlayerHangar(SteamID, Chat);
+
             if (!PlayersHanger.ParseInput(input, out int ID))
             {
                 Chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
-            PlayersHanger = new PlayerHangar(SteamID, Chat);
             PlayersHanger.DetailedReport(ID);
         }
 
