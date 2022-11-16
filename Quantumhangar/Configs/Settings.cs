@@ -13,10 +13,10 @@ namespace QuantumHangar
 
     public class Settings : ViewModel
     {
-        private bool _Enabled = false;
+        private bool _Enabled;
         public bool PluginEnabled { get => _Enabled; set => SetValue(ref _Enabled, value); }
 
-        private bool _NexusAPI = false;
+        private bool _NexusAPI;
         public bool NexusAPI { get => _NexusAPI; set => SetValue(ref _NexusAPI, value); }
 
         private string _FolderDirectory;
@@ -28,7 +28,7 @@ namespace QuantumHangar
         private double _DistanceCheck = 30000;
         public double DistanceCheck { get => _DistanceCheck; set => SetValue(ref _DistanceCheck, value); }
 
-        private double _GridDistanceCheck = 0;
+        private double _GridDistanceCheck;
         public double GridDistanceCheck { get => _GridDistanceCheck; set => SetValue(ref _GridDistanceCheck, value); }
 
         private int _GridCheckMinBlock = 25;
@@ -41,12 +41,12 @@ namespace QuantumHangar
         public int NormalHangarAmount { get => _NormalHangarAmount; set => SetValue(ref _NormalHangarAmount, value); }
 
 
-        private bool _EnableBlackListBlocks = false;
+        private bool _EnableBlackListBlocks;
         public bool EnableBlackListBlocks { get => _EnableBlackListBlocks; set => SetValue(ref _EnableBlackListBlocks, value); }
 
 
         //SaveGrid Currency
-        private bool _RequireCurrency = false;
+        private bool _RequireCurrency;
         public bool RequireCurrency { get => _RequireCurrency; set => SetValue(ref _RequireCurrency, value); }
 
 
@@ -62,7 +62,7 @@ namespace QuantumHangar
 
 
         //LoadGrid Currency
-        private bool _RequireLoadCurrency = false;
+        private bool _RequireLoadCurrency;
         public bool RequireLoadCurrency { get => _RequireLoadCurrency; set => SetValue(ref _RequireLoadCurrency, value); }
         private double _LoadLargeGridCurrency = 1;
         private double _LoadStaticGridCurrency = 1;
@@ -85,14 +85,14 @@ namespace QuantumHangar
         private bool _RequireLoadRadius = true;
         public bool RequireLoadRadius { get => _RequireLoadRadius; set => SetValue(ref _RequireLoadRadius, value); }
 
-        private bool _DigVoxels = false;
+        private bool _DigVoxels;
         public bool DigVoxels { get => _DigVoxels; set => SetValue(ref _DigVoxels, value); }
 
-        private bool _BlackListRadioButton = false;
+        private bool _BlackListRadioButton;
         public bool SBlockLimits { get => _BlackListRadioButton; set => SetValue(ref _BlackListRadioButton, value); }
 
       
-        private bool _EnableSubGrids = false;
+        private bool _EnableSubGrids;
         public bool EnableSubGrids { get => _EnableSubGrids; set => SetValue(ref _EnableSubGrids, value); }
 
         //public HangarMarketConfigs MarketConfigs { get; set; }
@@ -106,19 +106,19 @@ namespace QuantumHangar
         private ObservableCollection<HangarBlacklist> _AutoHangarPlayerBlacklist = new ObservableCollection<HangarBlacklist>();
         public ObservableCollection<HangarBlacklist> AutoHangarPlayerBlacklist { get => _AutoHangarPlayerBlacklist; set => SetValue(ref _AutoHangarPlayerBlacklist, value); }
 
-        private bool _AutoHangarGrids = false;
+        private bool _AutoHangarGrids;
         public bool AutoHangarGrids { get => _AutoHangarGrids; set => SetValue(ref _AutoHangarGrids, value); }
 
-        private bool _DeleteRespawnPods = false;
+        private bool _DeleteRespawnPods;
         public bool DeleteRespawnPods { get => _DeleteRespawnPods; set => SetValue(ref _DeleteRespawnPods, value); }
 
         private int _AutoHangarDayAmount = 20;
         public int AutoHangarDayAmount { get => _AutoHangarDayAmount; set => SetValue(ref _AutoHangarDayAmount, value); }
 
-        private bool _HangarGridsFallenInPlanet = false;
+        private bool _HangarGridsFallenInPlanet;
         public bool HangarGridsFallenInPlanet { get => _HangarGridsFallenInPlanet; set => SetValue(ref _HangarGridsFallenInPlanet, value); }
 
-        private bool _KeepPlayersLargestGrid = false;
+        private bool _KeepPlayersLargestGrid;
         public bool KeepPlayersLargestGrid { get => _KeepPlayersLargestGrid; set => SetValue(ref _KeepPlayersLargestGrid, value); }
 
         private bool _AutoHangarStaticGrids = true;
@@ -130,66 +130,67 @@ namespace QuantumHangar
         private bool _AutoHangarSmallGrids = true;
         public bool AutoHangarSmallGrids { get => _AutoHangarSmallGrids; set => SetValue(ref _AutoHangarSmallGrids, value); }
 
-        private bool _OnLoadTransfer = false;
+        private bool _OnLoadTransfer;
         public bool OnLoadTransfer { get => _OnLoadTransfer; set => SetValue(ref _OnLoadTransfer, value); }
 
 
-        //Single slot
-        private int _SingleMaxBlocks = 0;
+        //Single slot Configs
+        private int _SingleMaxBlocks;
         public int SingleMaxBlocks { get => _SingleMaxBlocks; set => SetValue(ref _SingleMaxBlocks, value); }
 
-        private int _SingleMaxPCU = 0;
+        private int _SingleMaxPCU;
         public int SingleMaxPCU { get => _SingleMaxPCU; set => SetValue(ref _SingleMaxPCU, value); }
 
         private bool _AllowStaticGrids = true;
         public bool AllowStaticGrids { get => _AllowStaticGrids; set => SetValue(ref _AllowStaticGrids, value); }
 
-        private int _SingleMaxStaticGrids = 0;
+        private int _SingleMaxStaticGrids;
         public int SingleMaxStaticGrids { get => _SingleMaxStaticGrids; set => SetValue(ref _SingleMaxStaticGrids, value); }
 
         private bool _AllowLargeGrids = true;
         public bool AllowLargeGrids { get => _AllowLargeGrids; set => SetValue(ref _AllowLargeGrids, value); }
 
-        private int _SingleMaxLargeGrids = 0;
+        private int _SingleMaxLargeGrids;
         public int SingleMaxLargeGrids { get => _SingleMaxLargeGrids; set => SetValue(ref _SingleMaxLargeGrids, value); }
 
         private bool _AllowSmallGrids = true;
         public bool AllowSmallGrids { get => _AllowSmallGrids; set => SetValue(ref _AllowSmallGrids, value); }
 
-        private int _SingleMaxSmallGrids = 0;
+        private int _SingleMaxSmallGrids;
         public int SingleMaxSmallGrids { get => _SingleMaxSmallGrids; set => SetValue(ref _SingleMaxSmallGrids, value); }
 
+        //Player Configs
+        private int _PlayerMaxBlocks;
+        public int PlayerMaxBlocks { get => _PlayerMaxBlocks; set => SetValue(ref _PlayerMaxBlocks, value); }
+
+        private int _PlayerMaxPCU;
+        public int PlayerMaxPCU { get => _PlayerMaxPCU; set => SetValue(ref _PlayerMaxPCU, value); }
 
         //Max Configs
-        private int _TotalMaxBlocks = 0;
+        private int _TotalMaxBlocks;
         public int TotalMaxBlocks { get => _TotalMaxBlocks; set => SetValue(ref _TotalMaxBlocks, value); }
 
-        private int _TotalMaxPCU = 0;
+        private int _TotalMaxPCU;
         public int TotalMaxPCU { get => _TotalMaxPCU; set => SetValue(ref _TotalMaxPCU, value); }
 
-        private int _TotalMaxStaticGrids = 0;
+        private int _TotalMaxStaticGrids;
         public int TotalMaxStaticGrids { get => _TotalMaxStaticGrids; set => SetValue(ref _TotalMaxStaticGrids, value); }
 
-        private int _TotalMaxLargeGrids = 0;
+        private int _TotalMaxLargeGrids;
         public int TotalMaxLargeGrids { get => _TotalMaxLargeGrids; set => SetValue(ref _TotalMaxLargeGrids, value); }
 
-        private int _TotalMaxSmallGrids = 0;
+        private int _TotalMaxSmallGrids;
         public int TotalMaxSmallGrids { get => _TotalMaxSmallGrids; set => SetValue(ref _TotalMaxSmallGrids, value); }
 
 
         private bool _AllowInGravity = true;
         public bool AllowInGravity { get => _AllowInGravity; set => SetValue(ref _AllowInGravity, value); }
 
-        private double _MaxGravityAmount = 0;
+        private double _MaxGravityAmount;
         public double MaxGravityAmount { get => _MaxGravityAmount; set => SetValue(ref _MaxGravityAmount, value); }
 
 
-
-
-
-
-
-        private bool _GridMarketEnabled = false;
+        private bool _GridMarketEnabled;
         public bool GridMarketEnabled { get => _GridMarketEnabled; set => SetValue(ref _GridMarketEnabled, value); }
 
 
@@ -209,7 +210,7 @@ namespace QuantumHangar
         public int SellAFKDayAmount { get => _SellAFKDayAmount; set => SetValue(ref _SellAFKDayAmount, value); }
 
 
-        private bool _AdvancedDebug = false;
+        private bool _AdvancedDebug;
         public bool AdvancedDebug { get => _AdvancedDebug; set => SetValue(ref _AdvancedDebug, value); }
 
 
@@ -217,7 +218,7 @@ namespace QuantumHangar
         public double RestockAmount { get => _RestockAmount; set => SetValue(ref _RestockAmount, value); }
 
 
-        private ulong _MarketUpdateChannel = 0;
+        private ulong _MarketUpdateChannel;
         public ulong MarketUpdateChannel { get => _MarketUpdateChannel; set => SetValue(ref _MarketUpdateChannel, value); }
 
 
@@ -225,11 +226,11 @@ namespace QuantumHangar
         //public ObservableCollection<MarketListing> PublicMarketOffers { get => _PublicMarketOffers; set => SetValue(ref _PublicMarketOffers, value); }
 
 
-        private bool _AutosellHangarGrids = false;
+        private bool _AutosellHangarGrids;
         public bool AutosellHangarGrids { get => _AutosellHangarGrids; set => SetValue(ref _AutosellHangarGrids, value); }
 
 
-        private bool _AllowLoadNearEnemy = false;
+        private bool _AllowLoadNearEnemy;
         public bool AllowLoadNearEnemy { get => _AllowLoadNearEnemy; set => SetValue(ref _AllowLoadNearEnemy, value); }
     }
 }
