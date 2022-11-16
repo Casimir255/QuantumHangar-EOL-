@@ -343,3 +343,4 @@ healthchecksdb
 GameBinaries
 TorchBinaries
 NexusBinaries
+Setup (run before opening plugin).bat
