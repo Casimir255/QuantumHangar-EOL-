@@ -121,7 +121,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!PlayersHanger.CheckHanagarLimits())
+            if (!PlayersHanger.CheckHangarLimits())
                 return;
 
 
