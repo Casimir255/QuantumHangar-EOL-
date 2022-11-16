@@ -184,10 +184,7 @@ namespace QuantumHangar.HangarChecks
             //Backwards compatibale
             if (Config.OnLoadTransfer)
                 return true;
-
-
-
-
+            
             if (Grid.ShipPCU.Count == 0)
             {
 
@@ -236,8 +233,7 @@ namespace QuantumHangar.HangarChecks
                 {
                     continue;
                 }
-
-
+                
                 var blockLimits = Identity.BlockLimits;
                 var a = MySession.Static.GlobalBlockLimits;
 
@@ -272,7 +268,6 @@ namespace QuantumHangar.HangarChecks
                 return false;
 
             }
-
             return true;
         }
         private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipBlueprints)
@@ -443,9 +438,9 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public bool IsGridForSale(GridStamp Grid, bool Admin = false)
+        public bool IsGridForSale(GridStamp Grid, bool Admin)
         {
-            return Grid.GridForSale;
+            return Admin && Grid.GridForSale;
         }
 
         public static bool IsServerSaving(Chat Chat)
@@ -835,7 +830,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool CheckLimits(GridStamp Grid, IEnumerable<MyObjectBuilder_CubeGrid> Blueprint)
         {
-            return CheckGridLimits(Grid) != false && BlockLimitChecker(Blueprint) != false;
+            return CheckGridLimits(Grid) && BlockLimitChecker(Blueprint);
         }
 
 
