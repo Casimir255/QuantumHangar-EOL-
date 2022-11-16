@@ -1,16 +1,12 @@
 ﻿using NLog;
-using QuantumHangar.HangarChecks;
 using Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.Screens.Helpers;
 using Sandbox.Game.World;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using VRageMath;
 
 namespace QuantumHangar.Utils

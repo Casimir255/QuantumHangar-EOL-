@@ -284,7 +284,7 @@ namespace QuantumHangar.HangarChecks
             var FinalBlocksPCU = 0;
 
 
-            //Go ahead and check if the block limits is enabled server side! If it isn't... continue!
+            //Go ahead and check if the block limits is enabled server side! If it isn't... return true!
             if (!Config.EnableBlackListBlocks)
             {
                 return true;
@@ -301,7 +301,6 @@ namespace QuantumHangar.HangarChecks
 
 
                 //Cycle each grid in the ship blueprints
-
                 foreach (var CubeGrid in shipBlueprints)
                 {
 
@@ -310,7 +309,7 @@ namespace QuantumHangar.HangarChecks
                     {
                         BiggestGrid = CubeGrid.CubeBlocks.Count();
                     }
-                    blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
+                    blocksToBuild += CubeGrid.CubeBlocks.Count();
 
                     foreach (var block in CubeGrid.CubeBlocks)
                     {
@@ -366,31 +365,25 @@ namespace QuantumHangar.HangarChecks
 
                 //Need too loop player identities in dictionary. Do this via seperate function
             }
-            else
+            //BlockLimiter
+            if (!PluginDependencies.BlockLimiterInstalled)
             {
-                //BlockLimiter
-                if (!PluginDependencies.BlockLimiterInstalled)
-                {
-                    //BlockLimiter is null!
-                    Chat.Respond("Blocklimiter Plugin not installed or Loaded!");
-                    Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
-                    return false;
-                }
-                var grids = shipBlueprints.ToList();
-                var ValueReturn = PluginDependencies.CheckGridLimits(grids, Identity.IdentityId);
-
-                //Convert to value return type
-                if (!ValueReturn)
-                {
-                    //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
-                    return true;
-                }
-                else
-                {
-                    Chat.Respond("Grid would be over Server-Blocklimiter limits!");
-                    return false;
-                }
+                //BlockLimiter is null!
+                Chat.Respond("Blocklimiter Plugin not installed or Loaded!");
+                Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
+                return false;
             }
+            var grids = shipBlueprints.ToList();
+            var ValueReturn = PluginDependencies.CheckGridLimits(grids, Identity.IdentityId);
+
+            //Convert to value return type
+            if (!ValueReturn)
+            {
+                //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
+                return true;
+            }
+            Chat.Respond("Grid would be over Server-Blocklimiter limits!");
+            return false;
         }
 
         private bool PlayerIdentityLoop(Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits, int blocksToBuild)
@@ -474,8 +467,6 @@ namespace QuantumHangar.HangarChecks
         public bool ExtensiveLimitChecker(GridStamp Stamp)
         {
             //Begin Single Slot Save!
-
-
             if (Config.SingleMaxBlocks != 0)
             {
                 if (Stamp.NumberofBlocks > Config.SingleMaxBlocks)
@@ -486,12 +477,12 @@ namespace QuantumHangar.HangarChecks
                 }
             }
 
-            if (Config.SingleMaxPCU != 0)
+            if (Config.SingleMaxPcu != 0)
             {
-                if (Stamp.GridPCU > Config.SingleMaxPCU)
+                if (Stamp.GridPCU > Config.SingleMaxPcu)
                 {
-                    var remainder = Stamp.GridPCU - Config.SingleMaxPCU;
-                    Chat?.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPCU);
+                    var remainder = Stamp.GridPCU - Config.SingleMaxPcu;
+                    Chat?.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPcu);
                     return false;
                 }
             }
@@ -568,46 +559,38 @@ namespace QuantumHangar.HangarChecks
                 SmallGrids += Grid.SmallGrids;
             }
 
-            if (Config.TotalMaxBlocks != 0 && TotalBlocks > Config.TotalMaxBlocks)
+            if (Config.PlayerMaxBlocks != 0 && TotalBlocks > Config.PlayerMaxBlocks)
             {
-                var remainder = TotalBlocks - Config.TotalMaxBlocks;
-
-                Chat?.Respond("Grid is " + remainder + " blocks over the total hangar block limit! " + TotalBlocks + "/" + Config.TotalMaxBlocks);
+                var remainder = TotalBlocks - Config.PlayerMaxBlocks;
+                Chat?.Respond("Grid is " + remainder + " blocks over your hangar block limit! " + TotalBlocks + "/" + Config.PlayerMaxBlocks);
                 return false;
             }
 
-            if (Config.TotalMaxPCU != 0 && TotalPCU > Config.TotalMaxPCU)
+            if (Config.PlayerMaxPcu != 0 && TotalPCU > Config.PlayerMaxPcu)
             {
-
-                var remainder = TotalPCU - Config.TotalMaxPCU;
-                Chat?.Respond("Grid is " + remainder + " PCU over the total hangar PCU limit! " + TotalPCU + "/" + Config.TotalMaxPCU);
+                var remainder = TotalPCU - Config.PlayerMaxPcu;
+                Chat?.Respond("Grid is " + remainder + " PCU over your hangar PCU limit! " + TotalPCU + "/" + Config.PlayerMaxPcu);
                 return false;
             }
 
-
-            if (Config.TotalMaxStaticGrids != 0 && StaticGrids > Config.TotalMaxStaticGrids)
+            if (Config.PlayerMaxStaticGrids != 0 && StaticGrids > Config.PlayerMaxStaticGrids)
             {
-                var remainder = StaticGrids - Config.TotalMaxStaticGrids;
-
-                Chat?.Respond("You are " + remainder + " static grid over the total hangar limit!");
+                var remainder = StaticGrids - Config.PlayerMaxStaticGrids;
+                Chat?.Respond("You are " + remainder + " static grid over your hangar limit!");
                 return false;
             }
-
 
             if (Config.TotalMaxLargeGrids != 0 && LargeGrids > Config.TotalMaxLargeGrids)
             {
                 var remainder = LargeGrids - Config.TotalMaxLargeGrids;
-
-                Chat?.Respond("You are " + remainder + " large grid over the total hangar limit!");
+                Chat?.Respond("You are " + remainder + " large grid over your hangar limit!");
                 return false;
             }
 
-
-            if (Config.TotalMaxSmallGrids == 0 || SmallGrids <= Config.TotalMaxSmallGrids) return true;
+            if (Config.PlayerMaxSmallGrids == 0 || SmallGrids <= Config.PlayerMaxSmallGrids) return true;
             {
-                var remainder = LargeGrids - Config.TotalMaxSmallGrids;
-
-                Chat?.Respond("You are " + remainder + " small grid over the total hangar limit!");
+                var remainder = LargeGrids - Config.PlayerMaxSmallGrids;
+                Chat?.Respond("You are " + remainder + " small grid over your hangar limit!");
                 return false;
             }
 
@@ -710,18 +693,18 @@ namespace QuantumHangar.HangarChecks
             {
                 Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ SelectedPlayerFile.MaxHangarSlots}";
                 Response.AppendLine("- - Global Limits - -");
-                Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
-                Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
-                Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.TotalMaxStaticGrids}");
+                Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.PlayerMaxBlocks}");
+                Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.PlayerMaxPcu}");
+                Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.PlayerMaxStaticGrids}");
                 Response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{ Config.TotalMaxLargeGrids}");
-                Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.TotalMaxSmallGrids}");
+                Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.PlayerMaxSmallGrids}");
                 Response.AppendLine();
                 Response.AppendLine("- - Individual Hangar Slots - -");
                 for (var i = 0; i < SelectedPlayerFile.Grids.Count; i++)
                 {
                     var Stamp = SelectedPlayerFile.Grids[i];
                     Response.AppendLine($" * * Slot {i + 1} : {Stamp.GridName} * *");
-                    Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
+                    Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPcu}");
                     Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
                     Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
                     Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
@@ -743,7 +726,7 @@ namespace QuantumHangar.HangarChecks
                 }
 
                 Prefix = $"Slot {ID} : {Stamp.GridName}";
-                Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
+                Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPcu}");
                 Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
                 Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
                 Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
