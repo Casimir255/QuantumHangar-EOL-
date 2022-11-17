@@ -26,16 +26,14 @@ namespace QuantumHangar.HangarChecks
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AdminChecks));
         private readonly bool _inConsole;
 
-        private CommandContext Ctx;
+        private CommandContext _ctx;
 
-        public AdminChecks(CommandContext Context, ulong TargetSteamId, long TargetIdentityId)
+        public AdminChecks(CommandContext Context)
         {
 
             _inConsole = TryGetAdminPosition(Context.Player);
             _chat = new Chat(Context, _inConsole);
-            Ctx = Context;
-            _targetSteamId = TargetSteamId;
-            _targetIdentityId = TargetIdentityId;
+            _ctx = Context;
         }
 
         private bool TryGetAdminPosition(IMyPlayer Admin)
@@ -68,8 +66,8 @@ namespace QuantumHangar.HangarChecks
             var stamp = Result.GenerateGridStamp();
             var PlayersHanger = new PlayerHangar(Result.OwnerSteamID, _chat, true);
             var Name = Result.OwnerSteamID.ToString();
-            if (MySession.Static.Players.TryGetIdentityFromSteamID(Result.OwnerSteamID, out MyIdentity identity))
-                Name = identity.DisplayName;
+            if (MySession.Static.Players.TryGetPlayerBySteamId(Result.OwnerSteamID, out MyPlayer player))
+                Name = player.DisplayName;
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(stamp);
 
@@ -82,7 +80,6 @@ namespace QuantumHangar.HangarChecks
             else
             {
                 _chat?.Respond($"{stamp.GridName} failed to send to {Name}'s hangar!");
-                return;
             }
 
         }

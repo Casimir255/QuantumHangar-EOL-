@@ -1,11 +1,5 @@
 ﻿using QuantumHangar.HangarChecks;
-using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Character;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Torch.Commands;
 using Torch.Commands.Permissions;
 using VRage.Game.ModAPI;

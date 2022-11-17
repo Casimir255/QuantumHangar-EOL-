@@ -469,7 +469,7 @@
                         <GroupBox.Header>
                             <TextBlock Height="18">
                                         <Span FontWeight="Bold">AutoHangar Blacklist</Span>
-                                        <Span>(Allows blacklisting players by SteamID)</Span>
+                                        <Span>(Allows blacklisting players by SteamId)</Span>
                             </TextBlock>
                         </GroupBox.Header>
 

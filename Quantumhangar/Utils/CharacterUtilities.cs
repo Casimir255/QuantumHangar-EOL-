@@ -15,49 +15,44 @@ namespace QuantumHangar.Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    
+
         public static bool TryGetPlayerBalance(ulong steamID, out long balance)
         {
             try
             {
                 //PlayerId Player = new MyPlayer.PlayerId(steamID);
                 //Hangar.Debug("SteamID: " + steamID);
-                long IdentityID = MySession.Static.Players.TryGetIdentityId(steamID);
+                var IdentityID = MySession.Static.Players.TryGetIdentityId(steamID);
                 //Hangar.Debug("IdentityID: " + IdentityID);
                 balance = MyBankingSystem.GetBalance(IdentityID);
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //Hangar.Debug("Unkown keen player error!", e, Hangar.ErrorType.Fatal);
                 balance = 0;
                 return false;
             }
-
-
         }
 
-        public static bool TryGetIdentityFromSteamID(this MyPlayerCollection Collection,  ulong SteamID, out MyIdentity Player)
+        public static bool TryGetIdentityFromSteamId(this MyPlayerCollection Collection, ulong SteamID,
+            out MyIdentity Player)
         {
-
             Player = Collection.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID, 0));
 
-            if (Player == null)
-                return false;
-
-            return true;
+            return Player != null;
         }
 
-        public static bool TryGetPlayerSteamID(string NameOrSteamID, Chat Chat, out ulong PSteamID)
+        public static bool TryGetPlayerSteamId(string NameOrSteamID, Chat Chat, out ulong PSteamID)
         {
-            ulong? SteamID;
-            if (UInt64.TryParse(NameOrSteamID, out ulong PlayerSteamID))
+            ulong? SteamID = null;
+            if (ulong.TryParse(NameOrSteamID, out var PlayerSteamID))
             {
-                MyIdentity Identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(PlayerSteamID, 0));
+                var Identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(PlayerSteamID, 0));
 
                 if (Identity == null)
                 {
-                    Chat?.Respond(NameOrSteamID + " doesnt exsist as an Identity! Dafuq?");
+                    Chat?.Respond(NameOrSteamID + " doesn't exist as an Identity! Dafuq?");
                     PSteamID = 0;
                     return false;
                 }
@@ -65,27 +60,25 @@ namespace QuantumHangar.Utils
                 PSteamID = PlayerSteamID;
                 return true;
             }
-            else
+
+            try
             {
-                try
-                {
-                    MyIdentity MPlayer;
-                    MPlayer = MySession.Static.Players.GetAllIdentities().FirstOrDefault(x => x.DisplayName.Equals(NameOrSteamID));
-                    SteamID = MySession.Static.Players.TryGetSteamId(MPlayer.IdentityId);
-                }
-                catch (Exception e)
-                {
-                    //Hangar.Debug("Player "+ NameOrID + " dosnt exist on the server!", e, Hangar.ErrorType.Warn);
-                    Chat?.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
-                    PSteamID = 0;
-                    return false;
-                }
+                var myPlayer = MySession.Static.Players.GetAllIdentities()
+                    .FirstOrDefault(x => x.DisplayName.Equals(NameOrSteamID));
+                if (myPlayer != null) SteamID = MySession.Static.Players.TryGetSteamId(myPlayer.IdentityId);
+            }
+            catch (Exception)
+            {
+                //Hangar.Debug("Player "+ NameOrID + " doesn't exist on the server!", e, Hangar.ErrorType.Warn);
+                Chat?.Respond("Player " + NameOrSteamID + " doesn't exist on the server!");
+                PSteamID = 0;
+                return false;
             }
 
             if (!SteamID.HasValue)
             {
                 Chat?.Respond("Invalid player format! Check logs for more details!");
-                //Hangar.Debug("Player " + NameOrSteamID + " dosnt exist on the server!");
+                //Hangar.Debug("Player " + NameOrSteamID + " doesn't exist on the server!");
                 PSteamID = 0;
                 return false;
             }
@@ -95,12 +88,13 @@ namespace QuantumHangar.Utils
         }
 
         public static readonly string m_ScanPattern = "GPS:([^:]{0,32}):([\\d\\.-]*):([\\d\\.-]*):([\\d\\.-]*):";
+
         public static Vector3D GetGps(string text)
         {
-            int num = 0;
+            var num = 0;
             foreach (Match item in Regex.Matches(text, m_ScanPattern))
             {
-                string value = item.Groups[1].Value;
+                var value = item.Groups[1].Value;
                 double value2;
                 double value3;
                 double value4;
@@ -119,7 +113,6 @@ namespace QuantumHangar.Utils
                 }
 
                 return new Vector3D(value2, value3, value4);
-
             }
 
             return Vector3D.Zero;
@@ -129,11 +122,12 @@ namespace QuantumHangar.Utils
         // GpsSender is a class to send GPS coordinates to the player.
         public class GpsSender
         {
-
             // Normal object to send GPS directly, i.e. in the current game.
-            public GpsSender() { }
+            public GpsSender()
+            {
+            }
 
-            private Action<Vector3D, string, long> _send;
+            private readonly Action<Vector3D, string, long> _send;
 
             // Delegate how to send the GPS, e.g. via a Nexus message.
             public GpsSender(Action<Vector3D, string, long> sender)
@@ -149,14 +143,17 @@ namespace QuantumHangar.Utils
                     _send(Position, name, EntityID);
                     return;
                 }
-                MyGps myGps = new MyGps();
-                myGps.ShowOnHud = true;
-                myGps.Coords = Position;
-                myGps.Name = name;
-                myGps.Description = "Hangar location for loading grid at or around this position";
-                myGps.AlwaysVisible = true;
 
-                MyGps gps = myGps;
+                var myGps = new MyGps
+                {
+                    ShowOnHud = true,
+                    Coords = Position,
+                    Name = name,
+                    Description = "Hangar location for loading grid at or around this position",
+                    AlwaysVisible = true
+                };
+
+                var gps = myGps;
                 gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
                 gps.GPSColor = Color.Yellow;
                 MySession.Static.Gpss.SendAddGpsRequest(EntityID, ref gps, 0L, true);

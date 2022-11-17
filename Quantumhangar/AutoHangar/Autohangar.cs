@@ -1,31 +1,25 @@
 ﻿using NLog;
 using QuantumHangar.HangarChecks;
-using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
 using Sandbox;
 using Sandbox.Game.Entities;
 using Sandbox.Game.World;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using VRage.Game;
-using VRage.Groups;
-using VRage.Utils;
 
 namespace QuantumHangar
 {
     public static class AutoHangar
     {
         //1800000
-        private static System.Timers.Timer UpdateTimer = new System.Timers.Timer(1800000);
+        private static Timer UpdateTimer = new Timer(1800000);
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        public static Settings Config { get { return Hangar.Config; } }
+        public static Settings Config => Hangar.Config;
 
 
         public static bool ScheduleAutoHangar = false;
@@ -39,7 +33,6 @@ namespace QuantumHangar
         }
 
 
-
         private static void UpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (Config.AutoHangarGrids && Config.PluginEnabled)
@@ -49,75 +42,68 @@ namespace QuantumHangar
 
         public static void UpdateAutoHangar()
         {
-
             //Log.Info("Hit");
             if (!ScheduleAutoHangar)
                 return;
 
-            RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids, Config.KeepPlayersLargestGrid);
+            RunAutoHangar(false, Config.AutoHangarStaticGrids, Config.AutoHangarLargeGrids, Config.AutoHangarSmallGrids,
+                Config.KeepPlayersLargestGrid);
             ScheduleAutoHangar = false;
         }
 
 
-        public static void RunAutoHangar(bool SaveAll, bool hangarStatic = true, bool hangarLarge = true, bool hangarSmall = true, bool hangarLargest = true)
+        public static void RunAutoHangar(bool SaveAll, bool hangarStatic = true, bool hangarLarge = true,
+            bool hangarSmall = true, bool hangarLargest = true)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
 
 
-            List<long> ExportPlayerIdentities = new List<long>();
+            var ExportPlayerIdentities = new List<long>();
 
             try
             {
                 //Scan all the identities we need
-                foreach (MyIdentity Identity in MySession.Static.Players.GetAllIdentities())
+                foreach (var Identity in MySession.Static.Players.GetAllIdentities())
                 {
                     //No need to check this identity. Its an NPC
-                    if (string.IsNullOrEmpty(Identity.DisplayName) || MySession.Static.Players.IdentityIsNpc(Identity.IdentityId))
+                    if (string.IsNullOrEmpty(Identity.DisplayName) ||
+                        MySession.Static.Players.IdentityIsNpc(Identity.IdentityId))
                         continue;
 
 
                     //Funcky SteamID check
-                    DateTime LastLogin = Identity.LastLoginTime;
-                    ulong SteamID = MySession.Static.Players.TryGetSteamId(Identity.IdentityId);
+                    var LastLogin = Identity.LastLoginTime;
+                    var SteamID = MySession.Static.Players.TryGetSteamId(Identity.IdentityId);
                     if (SteamID == 0)
                         continue;
 
-
-
-                    //Need to see if we need to check this identity
-                    if (SaveAll)
+                    switch (SaveAll)
                     {
-                        ExportPlayerIdentities.Add(Identity.IdentityId);
+                        //Need to see if we need to check this identity
+                        case true:
+                        case false when LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now &&
+                                        !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID):
+                            ExportPlayerIdentities.Add(Identity.IdentityId);
+                            break;
                     }
-                    else if (!SaveAll && LastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now && !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamID == SteamID))
-                    {
-                        ExportPlayerIdentities.Add(Identity.IdentityId);
-                    }
-
                 }
 
                 Log.Warn($"AutoHangar Running! Total players to check {ExportPlayerIdentities.Count()}");
-               
+
 
                 //Dictionary for a list of all the grids we need to remove
-                Dictionary<long, List<AutoHangarItem>> scannedGrids = new Dictionary<long, List<AutoHangarItem>>();
+                var scannedGrids = new Dictionary<long, List<AutoHangarItem>>();
 
                 foreach (var group in MyCubeGridGroups.Static.Physical.Groups.ToList())
                 {
                     if (group.Nodes.Count == 0)
                         continue;
 
-                    int totalBlocks = 0;
-                    List<MyCubeGrid> grids = new List<MyCubeGrid>();
-                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                    var totalBlocks = 0;
+                    var grids = new List<MyCubeGrid>();
+                    foreach (var grid in group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid => grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash))
                     {
-
-                        MyCubeGrid grid = groupNodes.NodeData;
-
-                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
-                            continue;
-
                         totalBlocks += grid.BlocksCount;
                         grids.Add(grid);
                     }
@@ -127,43 +113,34 @@ namespace QuantumHangar
                         continue;
 
                     //Get biggest grid owner, and see if they are an identity that we need to export
-                    grids.BiggestGrid(out MyCubeGrid LargestGrid);
-                    long biggestOwner = LargestGrid.GetBiggestOwner();
+                    grids.BiggestGrid(out var LargestGrid);
+                    var biggestOwner = LargestGrid.GetBiggestOwner();
 
                     //No need to autohangar if the largest owner is an NPC
                     if (MySession.Static.Players.IdentityIsNpc(biggestOwner))
                         continue;
 
-                    //Now see if we should hangar this shit
-                    if (LargestGrid.GridSizeEnum == MyCubeSize.Large && LargestGrid.IsStatic && !hangarStatic)
-                        continue;
-                    else if (LargestGrid.GridSizeEnum == MyCubeSize.Large && !LargestGrid.IsStatic && !hangarLarge)
-                        continue;
-                    else if (LargestGrid.GridSizeEnum == MyCubeSize.Small && !hangarSmall)
-                        continue;
-
+                    switch (LargestGrid.GridSizeEnum)
+                    {
+                        //Now see if we should hangar this shit
+                        case MyCubeSize.Large when LargestGrid.IsStatic && !hangarStatic:
+                        case MyCubeSize.Large when !LargestGrid.IsStatic && !hangarLarge:
+                        case MyCubeSize.Small when !hangarSmall:
+                            continue;
+                    }
 
 
                     //Add this new grid into our planned export queue
-                    if (ExportPlayerIdentities.Contains(biggestOwner))
-                    {
-                        AutoHangarItem hangar = new AutoHangarItem(totalBlocks, grids, LargestGrid);
-                        if (!scannedGrids.ContainsKey(biggestOwner))
-                        {
-                            scannedGrids.Add(biggestOwner, new List<AutoHangarItem>() { hangar });
-                        }
-                        else
-                        {
-                            scannedGrids[biggestOwner].Add(hangar);
-                        }
-                    }
+                    if (!ExportPlayerIdentities.Contains(biggestOwner)) continue;
+                    var hangar = new AutoHangarItem(totalBlocks, grids, LargestGrid);
+                    if (!scannedGrids.ContainsKey(biggestOwner))
+                        scannedGrids.Add(biggestOwner, new List<AutoHangarItem>() { hangar });
+                    else
+                        scannedGrids[biggestOwner].Add(hangar);
                 }
 
-              
-                Task.Run(() => SaveAutohangarGrids(scannedGrids));
 
-
-
+                Task.Run(() => SaveAutoHangarGrids(scannedGrids));
             }
             catch (Exception ex)
             {
@@ -176,10 +153,9 @@ namespace QuantumHangar
             }
         }
 
-        public static async Task<int> SaveAutohangarGrids(Dictionary<long, List<AutoHangarItem>> scannedGrids)
+        public static async Task<int> SaveAutoHangarGrids(Dictionary<long, List<AutoHangarItem>> scannedGrids)
         {
-            int GridCounter = 0;
-
+            var GridCounter = 0;
 
 
             try
@@ -189,13 +165,11 @@ namespace QuantumHangar
 
 
                 //Now that we have our complete collection, lets loop through the grids
-                foreach (KeyValuePair<long, List<AutoHangarItem>> kvp in scannedGrids)
+                foreach (var (k, allGrids) in scannedGrids)
                 {
-                    List<AutoHangarItem> allGrids = kvp.Value;
-
                     if (Config.KeepPlayersLargestGrid)
                     {
-                        AutoHangarItem largest = allGrids.Aggregate((i1, i2) => i1.blocksCount > i2.blocksCount ? i1 : i2);
+                        var largest = allGrids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
                         allGrids.Remove(largest);
                     }
 
@@ -204,40 +178,33 @@ namespace QuantumHangar
                         continue;
 
 
-
-
-
-
-
                     //Grab Players Hangar
-                    ulong id = MySession.Static.Players.TryGetSteamId(kvp.Key);
-                    PlayerHangar PlayersHangar = new PlayerHangar(id, null);
+                    var id = MySession.Static.Players.TryGetSteamId(k);
+                    var PlayersHangar = new PlayerHangar(id, null);
 
-                    foreach (AutoHangarItem item in allGrids)
+                    foreach (var item in allGrids)
                     {
-
                         //remove respawn grids
-                        if (item.largestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
+                        if (item.LargestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
                         {
                             //Close all grids
-                            item.grids.Close("Autohangar deleted respawn pod");
+                            item.Grids.Close("AutoHangar deleted respawn pod");
                             continue;
                         }
 
 
+                        var Result = new GridResult
+                        {
+                            Grids = item.Grids,
+                            BiggestGrid = item.LargestGrid
+                        };
 
-                        GridResult Result = new GridResult();
-                        Result.Grids = item.grids;
-                        Result.BiggestGrid = item.largestGrid;
 
-
-                        GridStamp Stamp = Result.GenerateGridStamp();
+                        var Stamp = Result.GenerateGridStamp();
                         PlayersHangar.SelectedPlayerFile.FormatGridName(Stamp);
 
 
-
-
-                        bool val = await PlayersHangar.SaveGridsToFile(Result, Stamp.GridName);
+                        var val = await PlayersHangar.SaveGridsToFile(Result, Stamp.GridName);
                         if (val)
                         {
                             //Load player file and update!
@@ -247,9 +214,10 @@ namespace QuantumHangar
                             Log.Info(Result.BiggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
                         }
                         else
-                            Log.Info(Result.BiggestGrid.DisplayName + " FAILED to Hangar! Check read error above for more info!");
-
-
+                        {
+                            Log.Info(Result.BiggestGrid.DisplayName +
+                                     " FAILED to Hangar! Check read error above for more info!");
+                        }
                     }
 
                     PlayersHangar.SavePlayerFile();
@@ -259,9 +227,8 @@ namespace QuantumHangar
                 Log.Warn($"Finished Hangaring: {GridCounter} grids! Action took: {Watcher.Elapsed}");
 
                 return GridCounter;
-
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex);
             }
@@ -269,8 +236,6 @@ namespace QuantumHangar
             Watcher.Stop();
             return GridCounter;
         }
-
-
 
 
         public static void Dispose()
@@ -282,17 +247,15 @@ namespace QuantumHangar
 
     public class AutoHangarItem
     {
-
-        public int blocksCount = 0;
-        public List<MyCubeGrid> grids;
-        public MyCubeGrid largestGrid;
+        public int BlocksCount = 0;
+        public List<MyCubeGrid> Grids;
+        public MyCubeGrid LargestGrid;
 
         public AutoHangarItem(int blocks, List<MyCubeGrid> grids, MyCubeGrid largestGrid)
         {
-            this.blocksCount = blocks;
-            this.grids = grids;
-            this.largestGrid = largestGrid;
+            BlocksCount = blocks;
+            Grids = grids;
+            LargestGrid = largestGrid;
         }
-
     }
 }

@@ -27,7 +27,7 @@ namespace QuantumHangar.HangarChecks
 
         private bool IsAdminCalling;
         private readonly ulong SteamID;
-        private readonly MyIdentity Identity;
+        private readonly MyPlayer Player;
 
 
         public string PlayersFolderPath { get; }
@@ -41,7 +41,7 @@ namespace QuantumHangar.HangarChecks
             try
             {
 
-                MySession.Static.Players.TryGetIdentityFromSteamID(SteamID, out Identity);
+                MySession.Static.Players.TryGetPlayerBySteamId(SteamID, out Player);
 
                 this.SteamID = SteamID;
 
@@ -188,7 +188,7 @@ namespace QuantumHangar.HangarChecks
             if (Grid.ShipPCU.Count == 0)
             {
 
-                var blockLimits = Identity.BlockLimits;
+                var blockLimits = Player.Identity.BlockLimits;
 
                 var a = MySession.Static.GlobalBlockLimits;
 
@@ -374,7 +374,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
             var grids = shipBlueprints.ToList();
-            var ValueReturn = PluginDependencies.CheckGridLimits(grids, Identity.IdentityId);
+            var ValueReturn = PluginDependencies.CheckGridLimits(grids, Player.Identity.IdentityId);
 
             //Convert to value return type
             if (!ValueReturn)
@@ -608,8 +608,8 @@ namespace QuantumHangar.HangarChecks
 
             var NewListing = new MarketListing(Stamp);
             NewListing.SetUserInputs(Description, Price);
-            NewListing.Seller = Identity.DisplayName;
-            NewListing.SetPlayerData(SteamID, Identity.IdentityId);
+            NewListing.Seller = Player.Identity.DisplayName;
+            NewListing.SetPlayerData(SteamID, Player.Identity.IdentityId);
             HangarMarketController.SaveNewMarketFile(NewListing);
             SavePlayerFile();
 
@@ -646,7 +646,7 @@ namespace QuantumHangar.HangarChecks
 
         public async Task<bool> SaveGridsToFile(GridResult Grids, string FileName)
         {
-            return await GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Identity.IdentityId);
+            return await GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Player.Identity.IdentityId);
         }
 
         public void ListAllGrids()
@@ -753,8 +753,8 @@ namespace QuantumHangar.HangarChecks
                 return false;
 
 
-            PluginDependencies.BackupGrid(Grids.ToList(), Identity.IdentityId);
-            GridSerializer.TransferGridOwnership(Grids, Identity.IdentityId, Stamp.TransferOwnerShipOnLoad);
+            PluginDependencies.BackupGrid(Grids.ToList(), Player.Identity.IdentityId);
+            GridSerializer.TransferGridOwnership(Grids, Player.Identity.IdentityId, Stamp.TransferOwnerShipOnLoad);
 
             return true;
         }

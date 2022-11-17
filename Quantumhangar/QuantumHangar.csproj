@@ -60,7 +60,6 @@
     <Compile Include="HangarMarket\MarketListing.cs" />
     <Compile Include="Properties\Debug.cs" />
     <Compile Include="Serialization\GridSerializer.cs" />
-    <Compile Include="Serialization\JsonSerializer.cs" />
     <Compile Include="Utils\GameEvents.cs" />
     <Compile Include="Utils\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
