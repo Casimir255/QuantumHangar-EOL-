@@ -12,7 +12,7 @@ namespace QuantumHangar.HangarMarket
     {
         [Command("sell", "Sells the grid")]
         [Permission(MyPromoteLevel.None)]
-        public async void SellGrid(int ID, long price, string description)
+        public async void SellGrid(int id, long price, string description)
         {
             if (!Hangar.Config.PluginEnabled)
                 return;
@@ -25,8 +25,8 @@ namespace QuantumHangar.HangarMarket
             }
 
 
-            var User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
+            var user = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SellGrid(id, price, description), Context);
         }
 
 
@@ -38,12 +38,12 @@ namespace QuantumHangar.HangarMarket
                 return;
 
 
-            var Builder = new StringBuilder();
-            foreach (var Value in HangarMarketController.MarketOffers.Values)
-                Builder.AppendLine($"{Value.Name} - {Value.Price}");
+            var builder = new StringBuilder();
+            foreach (var value in HangarMarketController.MarketOffers.Values)
+                builder.AppendLine($"{value.Name} - {value.Price}");
 
-            var Response = new Chat(Context);
-            Response.Respond(Builder.ToString());
+            var response = new Chat(Context);
+            response.Respond(builder.ToString());
         }
     }
 
@@ -53,7 +53,7 @@ namespace QuantumHangar.HangarMarket
     {
         [Command("sell", "Sells the grid")]
         [Permission(MyPromoteLevel.None)]
-        public async void SellGrid(int ID, long price, string description)
+        public async void SellGrid(int id, long price, string description)
         {
             if (!Hangar.Config.PluginEnabled)
                 return;
@@ -65,8 +65,8 @@ namespace QuantumHangar.HangarMarket
             }
 
 
-            var User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
+            var user = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SellGrid(id, price, description), Context);
         }
 
 
@@ -78,12 +78,12 @@ namespace QuantumHangar.HangarMarket
                 return;
 
 
-            var Builder = new StringBuilder();
-            foreach (var Value in HangarMarketController.MarketOffers.Values)
-                Builder.AppendLine($"{Value.Name} - {Value.Price}");
+            var builder = new StringBuilder();
+            foreach (var value in HangarMarketController.MarketOffers.Values)
+                builder.AppendLine($"{value.Name} - {value.Price}");
 
-            var Response = new Chat(Context);
-            Response.Respond(Builder.ToString());
+            var response = new Chat(Context);
+            response.Respond(builder.ToString());
         }
     }
 }

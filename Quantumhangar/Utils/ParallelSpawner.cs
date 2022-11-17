@@ -56,9 +56,9 @@ namespace QuantumHangar
         }
 
 
-        public bool Start(Vector3D Target, bool LoadInOriginalPosition = true)
+        public bool Start(Vector3D target, bool loadInOriginalPosition = true)
         {
-            _targetPos = Target;
+            _targetPos = target;
             if (!_grids.Any())
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
                 return true;
@@ -88,12 +88,12 @@ namespace QuantumHangar
 
             //This should return more than a bool (we only need to run on game thread to find a safe spot)
 
-            var Spawn = GameEvents.InvokeAsync(CalculateSafePositionAndSpawn, LoadInOriginalPosition);
+            var spawn = GameEvents.InvokeAsync(CalculateSafePositionAndSpawn, loadInOriginalPosition);
 
 
-            if (Spawn.Wait(Timeout))
+            if (spawn.Wait(Timeout))
             {
-                if (Spawn.Result)
+                if (spawn.Result)
                 {
                     foreach (var o in _grids)
                         MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
@@ -160,9 +160,9 @@ namespace QuantumHangar
                 if (Config.DigVoxels) DigVoxels();
                 return true;
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
-                Log.Fatal(Ex);
+                Log.Fatal(ex);
                 return false;
             }
         }
@@ -218,43 +218,43 @@ namespace QuantumHangar
             }
         }
 
-        private Vector3D? FindPastePosition(Vector3D Target)
+        private Vector3D? FindPastePosition(Vector3D target)
         {
             //Log.info($"BoundingSphereD: {SphereD.Center}, {SphereD.Radius}");
             //Log.info($"MyOrientedBoundingBoxD: {BoxD.Center}, {BoxD.GetAABB()}");
-            MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target, out var val);
+            MyGravityProviderSystem.CalculateNaturalGravityInPoint(target, out var val);
             if (val == 0)
                 //following method is what SEworldgen uses. We only really need to use this in space
-                return FindSuitableJumpLocationSpace(Target);
+                return FindSuitableJumpLocationSpace(target);
 
-            return MyEntities.FindFreePlaceCustom(Target, (float)_sphereD.Radius, 90, 10, 1.5f, 10);
+            return MyEntities.FindFreePlaceCustom(target, (float)_sphereD.Radius, 90, 10, 1.5f, 10);
         }
 
 
         private Vector3D? FindSuitableJumpLocationSpace(Vector3D desiredLocation)
         {
-            var m_objectsInRange = new List<MyObjectSeed>();
-            var m_entitiesInRange = new List<MyEntity>();
+            var mObjectsInRange = new List<MyObjectSeed>();
+            var mEntitiesInRange = new List<MyEntity>();
 
 
-            var Inflated = _sphereD;
-            Inflated.Radius *= 1.5;
-            Inflated.Center = desiredLocation;
+            var inflated = _sphereD;
+            inflated.Radius *= 1.5;
+            inflated.Center = desiredLocation;
 
             var vector3D = desiredLocation;
 
-            MyProceduralWorldGenerator.Static.OverlapAllAsteroidSeedsInSphere(Inflated, m_objectsInRange);
-            var m_obstaclesInRange = m_objectsInRange.Select(item3 => item3.BoundingVolume).ToList();
-            m_objectsInRange.Clear();
+            MyProceduralWorldGenerator.Static.OverlapAllAsteroidSeedsInSphere(inflated, mObjectsInRange);
+            var mObstaclesInRange = mObjectsInRange.Select(item3 => item3.BoundingVolume).ToList();
+            mObjectsInRange.Clear();
 
-            MyProceduralWorldGenerator.Static.GetAllInSphere<MyStationCellGenerator>(Inflated, m_objectsInRange);
-            m_obstaclesInRange.AddRange(m_objectsInRange.Select(item4 => item4.UserData).OfType<MyStation>().Select(myStation => new BoundingBoxD(myStation.Position - MyStation.SAFEZONE_SIZE, myStation.Position + MyStation.SAFEZONE_SIZE)).Where(item => item.Contains(vector3D) != 0));
+            MyProceduralWorldGenerator.Static.GetAllInSphere<MyStationCellGenerator>(inflated, mObjectsInRange);
+            mObstaclesInRange.AddRange(mObjectsInRange.Select(item4 => item4.UserData).OfType<MyStation>().Select(myStation => new BoundingBoxD(myStation.Position - MyStation.SAFEZONE_SIZE, myStation.Position + MyStation.SAFEZONE_SIZE)).Where(item => item.Contains(vector3D) != 0));
 
-            m_objectsInRange.Clear();
+            mObjectsInRange.Clear();
 
 
-            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref Inflated, m_entitiesInRange);
-            m_obstaclesInRange.AddRange(from item5 in m_entitiesInRange where !(item5 is MyPlanet) select item5.PositionComp.WorldAABB.GetInflated(Inflated.Radius));
+            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref inflated, mEntitiesInRange);
+            mObstaclesInRange.AddRange(from item5 in mEntitiesInRange where !(item5 is MyPlanet) select item5.PositionComp.WorldAABB.GetInflated(inflated.Radius));
 
             const int num = 10;
             var num2 = 0;
@@ -264,7 +264,7 @@ namespace QuantumHangar
             {
                 num2++;
                 var flag = false;
-                foreach (var item6 in m_obstaclesInRange
+                foreach (var item6 in mObstaclesInRange
                              .Select(item6 => new { item6, containmentType = item6.Contains(vector3D) })
                              .Where(@t =>
                                  @t.containmentType == ContainmentType.Contains ||
@@ -284,9 +284,9 @@ namespace QuantumHangar
                 break;
             }
 
-            m_obstaclesInRange.Clear();
-            m_entitiesInRange.Clear();
-            m_objectsInRange.Clear();
+            mObstaclesInRange.Clear();
+            mEntitiesInRange.Clear();
+            mObjectsInRange.Clear();
             if (flag2) return vector3D;
             return null;
         }
@@ -316,8 +316,8 @@ namespace QuantumHangar
             _boxAab = new BoundingBoxD();
             _boxAab.Include(_biggestGrid.CalculateBoundingBox());
 
-            var BiggestGridMatrix = _biggestGrid.PositionAndOrientation.Value.GetMatrix();
-            var BiggestGridMatrixToLocal = MatrixD.Invert(BiggestGridMatrix);
+            var biggestGridMatrix = _biggestGrid.PositionAndOrientation.Value.GetMatrix();
+            var biggestGridMatrixToLocal = MatrixD.Invert(biggestGridMatrix);
 
 
             var corners = new Vector3D[8];
@@ -330,15 +330,15 @@ namespace QuantumHangar
                 BoundingBoxD box = grid.CalculateBoundingBox();
 
                 var worldBox = new MyOrientedBoundingBoxD(box, grid.PositionAndOrientation.Value.GetMatrix());
-                worldBox.Transform(BiggestGridMatrixToLocal);
+                worldBox.Transform(biggestGridMatrixToLocal);
                 worldBox.GetCorners(corners, 0);
 
                 foreach (var corner in corners) _boxAab.Include(corner);
             }
 
-            var Sphere = BoundingSphereD.CreateFromBoundingBox(_boxAab);
-            _boxD = new MyOrientedBoundingBoxD(_boxAab, BiggestGridMatrix);
-            _sphereD = new BoundingSphereD(_boxD.Center, Sphere.Radius);
+            var sphere = BoundingSphereD.CreateFromBoundingBox(_boxAab);
+            _boxD = new MyOrientedBoundingBoxD(_boxAab, biggestGridMatrix);
+            _sphereD = new BoundingSphereD(_boxD.Center, sphere.Radius);
 
 
             //Test bounds to make sure they are in the right spot
@@ -363,35 +363,35 @@ namespace QuantumHangar
             var entities = new List<MyEntity>();
             MyGamePruningStructure.GetAllEntitiesInOBB(ref _boxD, entities);
 
-            var SpotCleared = true;
+            var spotCleared = true;
             if (!entities.OfType<MyCubeGrid>()
                     .Select(entity => new MyOrientedBoundingBoxD(entity.PositionComp.LocalAABB, entity.WorldMatrix))
-                    .Select(OBB => _boxD.Contains(ref OBB))
-                    .Any(Type => Type == ContainmentType.Contains || Type == ContainmentType.Intersects))
-                return SpotCleared;
-            SpotCleared = false;
+                    .Select(obb => _boxD.Contains(ref obb))
+                    .Any(type => type == ContainmentType.Contains || type == ContainmentType.Intersects))
+                return spotCleared;
+            spotCleared = false;
             _response.Respond(
                 "There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
 
-            return SpotCleared;
+            return spotCleared;
         }
 
 
-        private void UpdateGridsPosition(Vector3D TargetPos)
+        private void UpdateGridsPosition(Vector3D targetPos)
         {
             //Log.Info("New Grid Position: " + TargetPos);
 
             //Translated point
-            TargetPos = TargetPos - _delta3D;
+            targetPos = targetPos - _delta3D;
 
 
             //Now need to create a delta change from the initial position to the target position
-            var Delta = TargetPos - _biggestGrid.PositionAndOrientation.Value.Position;
+            var delta = targetPos - _biggestGrid.PositionAndOrientation.Value.Position;
             ParallelTasks.Parallel.ForEach(_grids, grid =>
             {
-                Vector3D CurrentPos = grid.PositionAndOrientation.Value.Position;
+                Vector3D currentPos = grid.PositionAndOrientation.Value.Position;
                 //MatrixD worldMatrix = MatrixD.CreateWorld(CurrentPos + Delta, grid.PositionAndOrientation.Value.Orientation.Forward, grid.PositionAndOrientation.Value.Orientation.Up,);
-                grid.PositionAndOrientation = new MyPositionAndOrientation(CurrentPos + Delta,
+                grid.PositionAndOrientation = new MyPositionAndOrientation(currentPos + delta,
                     grid.PositionAndOrientation.Value.Orientation.Forward,
                     grid.PositionAndOrientation.Value.Orientation.Up);
             });
@@ -426,27 +426,27 @@ namespace QuantumHangar
                 grid.AngularVelocity = new SerializableVector3();
 
                 var counter = 0;
-                foreach (var Block in grid.CubeBlocks.OfType<MyObjectBuilder_Thrust>())
+                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_Thrust>())
                 {
                     counter++;
-                    Block.Enabled = true;
+                    block.Enabled = true;
                 }
 
-                foreach (var Block in grid.CubeBlocks.OfType<MyObjectBuilder_Reactor>()) Block.Enabled = true;
+                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_Reactor>()) block.Enabled = true;
 
-                foreach (var Block in grid.CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
+                foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_BatteryBlock>())
                 {
-                    Block.Enabled = true;
-                    Block.SemiautoEnabled = true;
-                    Block.ProducerEnabled = true;
-                    Block.ChargeMode = 0;
+                    block.Enabled = true;
+                    block.SemiautoEnabled = true;
+                    block.ProducerEnabled = true;
+                    block.ChargeMode = 0;
                 }
 
                 grid.DampenersEnabled = true;
             });
         }
 
-        private bool CalculateGridPosition(Vector3D Target)
+        private bool CalculateGridPosition(Vector3D target)
         {
             var forwardVector = Vector3D.Zero;
 
@@ -461,7 +461,7 @@ namespace QuantumHangar
             //LordTylus's existing grid checkplament method
             var gravityRotation = 0f;
 
-            var gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(Target);
+            var gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(target);
             
             if (gravityDirectionalVector == Vector3.Zero)
                 return false;
@@ -494,14 +494,14 @@ namespace QuantumHangar
                 upDirectionalVector = Vector3D.CalculatePerpendicularVector(-forwardVector);
             }
 
-            BeginAlignToGravity(Target, forwardVector, upDirectionalVector);
+            BeginAlignToGravity(target, forwardVector, upDirectionalVector);
             return true;
         }
 
-        private void BeginAlignToGravity(Vector3D Target, Vector3D forwardVector, Vector3D upVector)
+        private void BeginAlignToGravity(Vector3D target, Vector3D forwardVector, Vector3D upVector)
         {
             //Create WorldMatrix
-            var worldMatrix = MatrixD.CreateWorld(Target, forwardVector, upVector);
+            var worldMatrix = MatrixD.CreateWorld(target, forwardVector, upVector);
 
             var num = 0;
             var referenceMatrix = MatrixD.Identity;
@@ -595,10 +595,10 @@ namespace QuantumHangar
 
 
         // Respond to a command.
-        public Chat(CommandContext context, bool Mod = false)
+        public Chat(CommandContext context, bool mod = false)
         {
             _context = context;
-            _mod = Mod;
+            _mod = mod;
         }
 
         // Respond without a command, delegate how to send the response.
@@ -636,7 +636,7 @@ namespace QuantumHangar
             return;
         }
 
-        public static void Send(string response, ulong Target)
+        public static void Send(string response, ulong target)
         {
             var scripted = new ScriptedChatMsg()
             {
@@ -644,10 +644,10 @@ namespace QuantumHangar
                 Text = response,
                 Font = MyFontEnum.White,
                 Color = ChatColor,
-                Target = Sync.Players.TryGetIdentityId(Target)
+                Target = Sync.Players.TryGetIdentityId(target)
             };
 
-            Log.Info($"{Author} (to {Torch.Managers.ChatManager.ChatManagerServer.GetMemberName(Target)}): {response}");
+            Log.Info($"{Author} (to {Torch.Managers.ChatManager.ChatManagerServer.GetMemberName(target)}): {response}");
             MyMultiplayerBase.SendScriptedChatMessage(ref scripted);
         }
     }

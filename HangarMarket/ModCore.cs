@@ -33,7 +33,7 @@ namespace HangarStoreMod
             GridName,
             Price,
             OwnerName,
-            PCU,
+            Pcu,
             BlockCount,
             ServerOffers
         }
@@ -50,9 +50,9 @@ namespace HangarStoreMod
 
 
         //BlockComponents
-        private bool BlockInitilized = false;
-        private static SortType Filter = SortType.GridName;
-        private IMyProjector ProjectorBlock = null;
+        private bool _blockInitilized = false;
+        private static SortType _filter = SortType.GridName;
+        private IMyProjector _projectorBlock = null;
 
         
 
@@ -60,21 +60,21 @@ namespace HangarStoreMod
 
         private void InitilizeMarket()
         {
-            BlockInitilized = true;
+            _blockInitilized = true;
             MyAPIGateway.TerminalControls.CustomControlGetter += CreateControlsNew;
-            ProjectorBlock.RefreshCustomInfo();
+            _projectorBlock.RefreshCustomInfo();
 
-            AllBlocks.Add(ProjectorBlock);
+            AllBlocks.Add(_projectorBlock);
             Utils.Log("Market Initilized");
         }
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
 
-            var m_block = Entity as IMyTerminalBlock;
-            ProjectorBlock = m_block as IMyProjector;
+            var mBlock = Entity as IMyTerminalBlock;
+            _projectorBlock = mBlock as IMyProjector;
 
-            ProjectorBlock.AppendingCustomInfo += ProjectorBlock_AppendingCustomInfo;
+            _projectorBlock.AppendingCustomInfo += ProjectorBlock_AppendingCustomInfo;
 
 
 
@@ -85,8 +85,8 @@ namespace HangarStoreMod
         public override void Close()
         {
             MyAPIGateway.TerminalControls.CustomControlGetter -= CreateControlsNew;
-            ProjectorBlock.AppendingCustomInfo -= ProjectorBlock_AppendingCustomInfo;
-            AllBlocks.Remove(ProjectorBlock);
+            _projectorBlock.AppendingCustomInfo -= ProjectorBlock_AppendingCustomInfo;
+            AllBlocks.Remove(_projectorBlock);
         }
 
 
@@ -102,7 +102,7 @@ namespace HangarStoreMod
                 return;
 
 
-            if (!BlockInitilized)
+            if (!_blockInitilized)
             {
                 InitilizeMarket();
             }
@@ -121,7 +121,7 @@ namespace HangarStoreMod
                 return;
 
 
-            var projectionEnt = ProjectorBlock.ProjectedGrid as IMyEntity;
+            var projectionEnt = _projectorBlock.ProjectedGrid as IMyEntity;
             //var projectionGrid = Session.Instance.consoleBlocks[index].ProjectedGrid as IMyCubeGrid;
             if (projectionEnt == null) return;
             var transparency = .25f;
@@ -150,25 +150,25 @@ namespace HangarStoreMod
         /* Get and set of filter types */
         internal static long FilterGet(IMyTerminalBlock arg)
         {
-            return (long)Filter;
+            return (long)_filter;
         }
 
         internal static void FilterSet(IMyTerminalBlock arg1, long arg2)
         {
-            Filter = (SortType)arg2;
+            _filter = (SortType)arg2;
         }
 
         internal static void PreviewSelectedGrid(IMyTerminalBlock block)
         {
             if (SelectedOffer != null) {
 
-                GridDefinition Def = new GridDefinition();
+                GridDefinition def = new GridDefinition();
 
-                Def.GridName = SelectedOffer.Name;
-                Def.OwnerSteamID = SelectedOffer.SteamID;
-                Def.ProjectorEntityID = block.EntityId;
+                def.GridName = SelectedOffer.Name;
+                def.OwnerSteamId = SelectedOffer.SteamId;
+                def.ProjectorEntityId = block.EntityId;
 
-                MarketSessionComponent.SendGridPreviewRequest(Def);
+                MarketSessionComponent.SendGridPreviewRequest(def);
             }
         }
 
@@ -196,8 +196,8 @@ namespace HangarStoreMod
                 return;
 
             BuyGridRequest request = new BuyGridRequest();
-            request.BuyerSteamID = MyAPIGateway.Session.LocalHumanPlayer.SteamUserId;
-            request.OwnerSteamID = SelectedOffer.SteamID;
+            request.BuyerSteamId = MyAPIGateway.Session.LocalHumanPlayer.SteamUserId;
+            request.OwnerSteamId = SelectedOffer.SteamId;
             request.GridName = SelectedOffer.Name;
 
             MarketSessionComponent.PurchaseGrid(request);
@@ -212,13 +212,13 @@ namespace HangarStoreMod
                 return false;
 
       
-            if (SelectedOffer.SteamID == MyAPIGateway.Session.LocalHumanPlayer.SteamUserId)
+            if (SelectedOffer.SteamId == MyAPIGateway.Session.LocalHumanPlayer.SteamUserId)
                 return false;
 
 
-            long Balance; 
-            MyAPIGateway.Session.LocalHumanPlayer.TryGetBalanceInfo(out Balance);
-            if (Balance < SelectedOffer.Price)
+            long balance; 
+            MyAPIGateway.Session.LocalHumanPlayer.TryGetBalanceInfo(out balance);
+            if (balance < SelectedOffer.Price)
                 return false;
 
 
@@ -249,11 +249,11 @@ namespace HangarStoreMod
             SelectedBoxItem = -1;
             for(int i = 0; i < List.Count; i++)
             {
-                MarketListing Offer = (MarketListing)List[i].UserData;
-                if(newSelectedItems[0].UserData as MarketListing == Offer)
+                MarketListing offer = (MarketListing)List[i].UserData;
+                if(newSelectedItems[0].UserData as MarketListing == offer)
                 {
                     SelectedBoxItem = i;
-                    SelectedOffer = Offer;
+                    SelectedOffer = offer;
                     break; 
                 }
             }
@@ -261,23 +261,23 @@ namespace HangarStoreMod
 
             //Utils.Log("Set selected item");
             arg1.RefreshCustomInfo();
-            UpdateGUI(arg1);
+            UpdateGui(arg1);
         }
 
         public static void UpdateAllBlocks()
         {
-            foreach(var Block in AllBlocks)
+            foreach(var block in AllBlocks)
             {
-                Block.RefreshCustomInfo();
-                UpdateGUI(Block);
+                block.RefreshCustomInfo();
+                UpdateGui(block);
             }
         }
-        public static void MergeNewCollection(List<MarketListing> NewOffers)
+        public static void MergeNewCollection(List<MarketListing> newOffers)
         {
 
 
             //No need to do any merge checks if the new list is null
-            if (NewOffers == null || NewOffers.Count == 0)
+            if (newOffers == null || newOffers.Count == 0)
             {
                 //Remove any selected items
                 SelectedBoxItem = -1;
@@ -294,7 +294,7 @@ namespace HangarStoreMod
             //First, lets see if we need to remove any items
             for (int i = MarketOffers.Count - 1; i >= 0; i--)
             {
-                if (!NewOffers.Contains(MarketOffers[i]))
+                if (!newOffers.Contains(MarketOffers[i]))
                 {
                     if (SelectedOffer == MarketOffers[i])
                     {
@@ -310,11 +310,11 @@ namespace HangarStoreMod
 
 
             //Now see if we need to add any items
-            for(int i = NewOffers.Count - 1; i >= 0; i--)
+            for(int i = newOffers.Count - 1; i >= 0; i--)
             {
-                if (!MarketOffers.Contains(NewOffers[i]))
+                if (!MarketOffers.Contains(newOffers[i]))
                 {
-                    MarketOffers.Add(NewOffers[i]);
+                    MarketOffers.Add(newOffers[i]);
                 }
             }
 
@@ -323,11 +323,11 @@ namespace HangarStoreMod
             List.Clear();
             for (int i = 0; i < MarketOffers.Count; i++)
             {
-                MyStringId Name = MyStringId.GetOrCompute(MarketOffers[i].Name);
-                MyStringId ToolTip = MyStringId.GetOrCompute("Price: " + MarketOffers[i].Price);
+                MyStringId name = MyStringId.GetOrCompute(MarketOffers[i].Name);
+                MyStringId toolTip = MyStringId.GetOrCompute("Price: " + MarketOffers[i].Price);
 
-                MyTerminalControlListBoxItem NewItem = new MyTerminalControlListBoxItem(Name, ToolTip, MarketOffers[i]);
-                List.Add(NewItem);
+                MyTerminalControlListBoxItem newItem = new MyTerminalControlListBoxItem(name, toolTip, MarketOffers[i]);
+                List.Add(newItem);
 
                 if (MarketOffers[i] == SelectedOffer)
                 {
@@ -337,7 +337,7 @@ namespace HangarStoreMod
 
             UpdateAllBlocks();
         }
-        public static void UpdateGUI(IMyTerminalBlock block)
+        public static void UpdateGui(IMyTerminalBlock block)
         {
 
             if (MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
@@ -365,25 +365,25 @@ namespace HangarStoreMod
 
 
 
-            if(SelectedOffer.SteamID != 0)
+            if(SelectedOffer.SteamId != 0)
             {
-                long ID = MyAPIGateway.Players.TryGetIdentityId(SelectedOffer.SteamID);
+                long id = MyAPIGateway.Players.TryGetIdentityId(SelectedOffer.SteamId);
 
-                if(ID != 0)
+                if(id != 0)
                 {
-                    List<IMyIdentity> Identities = new List<IMyIdentity>();
-                    MyAPIGateway.Players.GetAllIdentites(Identities);
+                    List<IMyIdentity> identities = new List<IMyIdentity>();
+                    MyAPIGateway.Players.GetAllIdentites(identities);
 
-                    IMyIdentity Seller = Identities.FirstOrDefault(x => x.IdentityId == ID);
+                    IMyIdentity seller = identities.FirstOrDefault(x => x.IdentityId == id);
 
-                    SelectedOffer.Seller = Seller.DisplayName;
+                    SelectedOffer.Seller = seller.DisplayName;
 
-                    var Fac = MyAPIGateway.Session.Factions.GetObjectBuilder().Factions.FirstOrDefault(x => x.Members.Any(c => c.PlayerId == Seller.IdentityId));
+                    var fac = MyAPIGateway.Session.Factions.GetObjectBuilder().Factions.FirstOrDefault(x => x.Members.Any(c => c.PlayerId == seller.IdentityId));
 
 
-                    if (Fac != null)
+                    if (fac != null)
                     {
-                        SelectedOffer.SellerFaction = Fac.Tag;
+                        SelectedOffer.SellerFaction = fac.Tag;
                     }
                 }
                 else
@@ -415,7 +415,7 @@ namespace HangarStoreMod
             stringBuilder.AppendLine("Max Power Output: " + SelectedOffer.MaxPowerOutput);
             stringBuilder.AppendLine("Build Percentage: " + Math.Round(SelectedOffer.GridBuiltPercent * 100, 2) + "%");
             stringBuilder.AppendLine("Max Jump Distance: " + SelectedOffer.JumpDistance);
-            stringBuilder.AppendLine("Ship PCU: " + SelectedOffer.PCU);
+            stringBuilder.AppendLine("Ship PCU: " + SelectedOffer.Pcu);
 
         }
     }
@@ -424,11 +424,11 @@ namespace HangarStoreMod
 
     public static class Utils
     {
-        public static void Log(string Log)
+        public static void Log(string log)
         {
 
             //MyAPIGateway.Utilities.ShowMessage("QuantumHangarMOD", Log);
-            MyLog.Default.WriteLineAndConsole(Log);
+            MyLog.Default.WriteLineAndConsole(log);
             //MyLog.Default.WriteLineAndConsole("QuantumHangarMOD: " + Log);
         }
 

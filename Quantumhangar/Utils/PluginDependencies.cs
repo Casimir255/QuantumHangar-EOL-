@@ -26,16 +26,16 @@ namespace QuantumHangar.Utils
         public static bool NexusInstalled { get; private set; }
 
 
-        public static void InitPluginDependencies(PluginManager Plugins)
+        public static void InitPluginDependencies(PluginManager plugins)
         {
-            if (Plugins.Plugins.TryGetValue(GridBackupGuid, out var GridBackupPlugin))
-                AcquireGridBackup(GridBackupPlugin);
+            if (plugins.Plugins.TryGetValue(GridBackupGuid, out var gridBackupPlugin))
+                AcquireGridBackup(gridBackupPlugin);
 
-            if (Plugins.Plugins.TryGetValue(BlockLimiterGuid, out var BlockLimiterPlugin))
-                AcquireBlockLimiter(BlockLimiterPlugin);
+            if (plugins.Plugins.TryGetValue(BlockLimiterGuid, out var blockLimiterPlugin))
+                AcquireBlockLimiter(blockLimiterPlugin);
 
-            if (Plugins.Plugins.TryGetValue(NexusGuid, out var NexusPlugin))
-                AcquireNexus(NexusPlugin);
+            if (plugins.Plugins.TryGetValue(NexusGuid, out var nexusPlugin))
+                AcquireNexus(nexusPlugin);
         }
 
         public static void Dispose()
@@ -43,52 +43,52 @@ namespace QuantumHangar.Utils
             if (NexusInstalled) NexusSupport.Dispose();
         }
 
-        private static Type DeclareInstalledPlugin(ITorchPlugin Plugin)
+        private static Type DeclareInstalledPlugin(ITorchPlugin plugin)
         {
-            Log.Info("Plugin: " + Plugin.Name + " " + Plugin.Version + " is installed!");
-            return Plugin.GetType();
+            Log.Info("Plugin: " + plugin.Name + " " + plugin.Version + " is installed!");
+            return plugin.GetType();
         }
 
 
-        private static void AcquireGridBackup(ITorchPlugin Plugin)
+        private static void AcquireGridBackup(ITorchPlugin plugin)
         {
-            var GridBackupType = DeclareInstalledPlugin(Plugin);
-            _backupGridBuilders = GridBackupType.GetMethod("BackupGridsManuallyWithBuilders",
+            var gridBackupType = DeclareInstalledPlugin(plugin);
+            _backupGridBuilders = gridBackupType.GetMethod("BackupGridsManuallyWithBuilders",
                 BindingFlags.Public | BindingFlags.Instance, null,
                 new Type[2] { typeof(List<MyObjectBuilder_CubeGrid>), typeof(long) }, null);
-            _gridBackupRef = Plugin;
+            _gridBackupRef = plugin;
 
             BlockLimiterInstalled = true;
         }
 
-        private static void AcquireBlockLimiter(ITorchPlugin Plugin)
+        private static void AcquireBlockLimiter(ITorchPlugin plugin)
         {
-            var BlockLimiterType = DeclareInstalledPlugin(Plugin);
-            _checkFutureLimits = BlockLimiterType.GetMethod("CheckLimits_future");
+            var blockLimiterType = DeclareInstalledPlugin(plugin);
+            _checkFutureLimits = blockLimiterType.GetMethod("CheckLimits_future");
         }
 
-        private static void AcquireNexus(ITorchPlugin Plugin)
+        private static void AcquireNexus(ITorchPlugin plugin)
         {
-            var NexusMain = DeclareInstalledPlugin(Plugin);
-            var ReflectedServerSideAPI = NexusMain?.Assembly.GetType("Nexus.API.PluginAPISync");
+            var nexusMain = DeclareInstalledPlugin(plugin);
+            var reflectedServerSideApi = nexusMain?.Assembly.GetType("Nexus.API.PluginAPISync");
 
-            if (ReflectedServerSideAPI == null)
+            if (reflectedServerSideApi == null)
                 return;
 
 
-            ReflectedServerSideAPI.GetMethod("ApplyPatching", BindingFlags.NonPublic | BindingFlags.Static)
-                ?.Invoke(null, new object[] { typeof(NexusAPI), "QuantumHangar" });
+            reflectedServerSideApi.GetMethod("ApplyPatching", BindingFlags.NonPublic | BindingFlags.Static)
+                ?.Invoke(null, new object[] { typeof(NexusApi), "QuantumHangar" });
 
             NexusSupport.Init();
             NexusInstalled = true;
         }
 
 
-        public static void BackupGrid(List<MyObjectBuilder_CubeGrid> Grids, long User)
+        public static void BackupGrid(List<MyObjectBuilder_CubeGrid> grids, long user)
         {
             try
             {
-                _backupGridBuilders?.Invoke(_gridBackupRef, new object[] { Grids, User });
+                _backupGridBuilders?.Invoke(_gridBackupRef, new object[] { grids, user });
             }
             catch (Exception ex)
             {
@@ -96,12 +96,12 @@ namespace QuantumHangar.Utils
             }
         }
 
-        public static bool CheckGridLimits(List<MyObjectBuilder_CubeGrid> Grids, long AgainstUser)
+        public static bool CheckGridLimits(List<MyObjectBuilder_CubeGrid> grids, long againstUser)
         {
             try
             {
-                var Return = (bool)_checkFutureLimits?.Invoke(null, new object[] { Grids.ToArray(), AgainstUser })!;
-                return Return;
+                var @return = (bool)_checkFutureLimits?.Invoke(null, new object[] { grids.ToArray(), againstUser })!;
+                return @return;
             }
             catch (Exception ex)
             {

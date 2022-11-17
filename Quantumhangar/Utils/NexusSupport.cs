@@ -19,25 +19,25 @@ namespace QuantumHangar.Utils
         private static int _thisServerId = -1;
         private static bool _requireTransfer = true;
         
-        public static NexusAPI Api { get; } = new NexusAPI(QuantumHangarNexusModId);
+        public static NexusApi Api { get; } = new NexusApi(QuantumHangarNexusModId);
         public static bool RunningNexus { get; private set; }
 
         public static void Init()
         {
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(QuantumHangarNexusModId, ReceivePacket);
-            _thisServerId = NexusAPI.GetThisServer().ServerId;
+            _thisServerId = NexusApi.GetThisServer().ServerId;
             Log.Info("QuantumHangar -> Nexus integration has been initilized with serverID " + _thisServerId);
 
 
-            if (!NexusAPI.IsRunningNexus())
+            if (!NexusApi.IsRunningNexus())
                 return;
 
             Log.Error("Running Nexus!");
 
             RunningNexus = true;
-            var ThisServer = NexusAPI.GetAllServers().FirstOrDefault(x => x.ServerId == _thisServerId);
+            var thisServer = NexusApi.GetAllServers().FirstOrDefault(x => x.ServerId == _thisServerId);
 
-            if (ThisServer.ServerType >= 1)
+            if (thisServer.ServerType >= 1)
             {
                 _requireTransfer = true;
                 Log.Info("QuantumHangar -> This server is Non-Sectored!");
@@ -64,33 +64,33 @@ namespace QuantumHangar.Utils
         //
         // If the target server is offline, it will refuse to load the grid and the player
         // must try again later when the target server is online.
-        public static bool RelayLoadIfNecessary(Vector3D spawnPos, int ID, bool loadNearPlayer, Chat Chat,
-            ulong SteamID, long IdentityID, Vector3D PlayerPosition)
+        public static bool RelayLoadIfNecessary(Vector3D spawnPos, int id, bool loadNearPlayer, Chat chat,
+            ulong steamId, long identityId, Vector3D playerPosition)
         {
             //Don't continue if we aren't running nexus, or we don't require transfer due to non-Sectored instances
             if (!RunningNexus || !_requireTransfer)
                 return false;
 
-            var target = NexusAPI.GetServerIDFromPosition(spawnPos);
+            var target = NexusApi.GetServerIdFromPosition(spawnPos);
             if (target == _thisServerId)
                 return false;
 
-            if (!NexusAPI.IsServerOnline(target))
+            if (!NexusApi.IsServerOnline(target))
             {
-                Chat?.Respond(
+                chat?.Respond(
                     "Sorry, this grid belongs to another server that is currently offline. Please try again later.");
                 return true;
             }
 
-            Chat?.Respond("Sending hangar load command to the corresponding server, please wait...");
+            chat?.Respond("Sending hangar load command to the corresponding server, please wait...");
             var msg = new NexusHangarMessage
             {
                 Type = NexusHangarMessageType.LoadGrid,
-                SteamId = SteamID,
-                LoadGridId = ID,
+                SteamId = steamId,
+                LoadGridId = id,
                 LoadNearPlayer = loadNearPlayer,
-                IdentityId = IdentityID,
-                PlayerPosition = PlayerPosition,
+                IdentityId = identityId,
+                PlayerPosition = playerPosition,
                 ServerId = _thisServerId
             };
 
@@ -98,15 +98,15 @@ namespace QuantumHangar.Utils
             return true;
         }
 
-        private static void ReceivePacket(ushort HandlerId, byte[] Data, ulong SteamID, bool FromServer)
+        private static void ReceivePacket(ushort handlerId, byte[] data, ulong steamId, bool fromServer)
         {
             // Only consider trusted server messages, i.e. from Nexus itself, not untrusted player messages.
-            if (!FromServer) return;
+            if (!fromServer) return;
 
             NexusHangarMessage msg;
             try
             {
-                msg = MyAPIGateway.Utilities.SerializeFromBinary<NexusHangarMessage>(Data);
+                msg = MyAPIGateway.Utilities.SerializeFromBinary<NexusHangarMessage>(data);
             }
             catch (Exception ex)
             {
@@ -147,24 +147,24 @@ namespace QuantumHangar.Utils
                             MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
                     });
 
-                    var gpsOverNexus = new GpsSender((position, name, entityID) =>
+                    var gpsOverNexus = new GpsSender((position, name, entityId) =>
                     {
                         var m = new NexusHangarMessage
                         {
                             Type = NexusHangarMessageType.SendGps,
                             Name = name,
                             Position = position,
-                            EntityId = entityID
+                            EntityId = entityId
                         };
                         Api.SendMessageToServer(msg.ServerId,
                             MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
                     });
 
-                    var User = new PlayerChecks(chatOverNexus, gpsOverNexus, msg.SteamId, msg.IdentityId,
+                    var user = new PlayerChecks(chatOverNexus, gpsOverNexus, msg.SteamId, msg.IdentityId,
                         msg.PlayerPosition);
 
 
-                    User.LoadGrid(msg.LoadGridId.ToString(), msg.LoadNearPlayer);
+                    user.LoadGrid(msg.LoadGridId.ToString(), msg.LoadNearPlayer);
                     return;
             }
 

@@ -12,42 +12,42 @@ namespace QuantumHangar.Commands
 
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void SaveGrid(string GridName = "")
+        public async void SaveGrid(string gridName = "")
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SaveGrid(GridName));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SaveGrid(gridName));
         }
 
         [Command("list", "Lists all grids of given player")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void ListGrids(string NameOrSteamID)
+        public async void ListGrids(string nameOrSteamId)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.ListGrids(NameOrSteamID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.ListGrids(nameOrSteamId));
         }
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void LoadGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public async void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.LoadGrid(NameOrSteamID, ID, FromSavePos));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void Remove(string NameOrSteamID, int ID)
+        public async void Remove(string nameOrSteamId, int id)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.RemoveGrid(NameOrSteamID, ID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.RemoveGrid(nameOrSteamId, id));
         }
 
         [Command("sync", "Re-scans the folder for added or removed grids")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void Sync(string NameOrSteamID)
+        public async void Sync(string nameOrSteamId)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncHangar(NameOrSteamID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SyncHangar(nameOrSteamId));
 
         }
 
@@ -55,8 +55,8 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void SyncAll()
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SyncAll());
         }
 
         [Command("autohangar", "Runs Autohangar")]
@@ -76,20 +76,20 @@ namespace QuantumHangar.Commands
             bool hangerLargest = false;
             bool saveAll = false;
 
-            foreach (var _override in overrides) {
-                if (_override == "staticgrids")
+            foreach (var @override in overrides) {
+                if (@override == "staticgrids")
                 {
                     staticgrids = true;
-                } else if (_override == "largegrids")
+                } else if (@override == "largegrids")
                 {
                     largegrids = true;
-                } else if (_override == "smallgrids")
+                } else if (@override == "smallgrids")
                 {
                     smallgrids = true;
-                } else if (_override == "hangerLargest")
+                } else if (@override == "hangerLargest")
                 {
                     hangerLargest = true;
-                } else if (_override == "saveAll")
+                } else if (@override == "saveAll")
                 {
                     saveAll = true;
                 }
@@ -100,9 +100,9 @@ namespace QuantumHangar.Commands
 
         [Command("enable", "Enables Hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Enable(bool SetPluginEnable)
+        public void Enable(bool setPluginEnable)
         {
-            Hangar.Config.PluginEnabled = SetPluginEnable;
+            Hangar.Config.PluginEnabled = setPluginEnable;
         }
 
 
@@ -122,42 +122,42 @@ namespace QuantumHangar.Commands
 
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void SaveGrid(string GridName = "")
+        public async void SaveGrid(string gridName = "")
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SaveGrid(GridName));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SaveGrid(gridName));
         }
 
         [Command("list", "Lists all grids of given player")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void ListGrids(string NameOrSteamID)
+        public async void ListGrids(string nameOrSteamId)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.ListGrids(NameOrSteamID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.ListGrids(nameOrSteamId));
         }
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void SaveGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public async void SaveGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.LoadGrid(NameOrSteamID, ID, FromSavePos));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void Remove(string NameOrSteamID, int ID)
+        public async void Remove(string nameOrSteamId, int id)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.RemoveGrid(NameOrSteamID, ID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.RemoveGrid(nameOrSteamId, id));
         }
 
         [Command("sync", "Re-scans the folder for added or removed grids")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void Sync(string NameOrSteamID)
+        public async void Sync(string nameOrSteamId)
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncHangar(NameOrSteamID));
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SyncHangar(nameOrSteamId));
 
         }
 
@@ -165,8 +165,8 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Moderator)]
         public async void SyncAll()
         {
-            AdminChecks User = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => User.SyncAll());
+            AdminChecks user = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SyncAll());
 
         }
 
@@ -187,20 +187,20 @@ namespace QuantumHangar.Commands
             bool hangerLargest = false;
             bool saveAll = false;
 
-            foreach (var _override in overrides) {
-                if (_override == "staticgrids")
+            foreach (var @override in overrides) {
+                if (@override == "staticgrids")
                 {
                     staticgrids = true;
-                } else if (_override == "largegrids")
+                } else if (@override == "largegrids")
                 {
                     largegrids = true;
-                } else if (_override == "smallgrids")
+                } else if (@override == "smallgrids")
                 {
                     smallgrids = true;
-                } else if (_override == "hangerLargest")
+                } else if (@override == "hangerLargest")
                 {
                     hangerLargest = true;
-                } else if (_override == "saveAll")
+                } else if (@override == "saveAll")
                 {
                     saveAll = true;
                 }
@@ -211,9 +211,9 @@ namespace QuantumHangar.Commands
 
         [Command("enable", "Enables Hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public void Enable(bool SetPluginEnable)
+        public void Enable(bool setPluginEnable)
         {
-            Hangar.Config.PluginEnabled = SetPluginEnable;
+            Hangar.Config.PluginEnabled = setPluginEnable;
         }
 
         [Command("saveall", "Saves All grids on server into hangar")]

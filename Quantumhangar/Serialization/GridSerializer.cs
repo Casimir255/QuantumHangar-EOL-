@@ -20,53 +20,50 @@ namespace QuantumHangar.Serialization
         private static Settings Config => Hangar.Config;
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public static async Task<bool> SaveGridsAndClose(IEnumerable<MyCubeGrid> Grids, string Path, string GridName,
-            long OwnerIdentity)
+        public static async Task<bool> SaveGridsAndClose(IEnumerable<MyCubeGrid> grids, string path, string gridName,
+            long ownerIdentity)
         {
-            var CurrentThread = Thread.CurrentThread;
-            if (CurrentThread == MyUtils.MainThread)
+            var currentThread = Thread.CurrentThread;
+            if (currentThread == MyUtils.MainThread)
             {
                 //Log.Warn("Running on game thread!");
 
-                var grids = GetObjectBuilders(Grids);
-                Grids.Close();
+                var gridObjects = GetObjectBuilders(grids);
+                grids.Close();
 
 
                 await Task.Run(() =>
                 {
-                    SaveGridToFile(Path, GridName, grids);
-                    PluginDependencies.BackupGrid(grids.ToList(), OwnerIdentity);
+                    SaveGridToFile(path, gridName, gridObjects);
+                    PluginDependencies.BackupGrid(gridObjects.ToList(), ownerIdentity);
                 });
 
                 return true;
             }
+            //Log.Warn("Not running on game thread!");
+
+            //Log.Info(Grids.Count());
+            var gridTask =
+                GameEvents.InvokeAsync(
+                    GetObjectBuilders, grids);
+            if (!gridTask.Wait(5000))
+            {
+                Log.Info("Grid saving timed out!");
+                return false;
+            }
             else
             {
-                //Log.Warn("Not running on game thread!");
-
-                //Log.Info(Grids.Count());
-                var GridTask =
-                    GameEvents.InvokeAsync<IEnumerable<MyCubeGrid>, IEnumerable<MyObjectBuilder_CubeGrid>>(
-                        GetObjectBuilders, Grids);
-                if (!GridTask.Wait(5000))
-                {
-                    Log.Info("Grid saving timed out!");
-                    return false;
-                }
-                else
-                {
-                    Grids.Close();
-                    //ClearAllAttachments(GridTask.Result);
-                    SaveGridToFile(Path, GridName, GridTask.Result);
-                    PluginDependencies.BackupGrid(GridTask.Result.ToList(), OwnerIdentity);
-                    return true;
-                }
+                grids.Close();
+                //ClearAllAttachments(GridTask.Result);
+                SaveGridToFile(path, gridName, gridTask.Result);
+                PluginDependencies.BackupGrid(gridTask.Result.ToList(), ownerIdentity);
+                return true;
             }
         }
 
-        private static void RemoveCharacters(MyCubeGrid Grid)
+        private static void RemoveCharacters(MyCubeGrid grid)
         {
-            foreach (var black in Grid.GetFatBlocks().OfType<MyCockpit>())
+            foreach (var black in grid.GetFatBlocks().OfType<MyCockpit>())
                 if (black.Pilot != null)
                 {
                     black.RequestRemovePilot();
@@ -74,12 +71,12 @@ namespace QuantumHangar.Serialization
                 }
         }
 
-        private static IEnumerable<MyObjectBuilder_CubeGrid> GetObjectBuilders(IEnumerable<MyCubeGrid> Grids)
+        private static IEnumerable<MyObjectBuilder_CubeGrid> GetObjectBuilders(IEnumerable<MyCubeGrid> grids)
         {
             //Log.Info("Collecting ObjectBuilders");
-            var Return = new List<MyObjectBuilder_CubeGrid>();
+            var @return = new List<MyObjectBuilder_CubeGrid>();
 
-            foreach (var grid in Grids)
+            foreach (var grid in grids)
             {
                 //Log.Info(grid.DisplayName);
                 RemoveCharacters(grid);
@@ -87,15 +84,15 @@ namespace QuantumHangar.Serialization
                 if (!(grid.GetObjectBuilder() is MyObjectBuilder_CubeGrid objectBuilder))
                     throw new ArgumentException(grid + " has a ObjectBuilder thats not for a CubeGrid");
                 // Log.Info("Adding objectbuilder!");
-                Return.Add(objectBuilder);
+                @return.Add(objectBuilder);
             }
 
-            return Return;
+            return @return;
         }
 
-        public static void ResetGear(IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        public static void ResetGear(IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
-            foreach (var grid in Grids)
+            foreach (var grid in grids)
             foreach (var block in grid.CubeBlocks.OfType<MyObjectBuilder_LandingGear>())
             {
                 //No sense and relocking something that is already off
@@ -114,67 +111,67 @@ namespace QuantumHangar.Serialization
         }
 
 
-        private static bool SaveGridToFile(string SavePath, string GridName,
-            IEnumerable<MyObjectBuilder_CubeGrid> GridBuilders)
+        private static bool SaveGridToFile(string savePath, string gridName,
+            IEnumerable<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             var definition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ShipBlueprintDefinition>();
 
             definition.Id = new MyDefinitionId(new MyObjectBuilderType(typeof(MyObjectBuilder_ShipBlueprintDefinition)),
-                GridName);
-            definition.CubeGrids = GridBuilders.ToArray();
+                gridName);
+            definition.CubeGrids = gridBuilders.ToArray();
             //PrepareGridForSave(definition);
 
             var builderDefinition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_Definitions>();
-            builderDefinition.ShipBlueprints = new MyObjectBuilder_ShipBlueprintDefinition[] { definition };
+            builderDefinition.ShipBlueprints = new[] { definition };
 
 
-            Log.Warn("Saving grid @" + Path.Combine(SavePath, GridName + ".sbc"));
-            return MyObjectBuilderSerializer.SerializeXML(Path.Combine(SavePath, GridName + ".sbc"), false,
+            Log.Warn("Saving grid @" + Path.Combine(savePath, gridName + ".sbc"));
+            return MyObjectBuilderSerializer.SerializeXML(Path.Combine(savePath, gridName + ".sbc"), false,
                 builderDefinition);
         }
 
-        public static bool LoadGrid(string Path, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        public static bool LoadGrid(string path, out IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
-            Grids = Enumerable.Empty<MyObjectBuilder_CubeGrid>();
-            if (!File.Exists(Path))
+            grids = Enumerable.Empty<MyObjectBuilder_CubeGrid>();
+            if (!File.Exists(path))
             {
-                Log.Error("Grid doesnt exsist @" + Path);
+                Log.Error("Grid doesnt exsist @" + path);
                 return false;
             }
 
             try
             {
-                if (MyObjectBuilderSerializer.DeserializeXML(Path, out MyObjectBuilder_Definitions Def))
+                if (MyObjectBuilderSerializer.DeserializeXML(path, out MyObjectBuilder_Definitions def))
                 {
-                    if (!TryGetGridsFromDefinition(Def, out Grids))
+                    if (!TryGetGridsFromDefinition(def, out grids))
                         return false;
 
-                    ResetGear(Grids);
+                    ResetGear(grids);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to deserialize grid: " + Path + " from file! Is this even an sbc?");
+                Log.Error(ex, "Failed to deserialize grid: " + path + " from file! Is this even an sbc?");
             }
 
             return false;
         }
 
-        private static bool TryGetGridsFromDefinition(MyObjectBuilder_Definitions Definition,
-            out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+        private static bool TryGetGridsFromDefinition(MyObjectBuilder_Definitions definition,
+            out IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
             //Should be able to load shipdef and prefabs that people load/drag in
-            Grids = new List<MyObjectBuilder_CubeGrid>();
-            if (Definition.Prefabs != null && Definition.Prefabs.Count() != 0)
+            grids = new List<MyObjectBuilder_CubeGrid>();
+            if (definition.Prefabs != null && definition.Prefabs.Count() != 0)
             {
-                Grids = Definition.Prefabs.Aggregate(Grids, (current, prefab) => current.Concat(prefab.CubeGrids));
+                grids = definition.Prefabs.Aggregate(grids, (current, prefab) => current.Concat(prefab.CubeGrids));
                 return true;
             }
 
-            if (Definition.ShipBlueprints != null && Definition.ShipBlueprints.Count() != 0)
+            if (definition.ShipBlueprints != null && definition.ShipBlueprints.Count() != 0)
             {
-                Grids = Definition.ShipBlueprints.Aggregate(Grids, (current, shipBlueprint) => current.Concat(shipBlueprint.CubeGrids));
+                grids = definition.ShipBlueprints.Aggregate(grids, (current, shipBlueprint) => current.Concat(shipBlueprint.CubeGrids));
                 return true;
             }
             Log.Error("Invalid Definition file!");
@@ -182,16 +179,16 @@ namespace QuantumHangar.Serialization
         }
 
 
-        public static void TransferGridOwnership(IEnumerable<MyObjectBuilder_CubeGrid> Grids, long Player,
-            bool Force = false)
+        public static void TransferGridOwnership(IEnumerable<MyObjectBuilder_CubeGrid> grids, long player,
+            bool force = false)
         {
-            if (!Force && !Config.OnLoadTransfer) return;
+            if (!force && !Config.OnLoadTransfer) return;
             //Will transfer pcu to new player
-            foreach (var CubeGridDef in Grids)
-            foreach (var block in CubeGridDef.CubeBlocks)
+            foreach (var cubeGridDef in grids)
+            foreach (var block in cubeGridDef.CubeBlocks)
             {
-                block.Owner = Player;
-                block.BuiltBy = Player;
+                block.Owner = player;
+                block.BuiltBy = player;
             }
         }
     }

@@ -58,10 +58,10 @@ namespace QuantumHangar
         }
 
 
-        public UserControl _control;
-        public UserControl GetControl() => _control ?? (_control = new UserControlInterface());
+        public UserControl Control;
+        public UserControl GetControl() => Control ?? (Control = new UserControlInterface());
 
-        private HangarMarketController Controller;
+        private HangarMarketController _controller;
 
 
         public override void Init(ITorchBase torch)
@@ -91,7 +91,7 @@ namespace QuantumHangar
 
             if (Config.GridMarketEnabled)
             {
-                Controller = new HangarMarketController();
+                _controller = new HangarMarketController();
             }
             else
             {
@@ -122,10 +122,10 @@ namespace QuantumHangar
                 {
                     Log.Warn("Moving!");
 
-                    string Destination = Path.Combine(MainPlayerDirectory, info.Name);
-                    Log.Warn($"Destination: {Destination}");
+                    string destination = Path.Combine(MainPlayerDirectory, info.Name);
+                    Log.Warn($"Destination: {destination}");
 
-                    Directory.Move(dir, Destination);
+                    Directory.Move(dir, destination);
 
                 }
             }
@@ -146,11 +146,11 @@ namespace QuantumHangar
 
                     //MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
                     //ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
-                    PluginManager Plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
-                    PluginDependencies.InitPluginDependencies(Plugins);
+                    PluginManager plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
+                    PluginDependencies.InitPluginDependencies(plugins);
                     ServerRunning = true;
                     AutoHangar.StartAutoHangar();
-                    Controller?.ServerStarted();
+                    _controller?.ServerStarted();
                     break;
 
                     
@@ -164,19 +164,19 @@ namespace QuantumHangar
         }
 
         // 60 frames =~ 1 sec, run update about every min
-        int MaxUpdateTime = 60 * 60;
-        int CurrentFrameCount = 0;
+        int _maxUpdateTime = 60 * 60;
+        int _currentFrameCount = 0;
 
         public override void Update()
         {
-            if (CurrentFrameCount >= MaxUpdateTime)
+            if (_currentFrameCount >= _maxUpdateTime)
             {
                 Update1Min();
-                CurrentFrameCount = 0;
+                _currentFrameCount = 0;
                 return;
             }
 
-            CurrentFrameCount++;
+            _currentFrameCount++;
         }
 
         public void Update1Min()
@@ -188,7 +188,7 @@ namespace QuantumHangar
 
         public void PluginDispose()
         {
-            Controller?.Close();
+            _controller?.Close();
             AutoHangar.Dispose();
             PluginDependencies.Dispose();
         }
@@ -201,16 +201,16 @@ namespace QuantumHangar
         private long _startTime;
         //private long _currentCooldown;
 
-        private string grid;
+        private string _grid;
         public void StartCooldown(string command)
         {
-            this.grid = command;
+            this._grid = command;
             _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
         public bool CheckCommandStatus(string command)
         {
 
-            if (this.grid != command)
+            if (this._grid != command)
                 return true;
 
             long elapsedTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _startTime;

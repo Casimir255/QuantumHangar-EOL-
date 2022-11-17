@@ -23,8 +23,8 @@ namespace QuantumHangar.HangarMarket
         {
             try
             {
-                var ReceivedMessage = MyAPIGateway.Utilities.SerializeFromBinary<Message>(arg2);
-                switch (ReceivedMessage.Type)
+                var receivedMessage = MyAPIGateway.Utilities.SerializeFromBinary<Message>(arg2);
+                switch (receivedMessage.Type)
                 {
                     case Message.MessageType.MarketOffersUpdate:
                         ReplyAllOffers(arg3);
@@ -32,12 +32,12 @@ namespace QuantumHangar.HangarMarket
 
 
                     case Message.MessageType.GridDefinitionPreview:
-                        SetGridPreview(ReceivedMessage.Definition);
+                        SetGridPreview(receivedMessage.Definition);
                         break;
 
 
                     case Message.MessageType.BuySelectedGrid:
-                        PurchaseGrid(ReceivedMessage.BuyRequest, arg3);
+                        PurchaseGrid(receivedMessage.BuyRequest, arg3);
                         break;
 
 
@@ -53,7 +53,7 @@ namespace QuantumHangar.HangarMarket
         }
 
 
-        private static void ReplyAllOffers(ulong SteamID)
+        private static void ReplyAllOffers(ulong steamId)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace QuantumHangar.HangarMarket
 
 
                 MyAPIGateway.Multiplayer.SendMessageTo(NetworkId, MyAPIGateway.Utilities.SerializeToBinary(message),
-                    SteamID);
+                    steamId);
                 //Log.Warn("Sending all market offers back to client!");
             }
             catch (Exception ex)
@@ -101,24 +101,24 @@ namespace QuantumHangar.HangarMarket
         }
 
 
-        private void SetGridPreview(GridDefinition Definition)
+        private void SetGridPreview(GridDefinition definition)
         {
             //Need to have a cooldown on this shit
-            Log.Warn($"Client requested to set grid preview of {Definition.GridName}!");
+            Log.Warn($"Client requested to set grid preview of {definition.GridName}!");
 
 
             //Get grid.
-            HangarMarketController.SetGridPreview(Definition.ProjectorEntityId, Definition.OwnerSteamId,
-                Definition.GridName);
+            HangarMarketController.SetGridPreview(definition.ProjectorEntityId, definition.OwnerSteamId,
+                definition.GridName);
         }
 
-        private static void PurchaseGrid(BuyGridRequest Offer, ulong BuyerSteamID)
+        private static void PurchaseGrid(BuyGridRequest offer, ulong buyerSteamId)
         {
-            HangarMarketController.PurchaseGridOffer(BuyerSteamID, Offer.OwnerSteamId, Offer.GridName);
+            HangarMarketController.PurchaseGridOffer(buyerSteamId, offer.OwnerSteamId, offer.GridName);
         }
 
 
-        public void close()
+        public void Close()
         {
             MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(NetworkId, ClientMessageReceived);
         }
@@ -173,9 +173,9 @@ namespace QuantumHangar.HangarMarket
         {
         }
 
-        public Message(MessageType Type)
+        public Message(MessageType type)
         {
-            this.Type = Type;
+            this.Type = type;
         }
     }
 }

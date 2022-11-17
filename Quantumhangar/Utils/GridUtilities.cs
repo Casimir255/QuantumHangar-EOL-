@@ -20,9 +20,9 @@ namespace QuantumHangar.Utils
 
         private static Settings Config => Hangar.Config;
 
-        public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> Grids)
+        public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> grids)
         {
-            Grids = new List<MyCubeGrid>();
+            grids = new List<MyCubeGrid>();
 
             if (string.IsNullOrEmpty(gridNameOrEntityId) && character == null)
                 return false;
@@ -42,8 +42,8 @@ namespace QuantumHangar.Utils
                 if (groups.Count > 1)
                     return false;
 
-                Grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
-                    .Where(Grid => Grid.Physics != null && !Grid.IsPreview && !Grid.MarkedForClose));
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
+                    .Where(grid => grid.Physics != null && !grid.IsPreview && !grid.MarkedForClose));
             }
             else
             {
@@ -58,11 +58,11 @@ namespace QuantumHangar.Utils
                     return false;
 
 
-                Grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
-                    .Where(Grid => Grid.Physics != null && !Grid.IsPreview && !Grid.MarkedForClose));
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
+                    .Where(grid => grid.Physics != null && !grid.IsPreview && !grid.MarkedForClose));
             }
 
-            return Grids != null && Grids.Count != 0;
+            return grids != null && grids.Count != 0;
         }
 
         public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
@@ -87,45 +87,45 @@ namespace QuantumHangar.Utils
             return grids;
         }
 
-        private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> Grids, long playerId)
+        private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> grids, long playerId)
         {
-            Grids.BiggestGrid(out var Grid);
+            grids.BiggestGrid(out var grid);
 
 
             /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
-            if (Grid == null || Grid.BigOwners.Count == 0)
+            if (grid == null || grid.BigOwners.Count == 0)
                 return false;
 
-            return Grid.BigOwners.Contains(playerId);
+            return grid.BigOwners.Contains(playerId);
         }
 
-        public static void BiggestGrid(this IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyCubeGrid> grids, out MyCubeGrid biggestGrid)
         {
-            BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
+            biggestGrid = grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
         }
 
-        public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> Grids,
-            out MyObjectBuilder_CubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> grids,
+            out MyObjectBuilder_CubeGrid biggestGrid)
         {
-            BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
+            biggestGrid = grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
         }
 
         public static long GetBiggestOwner(this MyCubeGrid grid)
         {
-            var FatBlocks = grid.GetFatBlocks().ToList();
+            var fatBlocks = grid.GetFatBlocks().ToList();
 
-            var TotalFatBlocks = 0;
+            var totalFatBlocks = 0;
 
 
             var owners = new Dictionary<long, int>();
-            foreach (var fat in FatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
+            foreach (var fat in fatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
             {
                 //WTF happened here?
                 //if (fat.OwnerId == 0)
                 //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
 
 
-                TotalFatBlocks++;
+                totalFatBlocks++;
 
                 if (fat.OwnerId == 0) continue;
                 if (!owners.ContainsKey(fat.OwnerId))
@@ -138,19 +138,19 @@ namespace QuantumHangar.Utils
         }
 
 
-        public static void Close(this IEnumerable<MyCubeGrid> Grids, string Reason = "Grid was Hangared")
+        public static void Close(this IEnumerable<MyCubeGrid> grids, string reason = "Grid was Hangared")
         {
-            var Builder = new StringBuilder();
-            Builder.AppendLine("Closing the following grids: ");
-            foreach (var Grid in Grids)
+            var builder = new StringBuilder();
+            builder.AppendLine("Closing the following grids: ");
+            foreach (var grid in grids)
             {
-                Builder.Append(Grid.DisplayName + ", ");
-                Grid.Close();
+                builder.Append(grid.DisplayName + ", ");
+                grid.Close();
             }
 
-            Builder.AppendLine("Reason: " + Reason);
+            builder.AppendLine("Reason: " + reason);
 
-            Log.Info(Builder.ToString());
+            Log.Info(builder.ToString());
         }
     }
 

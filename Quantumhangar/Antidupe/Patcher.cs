@@ -12,10 +12,10 @@ namespace QuantumHangar.Utilities
 
         public void Apply(PatchContext ctx, Hangar plugin)
         {
-            var SaveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
+            var saveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
                 new[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
-            if (SaveMethod == null) throw new InvalidOperationException("Couldn't find Save");
-            ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
+            if (saveMethod == null) throw new InvalidOperationException("Couldn't find Save");
+            ctx.GetPattern(saveMethod).Suffixes.Add(Method(nameof(AfterSave)));
             Plugin = plugin;
         }
 
@@ -24,9 +24,9 @@ namespace QuantumHangar.Utilities
             return typeof(Patcher).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic);
         }
 
-        private static void AfterSave(bool __result)
+        private static void AfterSave(bool result)
         {
-            if (__result)
+            if (result)
             {
             }
         }

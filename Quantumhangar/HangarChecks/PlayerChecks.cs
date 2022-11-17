@@ -37,27 +37,27 @@ namespace QuantumHangar.HangarChecks
         // PlayerChecks as initiated by another server to call LoadGrid.
         // We don't have a command context nor a player character object to work with,
         // but we receive all required data in the Nexus message.
-        public PlayerChecks(Chat chat, GpsSender gpsSender, ulong steamID, long identityID, Vector3D playerPosition)
+        public PlayerChecks(Chat chat, GpsSender gpsSender, ulong steamId, long identityId, Vector3D playerPosition)
         {
             _chat = chat;
             _gpsSender = gpsSender;
-            SteamId = steamID;
-            _identityId = identityID;
+            SteamId = steamId;
+            _identityId = identityId;
             _playerPosition = playerPosition;
             // UserCharacter can remain null, it is only used by SaveGrid.
         }
 
-        public PlayerChecks(CommandContext Context)
+        public PlayerChecks(CommandContext context)
         {
-            _chat = new Chat(Context);
+            _chat = new Chat(context);
             _gpsSender = new GpsSender();
-            SteamId = Context.Player.SteamUserId;
-            _identityId = Context.Player.Identity.IdentityId;
-            _playerPosition = Context.Player.GetPosition();
-            _userCharacter = (MyCharacter)Context.Player.Character;
+            SteamId = context.Player.SteamUserId;
+            _identityId = context.Player.Identity.IdentityId;
+            _playerPosition = context.Player.GetPosition();
+            _userCharacter = (MyCharacter)context.Player.Character;
         }
 
-        private bool PerformMainChecks(bool IsSaving)
+        private bool PerformMainChecks(bool isSaving)
         {
             if (!Config.PluginEnabled)
             {
@@ -73,7 +73,7 @@ namespace QuantumHangar.HangarChecks
             }
 
 
-            if (!CheckZoneRestrictions(IsSaving))
+            if (!CheckZoneRestrictions(isSaving))
             {
                 _chat?.Respond("You are not in the right zone!");
                 return false;
@@ -109,25 +109,25 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            var Result = new GridResult();
+            var result = new GridResult();
 
             //Gets grids player is looking at
-            if (!Result.GetGrids(_chat, _userCharacter))
+            if (!result.GetGrids(_chat, _userCharacter))
                 return;
 
 
-            if (IsAnyGridInsideSafeZone(Result))
+            if (IsAnyGridInsideSafeZone(result))
                 return;
 
 
             //Calculates incoming grids data
-            var GridData = Result.GenerateGridStamp();
+            var gridData = result.GenerateGridStamp();
 
 
             //PlayersHanger.CheckGridLimits(GridData);
 
             //Checks for single and all slot block and grid limits
-            if (!PlayersHanger.ExtensiveLimitChecker(GridData))
+            if (!PlayersHanger.ExtensiveLimitChecker(gridData))
                 return;
 
 
@@ -135,16 +135,16 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!RequireSaveCurrency(Result))
+            if (!RequireSaveCurrency(result))
                 return;
 
 
-            PlayersHanger.SelectedPlayerFile.FormatGridName(GridData);
+            PlayersHanger.SelectedPlayerFile.FormatGridName(gridData);
 
-            var val = await PlayersHanger.SaveGridsToFile(Result, GridData.GridName);
+            var val = await PlayersHanger.SaveGridsToFile(result, gridData.GridName);
             if (val)
             {
-                PlayersHanger.SaveGridStamp(GridData);
+                PlayersHanger.SaveGridStamp(gridData);
                 _chat?.Respond("Save Complete!");
             }
             else
@@ -162,7 +162,7 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                long SaveCost = 0;
+                long saveCost = 0;
                 switch (Config.HangarSaveCostType)
                 {
                     case CostType.BlockCount:
@@ -172,15 +172,15 @@ namespace QuantumHangar.HangarChecks
                             {
                                 if (grid.IsStatic)
                                     //If grid is station
-                                    SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomStaticGridCurrency);
+                                    saveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomStaticGridCurrency);
                                 else
                                     //If grid is large grid
-                                    SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomLargeGridCurrency);
+                                    saveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomLargeGridCurrency);
                             }
                             else
                             {
                                 //if its a small grid
-                                SaveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomSmallGridCurrency);
+                                saveCost += Convert.ToInt64(grid.BlocksCount * Config.CustomSmallGridCurrency);
                             }
 
                         //Multiply by 
@@ -189,7 +189,7 @@ namespace QuantumHangar.HangarChecks
 
                     case CostType.Fixed:
 
-                        SaveCost = Convert.ToInt64(Config.CustomStaticGridCurrency);
+                        saveCost = Convert.ToInt64(Config.CustomStaticGridCurrency);
 
                         break;
 
@@ -201,24 +201,24 @@ namespace QuantumHangar.HangarChecks
                             {
                                 if (grid.IsStatic)
                                     //If grid is station
-                                    SaveCost += Convert.ToInt64(Config.CustomStaticGridCurrency);
+                                    saveCost += Convert.ToInt64(Config.CustomStaticGridCurrency);
                                 else
                                     //If grid is large grid
-                                    SaveCost += Convert.ToInt64(Config.CustomLargeGridCurrency);
+                                    saveCost += Convert.ToInt64(Config.CustomLargeGridCurrency);
                             }
                             else
                             {
                                 //if its a small grid
-                                SaveCost += Convert.ToInt64(Config.CustomSmallGridCurrency);
+                                saveCost += Convert.ToInt64(Config.CustomSmallGridCurrency);
                             }
 
                         break;
                 }
 
-                TryGetPlayerBalance(out var Balance);
+                TryGetPlayerBalance(out var balance);
 
 
-                if (Balance >= SaveCost)
+                if (balance >= saveCost)
                 {
                     //Check command status!
                     var command = result.BiggestGrid.DisplayName;
@@ -231,15 +231,15 @@ namespace QuantumHangar.HangarChecks
                             confirmationCooldownMap.Remove(_identityId);
                             _chat?.Respond("Confirmed! Saving grid!");
 
-                            ChangeBalance(-1 * SaveCost);
+                            ChangeBalance(-1 * saveCost);
                             return true;
                         }
-                        _chat?.Respond("Saving this grid in your hangar will cost " + SaveCost +
+                        _chat?.Respond("Saving this grid in your hangar will cost " + saveCost +
                                       " SC. Run this command again within 30 secs to continue!");
                         confirmationCooldown.StartCooldown(command);
                         return false;
                     }
-                    _chat?.Respond("Saving this grid in your hangar will cost " + SaveCost +
+                    _chat?.Respond("Saving this grid in your hangar will cost " + saveCost +
                                   " SC. Run this command again within 30 secs to continue!");
                     confirmationCooldown = new CurrentCooldown();
                     confirmationCooldown.StartCooldown(command);
@@ -248,14 +248,14 @@ namespace QuantumHangar.HangarChecks
                 }
                 else
                 {
-                    var required = SaveCost - Balance;
+                    var required = saveCost - balance;
                     _chat?.Respond("You need an additional " + required + " SC to perform this action!");
                     return false;
                 }
             }
         }
 
-        private bool RequireLoadCurrency(GridStamp Grid)
+        private bool RequireLoadCurrency(GridStamp grid)
         {
             //MyObjectBuilder_Definitions(MyParticlesManager)
             if (!Config.RequireCurrency)
@@ -264,39 +264,39 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                long LoadCost = 0;
+                long loadCost = 0;
                 switch (Config.HangarLoadCostType)
                 {
                     case CostType.BlockCount:
                         //If grid is station
-                        LoadCost = Convert.ToInt64(Grid.NumberofBlocks * Config.LoadStaticGridCurrency);
+                        loadCost = Convert.ToInt64(grid.NumberofBlocks * Config.LoadStaticGridCurrency);
                         break;
 
 
                     case CostType.Fixed:
 
-                        LoadCost = Convert.ToInt64(Config.LoadStaticGridCurrency);
+                        loadCost = Convert.ToInt64(Config.LoadStaticGridCurrency);
 
                         break;
 
 
                     case CostType.PerGrid:
 
-                        LoadCost += Convert.ToInt64(Grid.StaticGrids * Config.LoadStaticGridCurrency);
-                        LoadCost += Convert.ToInt64(Grid.LargeGrids * Config.LoadLargeGridCurrency);
-                        LoadCost += Convert.ToInt64(Grid.SmallGrids * Config.LoadSmallGridCurrency);
+                        loadCost += Convert.ToInt64(grid.StaticGrids * Config.LoadStaticGridCurrency);
+                        loadCost += Convert.ToInt64(grid.LargeGrids * Config.LoadLargeGridCurrency);
+                        loadCost += Convert.ToInt64(grid.SmallGrids * Config.LoadSmallGridCurrency);
 
 
                         break;
                 }
 
-                TryGetPlayerBalance(out var Balance);
+                TryGetPlayerBalance(out var balance);
 
 
-                if (Balance >= LoadCost)
+                if (balance >= loadCost)
                 {
                     //Check command status!
-                    var command = Grid.GridName;
+                    var command = grid.GridName;
                     var confirmationCooldownMap = Hangar.ConfirmationsMap;
                     if (confirmationCooldownMap.TryGetValue(_identityId, out var confirmationCooldown))
                     {
@@ -306,12 +306,12 @@ namespace QuantumHangar.HangarChecks
                             confirmationCooldownMap.Remove(_identityId);
                             _chat?.Respond("Confirmed! Loading grid!");
 
-                            ChangeBalance(-1 * LoadCost);
+                            ChangeBalance(-1 * loadCost);
                             return true;
                         }
                         else
                         {
-                            _chat?.Respond("Loading this grid will cost " + LoadCost +
+                            _chat?.Respond("Loading this grid will cost " + loadCost +
                                           " SC. Run this command again within 30 secs to continue!");
                             confirmationCooldown.StartCooldown(command);
                             return false;
@@ -319,7 +319,7 @@ namespace QuantumHangar.HangarChecks
                     }
                     else
                     {
-                        _chat?.Respond("Loading this grid will cost " + LoadCost +
+                        _chat?.Respond("Loading this grid will cost " + loadCost +
                                       " SC. Run this command again within 30 secs to continue!");
                         confirmationCooldown = new CurrentCooldown();
                         confirmationCooldown.StartCooldown(command);
@@ -329,7 +329,7 @@ namespace QuantumHangar.HangarChecks
                 }
                 else
                 {
-                    var required = LoadCost - Balance;
+                    var required = loadCost - balance;
                     _chat?.Respond("You need an additional " + required + " SC to perform this action!");
                     return false;
                 }
@@ -346,71 +346,71 @@ namespace QuantumHangar.HangarChecks
         {
             PlayersHanger = new PlayerHangar(SteamId, _chat);
 
-            if (!PlayersHanger.ParseInput(input, out var ID))
+            if (!PlayersHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
-            PlayersHanger.DetailedReport(ID);
+            PlayersHanger.DetailedReport(id);
         }
 
-        public void LoadGrid(string input, bool LoadNearPlayer)
+        public void LoadGrid(string input, bool loadNearPlayer)
         {
             if (!PerformMainChecks(false))
                 return;
 
 
-            if (!PlayersHanger.ParseInput(input, out var ID))
+            if (!PlayersHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
 
-            if (!PlayersHanger.TryGetGridStamp(ID, out var Stamp))
+            if (!PlayersHanger.TryGetGridStamp(id, out var stamp))
                 return;
 
 
             //Check to see if the grid is for sale. We need to let the player know if it is
-            if (!CheckGridForSale(Stamp, ID))
+            if (!CheckGridForSale(stamp, id))
                 return;
 
 
-            if (!PlayersHanger.LoadGrid(Stamp, out var Grids))
+            if (!PlayersHanger.LoadGrid(stamp, out var grids))
             {
-                Log.Error($"Loading grid {ID} failed for {_identityId}!");
+                Log.Error($"Loading grid {id} failed for {_identityId}!");
                 _chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
 
-            if (!PlayersHanger.CheckLimits(Stamp, Grids))
+            if (!PlayersHanger.CheckLimits(stamp, grids))
                 return;
 
-            if (!CheckEnemyDistance(Config.LoadType, Stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
+            if (!CheckEnemyDistance(Config.LoadType, stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
                 return;
 
-            if (!RequireLoadCurrency(Stamp))
+            if (!RequireLoadCurrency(stamp))
                 return;
 
-            PluginDependencies.BackupGrid(Grids.ToList(), _identityId);
-            var SpawnPos = DetermineSpawnPosition(Stamp.GridSavePosition, _playerPosition, out var KeepOriginalPosition,
-                LoadNearPlayer);
+            PluginDependencies.BackupGrid(grids.ToList(), _identityId);
+            var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition,
+                loadNearPlayer);
 
-            if (!CheckDistanceToLoadPoint(SpawnPos))
+            if (!CheckDistanceToLoadPoint(spawnPos))
                 return;
 
             if (PluginDependencies.NexusInstalled && Config.NexusApi &&
-                NexusSupport.RelayLoadIfNecessary(SpawnPos, ID, LoadNearPlayer, _chat, SteamId, _identityId,
+                NexusSupport.RelayLoadIfNecessary(spawnPos, id, loadNearPlayer, _chat, SteamId, _identityId,
                     _playerPosition))
                 return;
 
-            var Spawner = new ParallelSpawner(Grids, _chat, SpawnedGridsSuccessful);
-            Log.Info("Attempting Grid Spawning @" + SpawnPos.ToString());
-            if (Spawner.Start(SpawnPos, KeepOriginalPosition))
+            var spawner = new ParallelSpawner(grids, _chat, SpawnedGridsSuccessful);
+            Log.Info("Attempting Grid Spawning @" + spawnPos.ToString());
+            if (spawner.Start(spawnPos, keepOriginalPosition))
             {
                 _chat?.Respond("Spawning Complete!");
-                PlayersHanger.RemoveGridStamp(ID);
+                PlayersHanger.RemoveGridStamp(id);
             }
             else
             {
@@ -418,22 +418,22 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        public void SellGrid(int ID, long Price, string Description)
+        public void SellGrid(int id, long price, string description)
         {
             PlayersHanger = new PlayerHangar(SteamId, _chat);
 
-            if (!PlayersHanger.TryGetGridStamp(ID, out var Stamp))
+            if (!PlayersHanger.TryGetGridStamp(id, out var stamp))
                 return;
 
             //Check to see if grid is already for sale
-            if (Stamp.IsGridForSale())
+            if (stamp.IsGridForSale())
             {
                 _chat.Respond("This grid is already for sale!");
                 return;
             }
 
 
-            if (!PlayersHanger.SellSelectedGrid(Stamp, Price, Description))
+            if (!PlayersHanger.SellSelectedGrid(stamp, price, description))
                 return;
 
             _chat.Respond("Grid has been succesfully listed!");
@@ -441,75 +441,75 @@ namespace QuantumHangar.HangarChecks
 
         public void RemoveGrid(string input)
         {
-            if (!PlayersHanger.ParseInput(input, out var ID))
+            if (!PlayersHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
             PlayersHanger = new PlayerHangar(SteamId, _chat);
-            if (PlayersHanger.RemoveGridStamp(ID))
+            if (PlayersHanger.RemoveGridStamp(id))
                 _chat.Respond("Successfully removed grid!");
         }
 
-        private void SpawnedGridsSuccessful(HashSet<MyCubeGrid> Grids)
+        private void SpawnedGridsSuccessful(HashSet<MyCubeGrid> grids)
         {
-            Grids.BiggestGrid(out var BiggestGrid);
+            grids.BiggestGrid(out var biggestGrid);
 
-            if (BiggestGrid != null && _identityId != 0)
-                _gpsSender.SendGps(BiggestGrid.PositionComp.GetPosition(), BiggestGrid.DisplayName, _identityId);
+            if (biggestGrid != null && _identityId != 0)
+                _gpsSender.SendGps(biggestGrid.PositionComp.GetPosition(), biggestGrid.DisplayName, _identityId);
         }
 
-        private bool CheckZoneRestrictions(bool IsSave)
+        private bool CheckZoneRestrictions(bool isSave)
         {
             if (Config.ZoneRestrictions.Count == 0) return true;
             //Get save point
-            var ClosestPoint = -1;
-            double Distance = -1;
+            var closestPoint = -1;
+            double distance = -1;
 
             for (var i = 0; i < Config.ZoneRestrictions.Count(); i++)
             {
-                var ZoneCenter = new Vector3D(Config.ZoneRestrictions[i].X, Config.ZoneRestrictions[i].Y,
+                var zoneCenter = new Vector3D(Config.ZoneRestrictions[i].X, Config.ZoneRestrictions[i].Y,
                     Config.ZoneRestrictions[i].Z);
 
-                var PlayerDistance = Vector3D.Distance(ZoneCenter, _playerPosition);
+                var playerDistance = Vector3D.Distance(zoneCenter, _playerPosition);
 
-                if (PlayerDistance <= Config.ZoneRestrictions[i].Radius)
+                if (playerDistance <= Config.ZoneRestrictions[i].Radius)
                 {
                     //if player is within range
 
-                    if (IsSave && !Config.ZoneRestrictions[i].AllowSaving)
+                    if (isSave && !Config.ZoneRestrictions[i].AllowSaving)
                     {
                         _chat?.Respond("You are not permitted to save grids in this zone");
                         return false;
                     }
 
-                    if (IsSave || Config.ZoneRestrictions[i].AllowLoading) return true;
+                    if (isSave || Config.ZoneRestrictions[i].AllowLoading) return true;
                     _chat?.Respond("You are not permitted to load grids in this zone");
                     return false;
 
                 }
 
 
-                if (IsSave && Config.ZoneRestrictions[i].AllowSaving)
-                    if (ClosestPoint == -1 || PlayerDistance <= Distance)
+                if (isSave && Config.ZoneRestrictions[i].AllowSaving)
+                    if (closestPoint == -1 || playerDistance <= distance)
                     {
-                        ClosestPoint = i;
-                        Distance = PlayerDistance;
+                        closestPoint = i;
+                        distance = playerDistance;
                     }
 
 
-                if (IsSave || !Config.ZoneRestrictions[i].AllowLoading) continue;
-                if (ClosestPoint != -1 && !(PlayerDistance <= Distance)) continue;
-                ClosestPoint = i;
-                Distance = PlayerDistance;
+                if (isSave || !Config.ZoneRestrictions[i].AllowLoading) continue;
+                if (closestPoint != -1 && !(playerDistance <= distance)) continue;
+                closestPoint = i;
+                distance = playerDistance;
             }
 
-            Vector3D ClosestZone;
+            Vector3D closestZone;
             try
             {
-                ClosestZone = new Vector3D(Config.ZoneRestrictions[ClosestPoint].X,
-                    Config.ZoneRestrictions[ClosestPoint].Y, Config.ZoneRestrictions[ClosestPoint].Z);
+                closestZone = new Vector3D(Config.ZoneRestrictions[closestPoint].X,
+                    Config.ZoneRestrictions[closestPoint].Y, Config.ZoneRestrictions[closestPoint].Z);
             }
             catch (Exception)
             {
@@ -519,17 +519,17 @@ namespace QuantumHangar.HangarChecks
             }
 
 
-            if (IsSave)
+            if (isSave)
             {
-                _gpsSender.SendGps(ClosestZone,
-                    Config.ZoneRestrictions[ClosestPoint].Name + " (within " +
-                    Config.ZoneRestrictions[ClosestPoint].Radius + "m)", _identityId);
+                _gpsSender.SendGps(closestZone,
+                    Config.ZoneRestrictions[closestPoint].Name + " (within " +
+                    Config.ZoneRestrictions[closestPoint].Radius + "m)", _identityId);
                 _chat?.Respond("Nearest save area has been added to your HUD");
                 return false;
             }
-            _gpsSender.SendGps(ClosestZone,
-                Config.ZoneRestrictions[ClosestPoint].Name + " (within " +
-                Config.ZoneRestrictions[ClosestPoint].Radius + "m)", _identityId);
+            _gpsSender.SendGps(closestZone,
+                Config.ZoneRestrictions[closestPoint].Name + " (within " +
+                Config.ZoneRestrictions[closestPoint].Radius + "m)", _identityId);
             //Chat chat = new Chat(Context);
             _chat?.Respond("Nearest load area has been added to your HUD");
             return false;
@@ -547,152 +547,152 @@ namespace QuantumHangar.HangarChecks
             }
 
             if (Config.MaxGravityAmount == 0) return true;
-            var Gravity = MyGravityProviderSystem.CalculateNaturalGravityInPoint(_playerPosition).Length() / 9.81f;
-            if (!(Gravity > Config.MaxGravityAmount)) return true;
+            var gravity = MyGravityProviderSystem.CalculateNaturalGravityInPoint(_playerPosition).Length() / 9.81f;
+            if (!(gravity > Config.MaxGravityAmount)) return true;
             //Log.Warn("Players gravity amount: " + Gravity);
             _chat?.Respond("You are not permitted to Save/load in this gravity amount. Max amount: " +
                           Config.MaxGravityAmount + "g");
             return false;
         }
 
-        private bool CheckEnemyDistance(LoadType LoadingAtSavePoint, Vector3D Position = new Vector3D())
+        private bool CheckEnemyDistance(LoadType loadingAtSavePoint, Vector3D position = new Vector3D())
         {
-            if (LoadingAtSavePoint == LoadType.ForceLoadMearPlayer) Position = _playerPosition;
+            if (loadingAtSavePoint == LoadType.ForceLoadMearPlayer) position = _playerPosition;
 
-            var PlayersFaction = MySession.Static.Factions.GetPlayerFaction(_identityId);
-            var EnemyFoundFlag = false;
+            var playersFaction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            var enemyFoundFlag = false;
 
 
             if (Config.DistanceCheck > 0)
                 //Check enemy location! If under limit return!
-                foreach (var P in MySession.Static.Players.GetOnlinePlayers())
+                foreach (var p in MySession.Static.Players.GetOnlinePlayers())
                 {
-                    if (P.Character == null || P.Character.MarkedForClose)
+                    if (p.Character == null || p.Character.MarkedForClose)
                         continue;
 
-                    Vector3D Pos;
-                    if (P.Character.IsUsing is MyCryoChamber || P.Character.IsUsing is MyCockpit)
-                        Pos = (P.Character.IsUsing as MyCockpit).PositionComp.GetPosition();
+                    Vector3D pos;
+                    if (p.Character.IsUsing is MyCryoChamber || p.Character.IsUsing is MyCockpit)
+                        pos = (p.Character.IsUsing as MyCockpit).PositionComp.GetPosition();
                     else
-                        Pos = P.GetPosition();
+                        pos = p.GetPosition();
 
 
-                    var PlayerID = P.Identity.IdentityId;
-                    if (PlayerID == 0L) continue;
-                    if (PlayerID == _identityId)
+                    var playerId = p.Identity.IdentityId;
+                    if (playerId == 0L) continue;
+                    if (playerId == _identityId)
                         continue;
 
-                    var TargetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(PlayerID);
-                    if (PlayersFaction != null && TargetPlayerFaction != null)
+                    var targetPlayerFaction = MySession.Static.Factions.GetPlayerFaction(playerId);
+                    if (playersFaction != null && targetPlayerFaction != null)
                     {
-                        if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                        if (playersFaction.FactionId == targetPlayerFaction.FactionId)
                             continue;
 
                         //Neutrals count as allies not friends for some reason
-                        var Relation = MySession.Static.Factions
-                            .GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId).Item1;
-                        if (Relation == MyRelationsBetweenFactions.Neutral ||
-                            Relation == MyRelationsBetweenFactions.Friends)
+                        var relation = MySession.Static.Factions
+                            .GetRelationBetweenFactions(playersFaction.FactionId, targetPlayerFaction.FactionId).Item1;
+                        if (relation == MyRelationsBetweenFactions.Neutral ||
+                            relation == MyRelationsBetweenFactions.Friends)
                             continue;
                     }
 
 
-                    if (Vector3D.Distance(Position, Pos) == 0) continue;
+                    if (Vector3D.Distance(position, pos) == 0) continue;
 
-                    if (!(Vector3D.Distance(Position, Pos) <= Config.DistanceCheck)) continue;
+                    if (!(Vector3D.Distance(position, pos) <= Config.DistanceCheck)) continue;
                     _chat?.Respond("Unable to load grid! Enemy within " + Config.DistanceCheck + "m!");
-                    _gpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", _identityId);
-                    EnemyFoundFlag = true;
+                    _gpsSender.SendGps(position, "Failed Hangar Load! (Enemy nearby)", _identityId);
+                    enemyFoundFlag = true;
                     break;
                 }
 
 
-            if (!(Config.GridDistanceCheck > 0) || Config.GridCheckMinBlock <= 0 || EnemyFoundFlag != false)
-                return !EnemyFoundFlag;
+            if (!(Config.GridDistanceCheck > 0) || Config.GridCheckMinBlock <= 0 || enemyFoundFlag != false)
+                return !enemyFoundFlag;
             {
-                var SpawnSphere = new BoundingSphereD(Position, Config.GridDistanceCheck);
+                var spawnSphere = new BoundingSphereD(position, Config.GridDistanceCheck);
 
                 var entities = new List<MyEntity>();
-                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref SpawnSphere, entities);
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref spawnSphere, entities);
 
 
                 //This is looping through all grids in the specified range. If we find an enemy, we need to break and return/deny spawning
-                foreach (var Grid in entities.OfType<MyCubeGrid>())
+                foreach (var grid in entities.OfType<MyCubeGrid>())
                 {
-                    if (Grid == null || Grid.MarkedForClose)
+                    if (grid == null || grid.MarkedForClose)
                         continue;
 
-                    if (Grid.BigOwners.Count <= 0 || Grid.CubeBlocks.Count < Config.GridCheckMinBlock)
+                    if (grid.BigOwners.Count <= 0 || grid.CubeBlocks.Count < Config.GridCheckMinBlock)
                         continue;
 
-                    if (Grid.BigOwners.Contains(_identityId))
+                    if (grid.BigOwners.Contains(_identityId))
                         continue;
 
 
                     //if the player isnt big owner, we need to scan for faction mates
-                    var FoundAlly = true;
-                    foreach (var TargetPlayerFaction in Grid.BigOwners.Select(Owner => MySession.Static.Factions.GetPlayerFaction(Owner)))
+                    var foundAlly = true;
+                    foreach (var targetPlayerFaction in grid.BigOwners.Select(owner => MySession.Static.Factions.GetPlayerFaction(owner)))
                     {
-                        if (PlayersFaction != null && TargetPlayerFaction != null)
+                        if (playersFaction != null && targetPlayerFaction != null)
                         {
-                            if (PlayersFaction.FactionId == TargetPlayerFaction.FactionId)
+                            if (playersFaction.FactionId == targetPlayerFaction.FactionId)
                                 continue;
 
-                            var Relation = MySession.Static.Factions
-                                .GetRelationBetweenFactions(PlayersFaction.FactionId, TargetPlayerFaction.FactionId)
+                            var relation = MySession.Static.Factions
+                                .GetRelationBetweenFactions(playersFaction.FactionId, targetPlayerFaction.FactionId)
                                 .Item1;
-                            if (Relation != MyRelationsBetweenFactions.Enemies) continue;
-                            FoundAlly = false;
+                            if (relation != MyRelationsBetweenFactions.Enemies) continue;
+                            foundAlly = false;
                             break;
                         }
                         else
                         {
-                            FoundAlly = false;
+                            foundAlly = false;
                             break;
                         }
                     }
 
-                    if (FoundAlly) continue;
+                    if (foundAlly) continue;
                     //Stop loop
                     _chat?.Respond("Unable to load grid! Enemy within " + Config.GridDistanceCheck + "m!");
-                    _gpsSender.SendGps(Position, "Failed Hangar Load! (Enemy nearby)", _identityId);
-                    EnemyFoundFlag = true;
+                    _gpsSender.SendGps(position, "Failed Hangar Load! (Enemy nearby)", _identityId);
+                    enemyFoundFlag = true;
                     break;
                 }
             }
 
-            return !EnemyFoundFlag;
+            return !enemyFoundFlag;
         }
 
-        private static Vector3D DetermineSpawnPosition(Vector3D GridPosition, Vector3D CharacterPosition,
-            out bool KeepOriginalPosition, bool PlayersSpawnNearPlayer = false)
+        private static Vector3D DetermineSpawnPosition(Vector3D gridPosition, Vector3D characterPosition,
+            out bool keepOriginalPosition, bool playersSpawnNearPlayer = false)
         {
             switch (Config.LoadType)
             {
                 //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
-                case LoadType.ForceLoadNearOriginalPosition when GridPosition == Vector3D.Zero:
+                case LoadType.ForceLoadNearOriginalPosition when gridPosition == Vector3D.Zero:
                     Log.Info("Grid position is empty!");
-                    KeepOriginalPosition = false;
-                    return CharacterPosition;
+                    keepOriginalPosition = false;
+                    return characterPosition;
                 case LoadType.ForceLoadNearOriginalPosition:
                     Log.Info("Loading from grid save position!");
-                    KeepOriginalPosition = true;
-                    return GridPosition;
-                case LoadType.ForceLoadMearPlayer when CharacterPosition == Vector3D.Zero:
-                    KeepOriginalPosition = true;
-                    return GridPosition;
+                    keepOriginalPosition = true;
+                    return gridPosition;
+                case LoadType.ForceLoadMearPlayer when characterPosition == Vector3D.Zero:
+                    keepOriginalPosition = true;
+                    return gridPosition;
                 case LoadType.ForceLoadMearPlayer:
-                    KeepOriginalPosition = false;
-                    return CharacterPosition;
+                    keepOriginalPosition = false;
+                    return characterPosition;
             }
 
-            if (PlayersSpawnNearPlayer)
+            if (playersSpawnNearPlayer)
             {
-                KeepOriginalPosition = false;
-                return CharacterPosition;
+                keepOriginalPosition = false;
+                return characterPosition;
             }
-            KeepOriginalPosition = true;
-            return GridPosition;
+            keepOriginalPosition = true;
+            return gridPosition;
         }
 
         private void TryGetPlayerBalance(out long balance)
@@ -708,30 +708,30 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        private void ChangeBalance(long Amount)
+        private void ChangeBalance(long amount)
         {
-            MyBankingSystem.ChangeBalance(_identityId, Amount);
+            MyBankingSystem.ChangeBalance(_identityId, amount);
         }
 
-        private bool CheckDistanceToLoadPoint(Vector3D LoadPoint)
+        private bool CheckDistanceToLoadPoint(Vector3D loadPoint)
         {
             if (!Config.RequireLoadRadius)
                 return true;
 
 
-            var Distance = Vector3D.Distance(_playerPosition, LoadPoint);
-            if (Distance < Config.LoadRadius)
+            var distance = Vector3D.Distance(_playerPosition, loadPoint);
+            if (distance < Config.LoadRadius)
                 return true;
 
-            _gpsSender.SendGps(LoadPoint, "Load Point", _identityId);
-            _chat.Respond("Cannot load! You are " + Math.Round(Distance, 0) +
+            _gpsSender.SendGps(loadPoint, "Load Point", _identityId);
+            _chat.Respond("Cannot load! You are " + Math.Round(distance, 0) +
                          "m away from the load point! Check your GPS points!");
             return false;
         }
 
-        private bool IsAnyGridInsideSafeZone(GridResult Result)
+        private bool IsAnyGridInsideSafeZone(GridResult result)
         {
-            if (!MySessionComponentSafeZones.SafeZones.Any(Zone => Zone.Entities.Contains(Result.BiggestGrid.EntityId)))
+            if (!MySessionComponentSafeZones.SafeZones.Any(zone => zone.Entities.Contains(result.BiggestGrid.EntityId)))
                 return false;
             _chat?.Respond("Cannot save a grid in safezone!");
             return true;
@@ -739,21 +739,21 @@ namespace QuantumHangar.HangarChecks
         }
 
 
-        private static Dictionary<ulong, int> PlayerConfirmations = new Dictionary<ulong, int>();
+        private static Dictionary<ulong, int> _playerConfirmations = new Dictionary<ulong, int>();
 
-        private bool CheckGridForSale(GridStamp Stamp, int ID)
+        private bool CheckGridForSale(GridStamp stamp, int id)
         {
             while (true)
             {
-                if (!Stamp.GridForSale)
+                if (!stamp.GridForSale)
                 {
                     //if grid is not for sale, remove any confirmations
-                    PlayerConfirmations.Remove(SteamId);
+                    _playerConfirmations.Remove(SteamId);
                     return true;
                 }
                 else
                 {
-                    if (!PlayerConfirmations.TryGetValue(SteamId, out var Selection))
+                    if (!_playerConfirmations.TryGetValue(SteamId, out var selection))
                     {
                         //Prompt user
                         _chat.Respond(Config.RestockAmount != 0
@@ -761,20 +761,20 @@ namespace QuantumHangar.HangarChecks
                             : "This grid is for sale! Run this command again to confirm removal of sell offer and load it in!");
 
 
-                        PlayerConfirmations.Add(SteamId, ID);
+                        _playerConfirmations.Add(SteamId, id);
 
                         return false;
                     }
-                    if (Selection != ID)
+                    if (selection != id)
                     {
                         //If this grid is for sale and doesnt match our first selection need to remove it from the list and call this function again.
-                        PlayerConfirmations.Remove(SteamId);
+                        _playerConfirmations.Remove(SteamId);
                         continue;
                     }
 
                     //Remove market offer
-                    HangarMarketController.RemoveMarketListing(SteamId, Stamp.GridName);
-                    PlayerConfirmations.Remove(SteamId);
+                    HangarMarketController.RemoveMarketListing(SteamId, stamp.GridName);
+                    _playerConfirmations.Remove(SteamId);
                     return true;
                 }
             }

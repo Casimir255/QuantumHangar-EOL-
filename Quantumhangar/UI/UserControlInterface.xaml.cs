@@ -177,7 +177,7 @@ namespace QuantumHangar.UI
 
         private void AddNewGpsButton(object sender, RoutedEventArgs e)
         {
-            foreach (Match item in Regex.Matches(GpsTextBox.Text, CharacterUtilities.m_ScanPattern))
+            foreach (Match item in Regex.Matches(GpsTextBox.Text, CharacterUtilities.MScanPattern))
             {
                 ZoneRestrictions r = new ZoneRestrictions();
 
@@ -268,7 +268,7 @@ namespace QuantumHangar.UI
                 try
                 {
                     MyIdentity player = MySession.Static.Players.GetAllIdentities().First(x => x.DisplayName.Equals(AutoHangarNameBox.Text));
-                    b.SteamID = MySession.Static.Players.TryGetSteamId(player.IdentityId);
+                    b.SteamId = MySession.Static.Players.TryGetSteamId(player.IdentityId);
                     
                 }
                 catch
@@ -321,9 +321,9 @@ namespace QuantumHangar.UI
 
         private void NewPublicOfferButton(object sender, RoutedEventArgs e)
         {
-            var Listing = new HangarMarket.MarketListing();
-            Listing.ServerOffer = true;
-            Listing.ForSale = true;
+            var listing = new HangarMarket.MarketListing();
+            listing.ServerOffer = true;
+            listing.ForSale = true;
 
             //Hangar.Config.PublicMarketOffers.Add(Listing);
         }

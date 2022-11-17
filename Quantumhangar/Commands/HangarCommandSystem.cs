@@ -22,39 +22,39 @@ namespace QuantumHangar.Commands
         private static readonly List<ulong> RunningTasks = new List<ulong>();
 
 
-        public static async Task RunTask(Action Invoker, ulong? SteamID = null)
+        public static async Task RunTask(Action invoker, ulong? steamId = null)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready)
                 return;
 
 
-            if (SteamID.HasValue && SteamID.Value != 1 && Dictionary.TryGetValue(SteamID.Value, out var RunningTask))
+            if (steamId.HasValue && steamId.Value != 1 && Dictionary.TryGetValue(steamId.Value, out var runningTask))
             {
-                if (RunningTask.Status == TaskStatus.Running)
+                if (runningTask.Status == TaskStatus.Running)
                 {
-                    var A = new ScriptedChatMsg
+                    var a = new ScriptedChatMsg
                     {
                         Author = "Hangar",
-                        Target = MySession.Static.Players.TryGetIdentityId(SteamID.Value),
+                        Target = MySession.Static.Players.TryGetIdentityId(steamId.Value),
                         Text = "Your previous command has yet to finish! Please wait!",
                         Font = "Blue",
                         Color = VRageMath.Color.Yellow
                     };
 
-                    MyMultiplayerBase.SendScriptedChatMessage(ref A);
+                    MyMultiplayerBase.SendScriptedChatMessage(ref a);
 
 
                     //Log.Warn("Aborted Action!");
                     return;
                 }
 
-                var Builder = new StringBuilder();
-                Builder.AppendLine($"Task is being removed! Status: {RunningTask.Status}");
+                var builder = new StringBuilder();
+                builder.AppendLine($"Task is being removed! Status: {runningTask.Status}");
 
-                foreach (var ex in RunningTask.Exception.InnerExceptions) Builder.AppendLine(ex.ToString());
+                foreach (var ex in runningTask.Exception.InnerExceptions) builder.AppendLine(ex.ToString());
 
-                Log.Error(Builder.ToString());
-                Dictionary.TryRemove(SteamID.Value, out _);
+                Log.Error(builder.ToString());
+                Dictionary.TryRemove(steamId.Value, out _);
             }
 
 
@@ -75,85 +75,85 @@ namespace QuantumHangar.Commands
             }
             */
 
-            SteamID ??= 1;
+            steamId ??= 1;
 
 
-            if (SteamID.Value != 1)
+            if (steamId.Value != 1)
             {
                 void Completed()
                 {
-                    RemoveAfterCompletion(SteamID.Value);
+                    RemoveAfterCompletion(steamId.Value);
                 }
 
-                Invoker += Completed;
+                invoker += Completed;
 
-                Dictionary.TryAdd(SteamID.Value, null);
-                await Task.Run(() => Invoker);
+                Dictionary.TryAdd(steamId.Value, null);
+                await Task.Run(() => invoker);
 
 
                 return;
             }
 
-            if (SteamID.Value == 1)
+            if (steamId.Value == 1)
             {
                 //Log.Warn("PP");
-                await Task.Run(() => Invoker);
+                await Task.Run(() => invoker);
             }
         }
 
-        private static void RemoveAfterCompletion(ulong SteamID)
+        private static void RemoveAfterCompletion(ulong steamId)
         {
-            if (Dictionary.ContainsKey(SteamID))
-                Dictionary.TryRemove(SteamID, out var task);
+            if (Dictionary.ContainsKey(steamId))
+                Dictionary.TryRemove(steamId, out var task);
 
-            Log.Warn(SteamID + " Action completed!");
+            Log.Warn(steamId + " Action completed!");
         }
 
 
-        public static async Task RunTaskAsync(Action Function, CommandContext Context)
+        public static async Task RunTaskAsync(Action function, CommandContext context)
         {
-            if (!CheckTaskStatus(Context))
+            if (!CheckTaskStatus(context))
                 return;
 
-            var steamUserId = Context.Player.SteamUserId;
+            var steamUserId = context.Player.SteamUserId;
             try
             {
-                await Task.Run(Function);
+                await Task.Run(function);
             }
             catch (Exception ex)
             {
                 Log.Error(ex);
-                Context.Respond("An error occurred when running this command! Check logs for more details!");
+                context.Respond("An error occurred when running this command! Check logs for more details!");
             }
 
             RemoveCompletedTask(steamUserId);
         }
 
 
-        public static async Task RunAdminTaskAsync(Action Function)
+        public static async Task RunAdminTaskAsync(Action function)
         {
-            await Task.Run(Function);
+            await Task.Run(function);
         }
 
 
-        public static bool CheckTaskStatus(CommandContext Context)
+        public static bool CheckTaskStatus(CommandContext context)
         {
-            if (RunningTasks.Contains(Context.Player.SteamUserId))
+            if (RunningTasks.Contains(context.Player.SteamUserId))
             {
-                Context.Respond("Your previous command has yet to finish!");
+                context.Respond("Your previous command has yet to finish!");
                 return false;
             }
 
 
-            RunningTasks.Add(Context.Player.SteamUserId);
+            RunningTasks.Add(context.Player.SteamUserId);
             return true;
         }
 
 
-        public static void RemoveCompletedTask(ulong SteamUserID)
+        public static void RemoveCompletedTask(ulong steamUserId)
         {
-            if (RunningTasks.Contains(SteamUserID))
-                RunningTasks.Remove(SteamUserID);
+            if (RunningTasks.Contains(steamUserId))
+                RunningTasks.Remove(steamUserId);
         }
     }
 }

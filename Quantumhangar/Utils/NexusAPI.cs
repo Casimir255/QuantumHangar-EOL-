@@ -9,7 +9,7 @@ using VRageMath;
 
 namespace QuantumHangar.Utils
 {
-    public class NexusAPI
+    public class NexusApi
     {
         public ushort CrossServerModId;
 
@@ -24,9 +24,9 @@ namespace QuantumHangar.Utils
          *  MyAPIGateway.Multiplayer.RegisterMessageHandler(5432, MessageHandler);
          */
 
-        public NexusAPI(ushort SocketID)
+        public NexusApi(ushort socketId)
         {
-            CrossServerModId = SocketID;
+            CrossServerModId = socketId;
         }
 
         public static bool IsRunningNexus()
@@ -34,40 +34,40 @@ namespace QuantumHangar.Utils
             return false;
         }
 
-        public static bool IsPlayerOnline(long IdentityID)
+        public static bool IsPlayerOnline(long identityId)
         {
             return false;
         }
 
         private static List<object[]> GetSectorsObject()
         {
-            var APISectors = new List<object[]>();
-            return APISectors;
+            var apiSectors = new List<object[]>();
+            return apiSectors;
         }
 
         private static List<object[]> GetAllOnlinePlayersObject()
         {
-            var OnlinePlayers = new List<object[]>();
-            return OnlinePlayers;
+            var onlinePlayers = new List<object[]>();
+            return onlinePlayers;
         }
 
         private static List<object[]> GetAllServersObject()
         {
-            var Servers = new List<object[]>();
-            return Servers;
+            var servers = new List<object[]>();
+            return servers;
 
         }
         private static List<object[]> GetAllOnlineServersObject()
         {
-            var Servers = new List<object[]>();
-            return Servers;
+            var servers = new List<object[]>();
+            return servers;
 
         }
 
         private static object[] GetThisServerObject()
         {
-            var OnlinePlayers = new object[6];
-            return OnlinePlayers;
+            var onlinePlayers = new object[6];
+            return onlinePlayers;
         }
 
 
@@ -79,13 +79,13 @@ namespace QuantumHangar.Utils
 
         public static List<Sector> GetSectors()
         {
-            var Objects = GetSectorsObject();
+            var objects = GetSectorsObject();
 
-            return Objects.Select(obj => new Sector((string)obj[0], (string)obj[1], (int)obj[2], (bool)obj[3], (Vector3D)obj[4], (double)obj[5], (int)obj[6])).ToList();
+            return objects.Select(obj => new Sector((string)obj[0], (string)obj[1], (int)obj[2], (bool)obj[3], (Vector3D)obj[4], (double)obj[5], (int)obj[6])).ToList();
         }
 
 
-        public static int GetServerIDFromPosition(Vector3D Position)
+        public static int GetServerIdFromPosition(Vector3D position)
         {
             return 0;
         }
@@ -93,41 +93,41 @@ namespace QuantumHangar.Utils
 
         public static List<Player> GetAllOnlinePlayers()
         {
-            var Objects = GetAllOnlinePlayersObject();
-            return Objects.Select(obj => new Player((string)obj[0], (ulong)obj[1], (long)obj[2], (int)obj[3])).ToList();
+            var objects = GetAllOnlinePlayersObject();
+            return objects.Select(obj => new Player((string)obj[0], (ulong)obj[1], (long)obj[2], (int)obj[3])).ToList();
         }
 
 
         public static List<Server> GetAllServers()
         {
-            var Objects = GetAllServersObject();
-            return Objects.Select(obj => new Server((string)obj[0], (int)obj[1], (int)obj[2], (string)obj[3])).ToList();
+            var objects = GetAllServersObject();
+            return objects.Select(obj => new Server((string)obj[0], (int)obj[1], (int)obj[2], (string)obj[3])).ToList();
         }
         public static List<Server> GetAllOnlineServers()
         {
-            var Objects = GetAllOnlineServersObject();
-            return Objects.Select(obj => new Server((string)obj[0], (int)obj[1], (int)obj[2], (float)obj[3], (int)obj[4], (List<ulong>)obj[5])).ToList();
+            var objects = GetAllOnlineServersObject();
+            return objects.Select(obj => new Server((string)obj[0], (int)obj[1], (int)obj[2], (float)obj[3], (int)obj[4], (List<ulong>)obj[5])).ToList();
         }
 
 
 
-        public static bool IsServerOnline(int ServerID)
+        public static bool IsServerOnline(int serverId)
         {
             return false;
         }
-        public static void BackupGrid(List<MyObjectBuilder_CubeGrid> GridObjectBuilders, long OnwerIdentity)
+        public static void BackupGrid(List<MyObjectBuilder_CubeGrid> gridObjectBuilders, long onwerIdentity)
         {
             
         }
-        public static void SendChatMessageToDiscord(ulong ChannelID, string Author, string Message) { }
-        public static void SendEmbedMessageToDiscord(ulong ChannelID, string EmbedTitle, string EmbedMsg, string EmbedFooter, string EmbedColor = null) { }
+        public static void SendChatMessageToDiscord(ulong channelId, string author, string message) { }
+        public static void SendEmbedMessageToDiscord(ulong channelId, string embedTitle, string embedMsg, string embedFooter, string embedColor = null) { }
 
-        public void SendMessageToServer(int ServerID, byte[] Message)
+        public void SendMessageToServer(int serverId, byte[] message)
         {
             
         }
 
-        public void SendMessageToAllServers(byte[] Message)
+        public void SendMessageToAllServers(byte[] message)
         {
             
         }
@@ -148,15 +148,15 @@ namespace QuantumHangar.Utils
 
             public readonly int ServerId;
 
-            public Sector(string Name, string IpAddress, int Port, bool IsGeneralSpace, Vector3D Center, double Radius, int ServerID)
+            public Sector(string name, string ipAddress, int port, bool isGeneralSpace, Vector3D center, double radius, int serverId)
             {
-                this.Name = Name;
-                this.IpAddress = IpAddress;
-                this.Port = Port;
-                this.IsGeneralSpace = IsGeneralSpace;
-                this.Center = Center;
-                this.Radius = Radius;
-                this.ServerId = ServerID;
+                this.Name = name;
+                this.IpAddress = ipAddress;
+                this.Port = port;
+                this.IsGeneralSpace = isGeneralSpace;
+                this.Center = center;
+                this.Radius = radius;
+                this.ServerId = serverId;
             }
 
         }
@@ -172,12 +172,12 @@ namespace QuantumHangar.Utils
 
             public readonly int OnServer;
 
-            public Player(string PlayerName, ulong SteamId, long IdentityId, int OnServer)
+            public Player(string playerName, ulong steamId, long identityId, int onServer)
             {
-                this.PlayerName = PlayerName;
-                this.SteamId = SteamId;
-                this.IdentityId = IdentityId;
-                this.OnServer = OnServer;
+                this.PlayerName = playerName;
+                this.SteamId = steamId;
+                this.IdentityId = identityId;
+                this.OnServer = onServer;
             }
         }
 
@@ -202,24 +202,24 @@ namespace QuantumHangar.Utils
              */
 
 
-            public Server(string Name, int ServerId, int ServerType, string Ip)
+            public Server(string name, int serverId, int serverType, string ip)
             {
-                this.Name = Name;
-                this.ServerId = ServerId;
-                this.ServerType = ServerType;
-                this.ServerIp = Ip;
+                this.Name = name;
+                this.ServerId = serverId;
+                this.ServerType = serverType;
+                this.ServerIp = ip;
             }
 
 
             //Online Server
-            public Server(string Name, int ServerId, int MaxPlayers, float SimSpeed, int TotalGrids, List<ulong> ReservedPlayers)
+            public Server(string name, int serverId, int maxPlayers, float simSpeed, int totalGrids, List<ulong> reservedPlayers)
             {
-                this.Name = Name;
-                this.ServerId = ServerId;
-                this.MaxPlayers = MaxPlayers;
-                this.ServerSs = SimSpeed;
-                this.TotalGrids = TotalGrids;
-                this.ReservedPlayers = ReservedPlayers;
+                this.Name = name;
+                this.ServerId = serverId;
+                this.MaxPlayers = maxPlayers;
+                this.ServerSs = simSpeed;
+                this.TotalGrids = totalGrids;
+                this.ReservedPlayers = reservedPlayers;
             }
 
         }
@@ -234,12 +234,12 @@ namespace QuantumHangar.Utils
             [ProtoMember(3)] public readonly ushort UniqueMessageId;
             [ProtoMember(4)] public readonly byte[] Message;
 
-            public CrossServerMessage(ushort UniqueMessageId, int ToServerId, int FromServerId, byte[] Message)
+            public CrossServerMessage(ushort uniqueMessageId, int toServerId, int fromServerId, byte[] message)
             {
-                this.UniqueMessageId = UniqueMessageId;
-                this.ToServerId = ToServerId;
-                this.FromServerId = FromServerId;
-                this.Message = Message;
+                this.UniqueMessageId = uniqueMessageId;
+                this.ToServerId = toServerId;
+                this.FromServerId = fromServerId;
+                this.Message = message;
             }
 
             public CrossServerMessage() { }

@@ -16,15 +16,15 @@ namespace QuantumHangar.Utils
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
 
-        public static bool TryGetPlayerBalance(ulong steamID, out long balance)
+        public static bool TryGetPlayerBalance(ulong steamId, out long balance)
         {
             try
             {
                 //PlayerId Player = new MyPlayer.PlayerId(steamID);
                 //Hangar.Debug("SteamID: " + steamID);
-                var IdentityID = MySession.Static.Players.TryGetIdentityId(steamID);
+                var identityId = MySession.Static.Players.TryGetIdentityId(steamId);
                 //Hangar.Debug("IdentityID: " + IdentityID);
-                balance = MyBankingSystem.GetBalance(IdentityID);
+                balance = MyBankingSystem.GetBalance(identityId);
                 return true;
             }
             catch (Exception)
@@ -35,64 +35,64 @@ namespace QuantumHangar.Utils
             }
         }
 
-        public static bool TryGetIdentityFromSteamId(this MyPlayerCollection Collection, ulong SteamID,
-            out MyIdentity Player)
+        public static bool TryGetIdentityFromSteamId(this MyPlayerCollection collection, ulong steamId,
+            out MyIdentity player)
         {
-            Player = Collection.TryGetPlayerIdentity(new MyPlayer.PlayerId(SteamID, 0));
+            player = collection.TryGetPlayerIdentity(new MyPlayer.PlayerId(steamId, 0));
 
-            return Player != null;
+            return player != null;
         }
 
-        public static bool TryGetPlayerSteamId(string NameOrSteamID, Chat Chat, out ulong PSteamID)
+        public static bool TryGetPlayerSteamId(string nameOrSteamId, Chat chat, out ulong pSteamId)
         {
-            ulong? SteamID = null;
-            if (ulong.TryParse(NameOrSteamID, out var PlayerSteamID))
+            ulong? steamId = null;
+            if (ulong.TryParse(nameOrSteamId, out var playerSteamId))
             {
-                var Identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(PlayerSteamID, 0));
+                var identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(playerSteamId, 0));
 
-                if (Identity == null)
+                if (identity == null)
                 {
-                    Chat?.Respond(NameOrSteamID + " doesn't exist as an Identity! Dafuq?");
-                    PSteamID = 0;
+                    chat?.Respond(nameOrSteamId + " doesn't exist as an Identity! Dafuq?");
+                    pSteamId = 0;
                     return false;
                 }
 
-                PSteamID = PlayerSteamID;
+                pSteamId = playerSteamId;
                 return true;
             }
 
             try
             {
                 var myPlayer = MySession.Static.Players.GetAllIdentities()
-                    .FirstOrDefault(x => x.DisplayName.Equals(NameOrSteamID));
-                if (myPlayer != null) SteamID = MySession.Static.Players.TryGetSteamId(myPlayer.IdentityId);
+                    .FirstOrDefault(x => x.DisplayName.Equals(nameOrSteamId));
+                if (myPlayer != null) steamId = MySession.Static.Players.TryGetSteamId(myPlayer.IdentityId);
             }
             catch (Exception)
             {
                 //Hangar.Debug("Player "+ NameOrID + " doesn't exist on the server!", e, Hangar.ErrorType.Warn);
-                Chat?.Respond("Player " + NameOrSteamID + " doesn't exist on the server!");
-                PSteamID = 0;
+                chat?.Respond("Player " + nameOrSteamId + " doesn't exist on the server!");
+                pSteamId = 0;
                 return false;
             }
 
-            if (!SteamID.HasValue)
+            if (!steamId.HasValue)
             {
-                Chat?.Respond("Invalid player format! Check logs for more details!");
+                chat?.Respond("Invalid player format! Check logs for more details!");
                 //Hangar.Debug("Player " + NameOrSteamID + " doesn't exist on the server!");
-                PSteamID = 0;
+                pSteamId = 0;
                 return false;
             }
 
-            PSteamID = SteamID.Value;
+            pSteamId = steamId.Value;
             return true;
         }
 
-        public static readonly string m_ScanPattern = "GPS:([^:]{0,32}):([\\d\\.-]*):([\\d\\.-]*):([\\d\\.-]*):";
+        public static readonly string MScanPattern = "GPS:([^:]{0,32}):([\\d\\.-]*):([\\d\\.-]*):([\\d\\.-]*):";
 
         public static Vector3D GetGps(string text)
         {
             var num = 0;
-            foreach (Match item in Regex.Matches(text, m_ScanPattern))
+            foreach (Match item in Regex.Matches(text, MScanPattern))
             {
                 var value = item.Groups[1].Value;
                 double value2;
@@ -136,18 +136,18 @@ namespace QuantumHangar.Utils
             }
 
             // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
-            public void SendGps(Vector3D Position, string name, long EntityID)
+            public void SendGps(Vector3D position, string name, long entityId)
             {
                 if (_send != null)
                 {
-                    _send(Position, name, EntityID);
+                    _send(position, name, entityId);
                     return;
                 }
 
                 var myGps = new MyGps
                 {
                     ShowOnHud = true,
-                    Coords = Position,
+                    Coords = position,
                     Name = name,
                     Description = "Hangar location for loading grid at or around this position",
                     AlwaysVisible = true
@@ -156,7 +156,7 @@ namespace QuantumHangar.Utils
                 var gps = myGps;
                 gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
                 gps.GPSColor = Color.Yellow;
-                MySession.Static.Gpss.SendAddGpsRequest(EntityID, ref gps, 0L, true);
+                MySession.Static.Gpss.SendAddGpsRequest(entityId, ref gps, 0L, true);
             }
         }
     }
