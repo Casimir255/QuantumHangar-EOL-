@@ -1,13 +1,6 @@
 ﻿using ProtoBuf;
-using Sandbox.Game.World;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
-using VRage.Game.ModAPI;
-using System.Collections.ObjectModel;
 
 namespace QuantumHangar.HangarMarket
 {
@@ -25,8 +18,8 @@ namespace QuantumHangar.HangarMarket
         [ProtoMember(4)] public long Price { get; set; } = 1000;
 
         [ProtoMember(5)] public double MarketValue = 0;
-        [ProtoMember(6)] public ulong SteamID = 0;
-        [ProtoMember(7)] public long IdentityID;
+        [ProtoMember(6)] public ulong SteamId = 0;
+        [ProtoMember(7)] public long IdentityId;
         [ProtoMember(8)] public string SellerFaction { get; set; } = "N/A";
 
 
@@ -42,7 +35,7 @@ namespace QuantumHangar.HangarMarket
         [ProtoMember(16)] public float GridBuiltPercent = 0;
         [ProtoMember(17)] public long JumpDistance = 0;
         [ProtoMember(18)] public int NumberOfGrids = 0;
-        [ProtoMember(19)] public int PCU = 0;
+        [ProtoMember(19)] public int Pcu = 0;
 
 
 
@@ -68,7 +61,7 @@ namespace QuantumHangar.HangarMarket
         [ProtoIgnore] public bool ServerOffer = false;
 
         [ProtoIgnore] public List<KeyValuePair<ulong, int>> PlayerPurchases = new List<KeyValuePair<ulong, int>>();
-        [ProtoIgnore] public string FileSBCPath { get; set; } = "";
+        [ProtoIgnore] public string FileSbcPath { get; set; } = "";
         [ProtoIgnore] public int TotalAmount { get; set; } = 0;
         [ProtoIgnore] public int TotalPerPlayer { get; set; } = 0;
         [ProtoIgnore] public int TotalBuys { get; set; } = 0;
@@ -77,37 +70,37 @@ namespace QuantumHangar.HangarMarket
 
 
         public MarketListing() { }
-        public MarketListing(GridStamp Stamp)
+        public MarketListing(GridStamp stamp)
         {
-            Name = Stamp.GridName;
+            Name = stamp.GridName;
             
             
 
-            GridMass = Stamp.GridMass;
-            SmallGrids = Stamp.SmallGrids;
-            LargeGrids = Stamp.LargeGrids;
-            StaticGrids = Stamp.StaticGrids;
-            NumberofBlocks = Stamp.NumberofBlocks;
-            MaxPowerOutput = Stamp.MaxPowerOutput;
-            GridBuiltPercent = Stamp.GridBuiltPercent;
-            JumpDistance = Stamp.JumpDistance;
-            NumberOfGrids = Stamp.NumberOfGrids;
-            PCU = Stamp.GridPCU;
-            MarketValue = Stamp.MarketValue;
+            GridMass = stamp.GridMass;
+            SmallGrids = stamp.SmallGrids;
+            LargeGrids = stamp.LargeGrids;
+            StaticGrids = stamp.StaticGrids;
+            NumberofBlocks = stamp.NumberofBlocks;
+            MaxPowerOutput = stamp.MaxPowerOutput;
+            GridBuiltPercent = stamp.GridBuiltPercent;
+            JumpDistance = stamp.JumpDistance;
+            NumberOfGrids = stamp.NumberOfGrids;
+            Pcu = stamp.GridPcu;
+            MarketValue = stamp.MarketValue;
         }
 
-        public void SetUserInputs(string Description, long Price)
+        public void SetUserInputs(string description, long price)
         {
-            this.Description = Description;
-            this.Price = Price;
+            this.Description = description;
+            this.Price = price;
         }
 
 
 
-        public void SetPlayerData(ulong SteamID, long IdentityID)
+        public void SetPlayerData(ulong steamId, long identityId)
         {
-            this.SteamID = SteamID;
-            this.IdentityID = IdentityID;
+            this.SteamId = steamId;
+            this.IdentityId = identityId;
         }
 
 

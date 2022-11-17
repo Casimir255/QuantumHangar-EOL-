@@ -20,8 +20,8 @@ namespace HangarStoreMod
     {
         //Items we send to server. (We will have server set the projection)
         [ProtoMember(1)] public string GridName;
-        [ProtoMember(3)] public ulong OwnerSteamID;
-        [ProtoMember(4)] public long ProjectorEntityID;
+        [ProtoMember(3)] public ulong OwnerSteamId;
+        [ProtoMember(4)] public long ProjectorEntityId;
 
 
         public GridDefinition() { }
@@ -32,8 +32,8 @@ namespace HangarStoreMod
     public class BuyGridRequest
     {
         [ProtoMember(1)] public string GridName;
-        [ProtoMember(3)] public ulong OwnerSteamID;
-        [ProtoMember(4)] public ulong BuyerSteamID;
+        [ProtoMember(3)] public ulong OwnerSteamId;
+        [ProtoMember(4)] public ulong BuyerSteamId;
 
         public BuyGridRequest() { }
     }
@@ -55,9 +55,9 @@ namespace HangarStoreMod
 
         public Message() { }
 
-        public Message(MessageType Type)
+        public Message(MessageType type)
         {
-            this.Type = Type;
+            this.Type = type;
         }
 
     }
@@ -71,8 +71,8 @@ namespace HangarStoreMod
         [ProtoMember(3)] public string Seller = "Sold by Server";
         [ProtoMember(4)] public long Price;
         [ProtoMember(5)] public double MarketValue;
-        [ProtoMember(6)] public ulong SteamID;
-        [ProtoMember(7)] public long IdentityID;
+        [ProtoMember(6)] public ulong SteamId;
+        [ProtoMember(7)] public long IdentityId;
         [ProtoMember(8)] public string SellerFaction = "N/A";
 
 
@@ -88,7 +88,7 @@ namespace HangarStoreMod
         [ProtoMember(16)] public float GridBuiltPercent = 0;
         [ProtoMember(17)] public long JumpDistance = 0;
         [ProtoMember(18)] public int NumberOfGrids = 0;
-        [ProtoMember(19)] public int PCU = 0;
+        [ProtoMember(19)] public int Pcu = 0;
 
 
 

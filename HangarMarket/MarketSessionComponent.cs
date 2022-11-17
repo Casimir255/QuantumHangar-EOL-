@@ -17,8 +17,8 @@ namespace HangarStoreMod
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     public class MarketSessionComponent : MySessionComponentBase
     {
-        private bool Initilized = false;
-        public const ushort NETWORK_ID = 2934;
+        private bool _initilized = false;
+        public const ushort NetworkId = 2934;
 
         public static List<MarketListing> RecievedMarket = new List<MarketListing>();
 
@@ -35,10 +35,10 @@ namespace HangarStoreMod
 
 
 
-            if (!Initilized)
+            if (!_initilized)
             {
-                Initilized = true;
-                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(NETWORK_ID, MessageRecieved);
+                _initilized = true;
+                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(NetworkId, MessageRecieved);
 
                 //Tell server to send new offers
                 RequestOffers();
@@ -48,7 +48,7 @@ namespace HangarStoreMod
 
         protected override void UnloadData()
         {
-            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(NETWORK_ID, MessageRecieved);
+            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(NetworkId, MessageRecieved);
         }
 
 
@@ -60,16 +60,16 @@ namespace HangarStoreMod
 
             try
             {
-                Message RecievedMessage = MyAPIGateway.Utilities.SerializeFromBinary<Message>(arg2);
+                Message recievedMessage = MyAPIGateway.Utilities.SerializeFromBinary<Message>(arg2);
 
-                if (RecievedMessage == null)
+                if (recievedMessage == null)
                     return;
 
 
-                switch (RecievedMessage.Type)
+                switch (recievedMessage.Type)
                 {
                     case MessageType.MarketOffersUpdate:
-                        ModCore.MergeNewCollection(RecievedMessage.MarketOffers);
+                        ModCore.MergeNewCollection(recievedMessage.MarketOffers);
                         break;
 
 
@@ -90,14 +90,14 @@ namespace HangarStoreMod
 
         }
 
-        public static void SendGridPreviewRequest(GridDefinition Def)
+        public static void SendGridPreviewRequest(GridDefinition def)
         {
             try
             {
-                Message Message = new Message(MessageType.GridDefintionPreview);
-                Message.Definition = Def;
+                Message message = new Message(MessageType.GridDefintionPreview);
+                message.Definition = def;
 
-                MyAPIGateway.Multiplayer.SendMessageToServer(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));
+                MyAPIGateway.Multiplayer.SendMessageToServer(NetworkId, MyAPIGateway.Utilities.SerializeToBinary(message));
             }
             catch (Exception ex)
             {
@@ -110,10 +110,10 @@ namespace HangarStoreMod
         {
             try
             {
-                Message Message = new Message(MessageType.MarketOffersUpdate);
+                Message message = new Message(MessageType.MarketOffersUpdate);
 
 
-                MyAPIGateway.Multiplayer.SendMessageToServer(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));
+                MyAPIGateway.Multiplayer.SendMessageToServer(NetworkId, MyAPIGateway.Utilities.SerializeToBinary(message));
             }
             catch (Exception ex)
             {
@@ -121,14 +121,14 @@ namespace HangarStoreMod
             }
         }
 
-        public static void PurchaseGrid(BuyGridRequest Request)
+        public static void PurchaseGrid(BuyGridRequest request)
         {
             try
             {
-                Message Message = new Message(MessageType.BuySelectedGrid);
-                Message.BuyRequest = Request;
+                Message message = new Message(MessageType.BuySelectedGrid);
+                message.BuyRequest = request;
 
-                MyAPIGateway.Multiplayer.SendMessageToServer(NETWORK_ID, MyAPIGateway.Utilities.SerializeToBinary(Message));
+                MyAPIGateway.Multiplayer.SendMessageToServer(NetworkId, MyAPIGateway.Utilities.SerializeToBinary(message));
 
             }catch(Exception ex)
             {
@@ -142,13 +142,13 @@ namespace HangarStoreMod
 
 
 
-        private MarketListing FillTest(string Name, int PCU)
+        private MarketListing FillTest(string name, int pcu)
         {
-            MarketListing B = new MarketListing();
-            B.Name = Name;
-            B.PCU = PCU;
+            MarketListing b = new MarketListing();
+            b.Name = name;
+            b.Pcu = pcu;
 
-            return B;
+            return b;
         }
 
 

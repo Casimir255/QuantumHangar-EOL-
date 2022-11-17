@@ -1,24 +1,15 @@
 ﻿using NLog;
 using ParallelTasks;
-using QuantumHangar.HangarChecks;
-using QuantumHangar.Utilities;
-using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
-using Sandbox.Game.World;
-using SpaceEngineers.Game.Entities.Blocks;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using Torch.Commands;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.Groups;
-using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRageMath;
 
 namespace QuantumHangar.Utils
@@ -27,16 +18,14 @@ namespace QuantumHangar.Utils
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        private static Settings Config { get { return Hangar.Config; } }
+        private static Settings Config => Hangar.Config;
 
-        public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> Grids)
+        public static bool FindGridList(string gridNameOrEntityId, MyCharacter character, out List<MyCubeGrid> grids)
         {
-
-            Grids = new List<MyCubeGrid>();
+            grids = new List<MyCubeGrid>();
 
             if (string.IsNullOrEmpty(gridNameOrEntityId) && character == null)
                 return false;
-
 
 
             if (Config.EnableSubGrids)
@@ -44,7 +33,7 @@ namespace QuantumHangar.Utils
                 //If we include subgrids in the grid grab
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> groups;
 
-                if (String.IsNullOrEmpty(gridNameOrEntityId) && character != null)
+                if (string.IsNullOrEmpty(gridNameOrEntityId) && character != null)
                     groups = GridFinder.FindLookAtGridGroup(character);
                 else
                     groups = GridFinder.FindGridGroup(gridNameOrEntityId);
@@ -53,200 +42,115 @@ namespace QuantumHangar.Utils
                 if (groups.Count > 1)
                     return false;
 
-                foreach (var group in groups)
-                {
-                    foreach (var node in group.Nodes)
-                    {
-                        MyCubeGrid Grid = node.NodeData;
-
-                        if (Grid.Physics == null || Grid.IsPreview || Grid.MarkedForClose)
-                            continue;
-
-                        Grids.Add(Grid);
-                    }
-                }
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
+                    .Where(grid => grid.Physics != null && !grid.IsPreview && !grid.MarkedForClose));
             }
             else
             {
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups;
 
-                if (string.IsNullOrEmpty(gridNameOrEntityId))
-                    groups = GridFinder.FindLookAtGridGroupMechanical(character);
-                else
-                    groups = GridFinder.FindGridGroupMechanical(gridNameOrEntityId);
+                groups = string.IsNullOrEmpty(gridNameOrEntityId)
+                    ? GridFinder.FindLookAtGridGroupMechanical(character)
+                    : GridFinder.FindGridGroupMechanical(gridNameOrEntityId);
 
                 //Should only get one group
                 if (groups.Count > 1)
                     return false;
 
 
-                foreach (var group in groups)
-                {
-                    foreach (var node in group.Nodes)
-                    {
-                        MyCubeGrid Grid = node.NodeData;
-
-                        if (Grid.Physics == null || Grid.IsPreview || Grid.MarkedForClose)
-                            continue;
-
-                        Grids.Add(Grid);
-                    }
-                }
-
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData)
+                    .Where(grid => grid.Physics != null && !grid.IsPreview && !grid.MarkedForClose));
             }
 
-
-            if (Grids == null || Grids.Count == 0)
-            {
-                return false;
-            }
-
-            return true;
+            return grids != null && grids.Count != 0;
         }
 
         public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
         {
-
-            ConcurrentBag<List<MyCubeGrid>> grids = new ConcurrentBag<List<MyCubeGrid>>();
+            var grids = new ConcurrentBag<List<MyCubeGrid>>();
 
             if (includeConnectedGrids)
-            {
-
-
-
-                foreach (var group in MyCubeGridGroups.Static.Physical.Groups.ToList())
-                {
-                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
-
-                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
-                    {
-
-                        MyCubeGrid grid = groupNodes.NodeData;
-
-                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
-                            continue;
-
-                        gridList.Add(grid);
-                    }
-
-                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
-                        grids.Add(gridList);
-                }
-
-            }
+                foreach (var gridList in MyCubeGridGroups.Static.Physical.Groups.ToList()
+                             .Select(group =>
+                                 group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid =>
+                                     grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash).ToList())
+                             .Where(gridList => gridList.Count != 0 && gridList.IsPlayerOwner(playerId)))
+                    grids.Add(gridList);
             else
-            {
-
-                foreach (var group in MyCubeGridGroups.Static.Mechanical.Groups.ToList())
-                {
-
-
-                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
-
-                    foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
-                    {
-                        MyCubeGrid grid = groupNodes.NodeData;
-
-                        if (grid == null || grid.MarkedForClose || grid.MarkedAsTrash)
-                            continue;
-
-                        gridList.Add(grid);
-                    }
-
-                    if (gridList.Count != 0 && gridList.IsPlayerOwner(playerId))
-                        grids.Add(gridList);
-
-
-                }
-
-
-            }
+                foreach (var gridList in MyCubeGridGroups.Static.Mechanical.Groups.ToList()
+                             .Select(group =>
+                                 group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid =>
+                                     grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash).ToList())
+                             .Where(gridList => gridList.Count != 0 && gridList.IsPlayerOwner(playerId)))
+                    grids.Add(gridList);
 
             return grids;
         }
 
-        private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> Grids, long playerId)
+        private static bool IsPlayerOwner(this IEnumerable<MyCubeGrid> grids, long playerId)
         {
-            Grids.BiggestGrid(out MyCubeGrid Grid);
+            grids.BiggestGrid(out var grid);
 
 
             /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
-            if (Grid == null || Grid.BigOwners.Count == 0)
+            if (grid == null || grid.BigOwners.Count == 0)
                 return false;
 
-            if (Grid.BigOwners.Contains(playerId))
-                return true;
-
-            return false;
+            return grid.BigOwners.Contains(playerId);
         }
 
-        public static void BiggestGrid(this IEnumerable<MyCubeGrid> Grids, out MyCubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyCubeGrid> grids, out MyCubeGrid biggestGrid)
         {
-            BiggestGrid = Grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
+            biggestGrid = grids.Aggregate((i1, i2) => i1.BlocksCount > i2.BlocksCount ? i1 : i2);
         }
 
-        public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> Grids, out MyObjectBuilder_CubeGrid BiggestGrid)
+        public static void BiggestGrid(this IEnumerable<MyObjectBuilder_CubeGrid> grids,
+            out MyObjectBuilder_CubeGrid biggestGrid)
         {
-            BiggestGrid = Grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
+            biggestGrid = grids.Aggregate((i1, i2) => i1.CubeBlocks.Count > i2.CubeBlocks.Count ? i1 : i2);
         }
 
         public static long GetBiggestOwner(this MyCubeGrid grid)
         {
+            var fatBlocks = grid.GetFatBlocks().ToList();
 
-            var FatBlocks = grid.GetFatBlocks().ToList();
-
-            int TotalFatBlocks = 0;
+            var totalFatBlocks = 0;
 
 
-            Dictionary<long, int> owners = new Dictionary<long, int>();
-            foreach (var fat in FatBlocks)
+            var owners = new Dictionary<long, int>();
+            foreach (var fat in fatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
             {
-                //Only count blocks with ownership
-                if (!fat.IsFunctional || fat.IDModule == null)
-                    continue;
-
-
                 //WTF happened here?
                 //if (fat.OwnerId == 0)
                 //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
 
 
-                TotalFatBlocks++;
+                totalFatBlocks++;
 
-
-                if (fat.OwnerId != 0)
-                {
-                    if (!owners.ContainsKey(fat.OwnerId))
-                    {
-                        owners.Add(fat.OwnerId, 1);
-                    }
-                    else
-                    {
-                        owners[fat.OwnerId] += 1;
-                    }
-                }
+                if (fat.OwnerId == 0) continue;
+                if (!owners.ContainsKey(fat.OwnerId))
+                    owners.Add(fat.OwnerId, 1);
+                else
+                    owners[fat.OwnerId] += 1;
             }
 
-            if (owners.Count == 0)
-                return 0;
-  
-            return owners.FirstOrDefault(x => x.Value == owners.Values.Max()).Key;
+            return owners.Count == 0 ? 0 : owners.FirstOrDefault(x => x.Value == owners.Values.Max()).Key;
         }
 
 
-        public static void Close(this IEnumerable<MyCubeGrid> Grids, string Reason = "Grid was Hangared")
+        public static void Close(this IEnumerable<MyCubeGrid> grids, string reason = "Grid was Hangared")
         {
-            StringBuilder Builder = new StringBuilder();
-            Builder.AppendLine("Closing the following grids: ");
-            foreach (var Grid in Grids)
+            var builder = new StringBuilder();
+            builder.AppendLine("Closing the following grids: ");
+            foreach (var grid in grids)
             {
-                Builder.Append(Grid.DisplayName + ", ");
-                Grid.Close();
+                builder.Append(grid.DisplayName + ", ");
+                grid.Close();
             }
 
-            Builder.AppendLine("Reason: " + Reason);
+            builder.AppendLine("Reason: " + reason);
 
-            Log.Info(Builder.ToString());
+            Log.Info(builder.ToString());
         }
     }
 
@@ -254,153 +158,78 @@ namespace QuantumHangar.Utils
     {
         //Thanks LordTylus, I was too lazy to create my own little utils
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
         public static ConcurrentBag<List<MyCubeGrid>> FindGridList(long playerId, bool includeConnectedGrids)
         {
-
-            ConcurrentBag<List<MyCubeGrid>> grids = new ConcurrentBag<List<MyCubeGrid>>();
+            var grids = new ConcurrentBag<List<MyCubeGrid>>();
 
             if (includeConnectedGrids)
-            {
-
                 Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
                 {
-
-                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
-
-                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
-                    {
-
-                        MyCubeGrid grid = groupNodes.NodeData;
-
-                        if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
-                            continue;
-
-                        gridList.Add(grid);
-                    }
+                    var gridList = group.Nodes.Select(groupNodes => groupNodes.NodeData)
+                        .Where(grid => !grid.MarkedForClose && !grid.MarkedAsTrash && grid.InScene).ToList();
 
                     if (IsPlayerIdCorrect(playerId, gridList))
                         grids.Add(gridList);
                 });
-
-            }
             else
-            {
-
                 Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
                 {
-
-                    List<MyCubeGrid> gridList = new List<MyCubeGrid>();
-
-                    foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
-                    {
-
-                        MyCubeGrid grid = groupNodes.NodeData;
-
-                        if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
-                            continue;
-
-                        gridList.Add(grid);
-                    }
+                    var gridList = group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid => !grid.MarkedForClose && !grid.MarkedAsTrash && grid.InScene).ToList();
 
                     if (IsPlayerIdCorrect(playerId, gridList))
                         grids.Add(gridList);
                 });
-            }
 
             return grids;
         }
 
         private static bool IsPlayerIdCorrect(long playerId, List<MyCubeGrid> gridList)
         {
-
             MyCubeGrid biggestGrid = null;
 
-            foreach (var grid in gridList)
-                if (biggestGrid == null || biggestGrid.BlocksCount < grid.BlocksCount)
-                    biggestGrid = grid;
+            foreach (var grid in gridList.Where(grid => biggestGrid == null || biggestGrid.BlocksCount < grid.BlocksCount))
+                biggestGrid = grid;
 
             /* No biggest grid should not be possible, unless the gridgroup only had projections -.- just skip it. */
             if (biggestGrid == null)
                 return false;
 
-            bool hasOwners = biggestGrid.BigOwners.Count != 0;
+            var hasOwners = biggestGrid.BigOwners.Count != 0;
 
-            if (!hasOwners)
-            {
-
-                if (playerId != 0L)
-                    return false;
-
-                return true;
-            }
-
-            return playerId == biggestGrid.BigOwners[0];
+            if (hasOwners) return playerId == biggestGrid.BigOwners[0];
+            return playerId == 0L;
         }
 
-        public static List<MyCubeGrid> FindGridList(string gridNameOrEntityId, MyCharacter character, bool includeConnectedGrids)
+        public static List<MyCubeGrid> FindGridList(string gridNameOrEntityId, MyCharacter character,
+            bool includeConnectedGrids)
         {
-
-
-            List<MyCubeGrid> grids = new List<MyCubeGrid>();
+            var grids = new List<MyCubeGrid>();
 
             if (gridNameOrEntityId == null && character == null)
                 return new List<MyCubeGrid>();
 
             if (includeConnectedGrids)
             {
-
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> groups;
 
-                if (gridNameOrEntityId == null)
-                    groups = FindLookAtGridGroup(character);
-                else
-                    groups = FindGridGroup(gridNameOrEntityId);
+                groups = gridNameOrEntityId == null ? FindLookAtGridGroup(character) : FindGridGroup(gridNameOrEntityId);
 
                 if (groups.Count > 1)
                     return null;
 
-                foreach (var group in groups)
-                {
-                    foreach (var node in group.Nodes)
-                    {
-
-                        MyCubeGrid grid = node.NodeData;
-
-
-                        if (grid.Physics == null)
-                            continue;
-
-                        grids.Add(grid);
-                    }
-                }
-
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData).Where(grid => grid.Physics != null));
             }
             else
             {
-
                 ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups;
 
-                if (gridNameOrEntityId == null)
-                    groups = FindLookAtGridGroupMechanical(character);
-                else
-                    groups = FindGridGroupMechanical(gridNameOrEntityId);
+                groups = gridNameOrEntityId == null ? FindLookAtGridGroupMechanical(character) : FindGridGroupMechanical(gridNameOrEntityId);
 
                 if (groups.Count > 1)
                     return null;
 
-                foreach (var group in groups)
-                {
-                    foreach (var node in group.Nodes)
-                    {
-
-                        MyCubeGrid grid = node.NodeData;
-
-                        if (grid.Physics == null)
-                            continue;
-
-                        grids.Add(grid);
-                    }
-                }
+                grids.AddRange(groups.SelectMany(group => group.Nodes, (group, node) => node.NodeData).Where(grid => grid.Physics != null));
             }
 
             return grids;
@@ -408,23 +237,11 @@ namespace QuantumHangar.Utils
 
         public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindGridGroup(string gridName)
         {
-
-            ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> groups = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
+            var groups = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
             Parallel.ForEach(MyCubeGridGroups.Static.Physical.Groups, group =>
             {
-
-                foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                foreach (var _ in from groupNodes in @group.Nodes select groupNodes.NodeData into grid where !grid.MarkedForClose && !grid.MarkedAsTrash && grid.InScene where grid.DisplayName.Equals(gridName) || grid.EntityId + "" == gridName select grid)
                 {
-
-                    MyCubeGrid grid = groupNodes.NodeData;
-
-                    if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
-                        continue;
-
-                    /* Gridname is wrong ignore */
-                    if (!grid.DisplayName.Equals(gridName) && grid.EntityId + "" != gridName)
-                        continue;
-
                     groups.Add(group);
                 }
             });
@@ -432,60 +249,34 @@ namespace QuantumHangar.Utils
             return groups;
         }
 
-        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindLookAtGridGroup(MyCharacter controlledEntity)
+        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> FindLookAtGridGroup(
+            MyCharacter controlledEntity)
         {
-
             const float range = 5000;
-            Matrix worldMatrix;
-            Vector3D startPosition;
-            Vector3D endPosition;
 
-            worldMatrix = controlledEntity.GetHeadMatrix(true, true, false); // dead center of player cross hairs, or the direction the player is looking with ALT.
-            startPosition = worldMatrix.Translation + worldMatrix.Forward * 0.5f;
-            endPosition = worldMatrix.Translation + worldMatrix.Forward * (range);
+            Matrix worldMatrix = controlledEntity.GetHeadMatrix(true); // dead center of player cross hairs, or the direction the player is looking with ALT.
+            Vector3D startPosition = worldMatrix.Translation + worldMatrix.Forward * 0.5f;
+            Vector3D endPosition = worldMatrix.Translation + worldMatrix.Forward * range;
 
             var list = new Dictionary<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group, double>();
             var ray = new RayD(startPosition, worldMatrix.Forward);
 
             foreach (var group in MyCubeGridGroups.Static.Physical.Groups)
+            foreach (var distance in from groupNodes in @group.Nodes select groupNodes.NodeData into cubeGrid where cubeGrid != null where !cubeGrid.MarkedForClose && !cubeGrid.MarkedAsTrash && cubeGrid.InScene where ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue let hit = cubeGrid.RayCastBlocks(startPosition, endPosition) where hit.HasValue select (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length())
             {
-                foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in group.Nodes)
+                if (list.TryGetValue(group, out var oldDistance))
                 {
-
-                    MyCubeGrid cubeGrid = groupNodes.NodeData;
-                    if (cubeGrid != null)
-                    {
-                        if (cubeGrid.MarkedForClose || cubeGrid.MarkedAsTrash || !cubeGrid.InScene)
-                            continue;
-
-                        // check if the ray comes anywhere near the Grid before continuing.    
-                        if (ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue)
-                        {
-                            Vector3I? hit = cubeGrid.RayCastBlocks(startPosition, endPosition);
-                            if (hit.HasValue)
-                            {
-                                double distance = (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length();
-                                if (list.TryGetValue(group, out double oldDistance))
-                                {
-
-                                    if (distance < oldDistance)
-                                    {
-                                        list.Remove(group);
-                                        list.Add(group, distance);
-                                    }
-
-                                }
-                                else
-                                {
-                                    list.Add(group, distance);
-                                }
-                            }
-                        }
-                    }
+                    if (!(distance < oldDistance)) continue;
+                    list.Remove(group);
+                    list.Add(group, distance);
+                }
+                else
+                {
+                    list.Add(group, distance);
                 }
             }
 
-            ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
+            var bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group>();
 
 
             if (list.Count == 0)
@@ -498,25 +289,14 @@ namespace QuantumHangar.Utils
             return bag;
         }
 
-        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> FindGridGroupMechanical(string gridName)
+        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> FindGridGroupMechanical(
+            string gridName)
         {
-
-            ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> groups = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group>();
+            var groups = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group>();
             Parallel.ForEach(MyCubeGridGroups.Static.Mechanical.Groups, group =>
             {
-
-                foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
+                foreach (var _ in from groupNodes in @group.Nodes select groupNodes.NodeData into grid where !grid.MarkedForClose && !grid.MarkedAsTrash && grid.InScene where grid.DisplayName.Equals(gridName) || grid.EntityId + "" == gridName select grid)
                 {
-
-                    MyCubeGrid grid = groupNodes.NodeData;
-
-                    if (grid.MarkedForClose || grid.MarkedAsTrash || !grid.InScene)
-                        continue;
-
-                    /* Gridname is wrong ignore */
-                    if (!grid.DisplayName.Equals(gridName) && grid.EntityId + "" != gridName)
-                        continue;
-
                     groups.Add(group);
                 }
             });
@@ -524,70 +304,36 @@ namespace QuantumHangar.Utils
             return groups;
         }
 
-        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> FindLookAtGridGroupMechanical(IMyCharacter controlledEntity)
+        public static ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group>
+            FindLookAtGridGroupMechanical(IMyCharacter controlledEntity)
         {
             try
             {
                 const float range = 5000;
-                Matrix worldMatrix;
-                Vector3D startPosition;
-                Vector3D endPosition;
 
-                worldMatrix = controlledEntity.GetHeadMatrix(true, true, false); // dead center of player cross hairs, or the direction the player is looking with ALT.
-                startPosition = worldMatrix.Translation + worldMatrix.Forward * 0.5f;
-                endPosition = worldMatrix.Translation + worldMatrix.Forward * (range + 0.5f);
+                Matrix worldMatrix = controlledEntity.GetHeadMatrix(true); // dead center of player cross hairs, or the direction the player is looking with ALT.
+                Vector3D startPosition = worldMatrix.Translation + worldMatrix.Forward * 0.5f;
+                Vector3D endPosition = worldMatrix.Translation + worldMatrix.Forward * (range + 0.5f);
 
                 var list = new Dictionary<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group, double>();
                 var ray = new RayD(startPosition, worldMatrix.Forward);
 
                 foreach (var group in MyCubeGridGroups.Static.Mechanical.Groups)
+                foreach (var distance in from groupNodes in @group.Nodes select groupNodes.NodeData into cubeGrid where cubeGrid != null where !cubeGrid.MarkedForClose && !cubeGrid.MarkedAsTrash && cubeGrid.InScene where ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue let hit = cubeGrid.RayCastBlocks(startPosition, endPosition) where hit.HasValue select (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length())
                 {
-
-                    foreach (MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Node groupNodes in group.Nodes)
+                    if (list.TryGetValue(group, out var oldDistance))
                     {
-
-                        MyCubeGrid cubeGrid = groupNodes.NodeData;
-
-                        if (cubeGrid != null)
-                        {
-
-                            if (cubeGrid.MarkedForClose || cubeGrid.MarkedAsTrash || !cubeGrid.InScene)
-                                continue;
-
-                            // check if the ray comes anywhere near the Grid before continuing.    
-                            if (ray.Intersects(cubeGrid.PositionComp.WorldAABB).HasValue)
-                            {
-
-                                Vector3I? hit = cubeGrid.RayCastBlocks(startPosition, endPosition);
-
-                                if (hit.HasValue)
-                                {
-
-                                    double distance = (startPosition - cubeGrid.GridIntegerToWorld(hit.Value)).Length();
-
-
-                                    if (list.TryGetValue(group, out double oldDistance))
-                                    {
-
-                                        if (distance < oldDistance)
-                                        {
-                                            list.Remove(group);
-                                            list.Add(group, distance);
-                                        }
-
-                                    }
-                                    else
-                                    {
-
-                                        list.Add(group, distance);
-                                    }
-                                }
-                            }
-                        }
+                        if (!(distance < oldDistance)) continue;
+                        list.Remove(group);
+                        list.Add(group, distance);
+                    }
+                    else
+                    {
+                        list.Add(group, distance);
                     }
                 }
 
-                ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group> bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group>();
+                var bag = new ConcurrentBag<MyGroups<MyCubeGrid, MyGridMechanicalGroupData>.Group>();
 
                 if (list.Count == 0)
                     return bag;
@@ -603,9 +349,6 @@ namespace QuantumHangar.Utils
                 //Hangar.Debug("Matrix Error!", e, Hangar.ErrorType.Trace);
                 return null;
             }
-
         }
-
     }
-
 }

@@ -1,11 +1,6 @@
-﻿using Sandbox.Game.Multiplayer;
-using Sandbox.Game.World;
+﻿using Sandbox.Game.World;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Torch.Managers.PatchManager;
 
 namespace QuantumHangar.Utilities
@@ -15,16 +10,12 @@ namespace QuantumHangar.Utilities
         private static Hangar Plugin { get; set; }
 
 
-
         public void Apply(PatchContext ctx, Hangar plugin)
         {
-            var SaveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
-            new Type[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
-            if (SaveMethod == null)
-            {
-                throw new InvalidOperationException("Couldn't find Save");
-            }
-            ctx.GetPattern(SaveMethod).Suffixes.Add(Method(nameof(AfterSave)));
+            var saveMethod = typeof(MySession).GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null,
+                new[] { typeof(MySessionSnapshot).MakeByRefType(), typeof(string) }, null);
+            if (saveMethod == null) throw new InvalidOperationException("Couldn't find Save");
+            ctx.GetPattern(saveMethod).Suffixes.Add(Method(nameof(AfterSave)));
             Plugin = plugin;
         }
 
@@ -33,16 +24,11 @@ namespace QuantumHangar.Utilities
             return typeof(Patcher).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic);
         }
 
-        private static void AfterSave(bool __result)
+        private static void AfterSave(bool result)
         {
-            if (__result)
+            if (result)
             {
-
             }
         }
     }
-
-
-
 }
-

@@ -325,8 +325,8 @@
                     <GroupBox>
                         <GroupBox.Header>
                             <TextBlock>
-                                        <Span FontWeight="Bold">Hangar Total limits</Span>
-                                        <Span>(These are <Italic>GLOBAL</Italic> limits for your hangar storage)</Span>
+                                        <Span FontWeight="Bold">Hangar Per Player limits</Span>
+                                        <Span>(These are the limits for <Italic>PER PLAYER</Italic> hangar storage)</Span>
                             </TextBlock>
 
                         </GroupBox.Header>
@@ -346,19 +346,19 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Column="0" Grid.Row ="0" Text="Max Blocks:" Margin="3"/>
-                            <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxBlocks}" />
+                            <TextBox Grid.Column="1" Grid.Row="0" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding PlayerMaxBlocks}" />
 
                             <TextBlock Grid.Column="0" Grid.Row ="1" Text="Max PCU:" Margin="3"/>
-                            <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxPCU}"/>
+                            <TextBox Grid.Column="1" Grid.Row="1" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding PlayerMaxPCU}"/>
 
                             <TextBlock Grid.Column="0" Grid.Row ="2" Grid.ColumnSpan="2" Text="Max Amount of Static grids:"  Margin="3"/>
-                            <TextBox Grid.Column="1" Grid.Row="2" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxStaticGrids}"/>
+                            <TextBox Grid.Column="1" Grid.Row="2" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding PlayerMaxStaticGrids}"/>
 
                             <TextBlock Grid.Column="0" Grid.Row ="3" Grid.ColumnSpan="2" Text="Max Amount of Large grids: "  Margin="3"/>
-                            <TextBox Grid.Column="1" Grid.Row="3" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxLargeGrids}" />
+                            <TextBox Grid.Column="1" Grid.Row="3" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding PlayerMaxLargeGrids}" />
 
                             <TextBlock Grid.Column="0" Grid.Row ="4" Grid.ColumnSpan="2" Text="Max Amount of Small grids:"  Margin="3"/>
-                            <TextBox Grid.Column="1" Grid.Row="4" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding TotalMaxSmallGrids}" />
+                            <TextBox Grid.Column="1" Grid.Row="4" Width="140" HorizontalAlignment="Left" Margin="2" Text="{Binding PlayerMaxSmallGrids}" />
 
                         </Grid>
 
@@ -469,7 +469,7 @@
                         <GroupBox.Header>
                             <TextBlock Height="18">
                                         <Span FontWeight="Bold">AutoHangar Blacklist</Span>
-                                        <Span>(Allows blacklisting players by SteamID)</Span>
+                                        <Span>(Allows blacklisting players by SteamId)</Span>
                             </TextBlock>
                         </GroupBox.Header>
 

@@ -1,14 +1,11 @@
 ﻿using NLog;
 using QuantumHangar.Utils;
-using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Torch.Commands;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -18,143 +15,132 @@ namespace QuantumHangar.HangarChecks
 {
     public class AdminChecks
     {
-        public static Settings Config { get { return Hangar.Config; } }
-        private readonly Chat Chat;
+        public static Settings Config => Hangar.Config;
+        private readonly Chat _chat;
 
-        private readonly ulong TargetSteamID;
-        private readonly long TargetIdentityID;
+        private readonly ulong _targetSteamId;
+        private readonly long _targetIdentityId;
 
-        private Vector3D AdminPlayerPosition;
-        private MyCharacter AdminUserCharacter;
+        private Vector3D _adminPlayerPosition;
+        private MyCharacter _adminUserCharacter;
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(AdminChecks));
-        private readonly bool InConsole = false;
+        private readonly bool _inConsole;
 
-        private CommandContext Ctx;
+        private CommandContext _ctx;
 
-        public AdminChecks(CommandContext Context)
+        public AdminChecks(CommandContext context)
         {
 
-            InConsole = TryGetAdminPosition(Context.Player);
-            Chat = new Chat(Context, InConsole);
-            Ctx = Context;
+            _inConsole = TryGetAdminPosition(context.Player);
+            _chat = new Chat(context, _inConsole);
+            _ctx = context;
         }
 
-        private bool TryGetAdminPosition(IMyPlayer Admin)
+        private bool TryGetAdminPosition(IMyPlayer admin)
         {
-            if (Admin == null)
+            if (admin == null)
                 return true;
 
 
-            AdminPlayerPosition = Admin.GetPosition();
-            AdminUserCharacter = (MyCharacter)Admin.Character;
+            _adminPlayerPosition = admin.GetPosition();
+            _adminUserCharacter = (MyCharacter)admin.Character;
 
             return false;
         }
 
 
-        public async void SaveGrid(string NameOrIdentity = "")
+        public async void SaveGrid(string nameOrIdentity = "")
         {
-
-
-            GridResult Result = new GridResult(true);
-
-
-
+            var result = new GridResult(true);
+            
             //Gets grids player is looking at
-            if (!Result.GetGrids(Chat, AdminUserCharacter, NameOrIdentity))
+            if (!result.GetGrids(_chat, _adminUserCharacter, nameOrIdentity))
                 return;
 
 
-            if (Result.OwnerSteamID == 0)
+            if (result.OwnerSteamId == 0)
             {
-                Chat?.Respond("Unable to get major grid owner!");
+                _chat?.Respond("Unable to get major grid owner!");
                 return;
             }
+            var stamp = result.GenerateGridStamp();
+            var playersHanger = new PlayerHangar(result.OwnerSteamId, _chat, true);
+            var name = result.OwnerSteamId.ToString();
+            if (MySession.Static.Players.TryGetPlayerBySteamId(result.OwnerSteamId, out MyPlayer player))
+                name = player.DisplayName;
 
+            playersHanger.SelectedPlayerFile.FormatGridName(stamp);
 
-            GridStamp stamp = Result.GenerateGridStamp();
-            PlayerHangar PlayersHanger = new PlayerHangar(Result.OwnerSteamID, Chat, true);
-
-            string Name = Result.OwnerSteamID.ToString();
-            if (MySession.Static.Players.TryGetIdentityFromSteamID(Result.OwnerSteamID, out MyIdentity identity))
-                Name = identity.DisplayName;
-
-            PlayersHanger.SelectedPlayerFile.FormatGridName(stamp);
-
-            bool val = await PlayersHanger.SaveGridsToFile(Result, stamp.GridName);
+            var val = await playersHanger.SaveGridsToFile(result, stamp.GridName);
             if (val)
             {
-                PlayersHanger.SaveGridStamp(stamp, true);
-                Chat?.Respond($"{stamp.GridName} was saved to {Name}'s hangar!");
+                playersHanger.SaveGridStamp(stamp, true);
+                _chat?.Respond($"{stamp.GridName} was saved to {name}'s hangar!");
             }
             else
             {
-                Chat?.Respond($"{stamp.GridName} failed to send to {Name}'s hangar!");
-                return;
+                _chat?.Respond($"{stamp.GridName} failed to send to {name}'s hangar!");
             }
 
         }
 
-        public void LoadGrid(string NameOrSteamID, int ID, bool FromSavePos = true)
+        public void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamId(nameOrSteamId, out var playerSteamId))
                 return;
 
-            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
-            if (!PlayersHanger.TryGetGridStamp(ID, out GridStamp Stamp))
+            var playersHanger = new PlayerHangar(playerSteamId, _chat, true);
+            if (!playersHanger.TryGetGridStamp(id, out var stamp))
                 return;
 
 
-            if (!PlayersHanger.LoadGrid(Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids))
+            if (!playersHanger.LoadGrid(stamp, out var grids))
             {
-                Log.Error($"Loading grid {ID} failed for {NameOrSteamID}!");
-                Chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
+                Log.Error($"Loading grid {id} failed for {nameOrSteamId}!");
+                _chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
 
 
-            Vector3D LoadPos = Stamp.GridSavePosition;
-            if (FromSavePos == false && InConsole == true)
-                FromSavePos = true;
+            var loadPos = stamp.GridSavePosition;
+            if (fromSavePos == false && _inConsole == true)
+                fromSavePos = true;
 
-            if (!FromSavePos)
-                LoadPos = AdminPlayerPosition;
+            if (!fromSavePos)
+                loadPos = _adminPlayerPosition;
 
 
 
-            ParallelSpawner Spawner = new ParallelSpawner(Grids, Chat);
-            if (Spawner.Start(LoadPos, FromSavePos))
+            var spawner = new ParallelSpawner(grids, _chat);
+            if (spawner.Start(loadPos, fromSavePos))
             {
-                Chat?.Respond($"Spawning Completed! \n Location: {LoadPos}");
-                PlayersHanger.RemoveGridStamp(ID);
+                _chat?.Respond($"Spawning Completed! \n Location: {loadPos}");
+                playersHanger.RemoveGridStamp(id);
             }
             else
             {
-                Chat?.Respond("An error occured while spawning the grid!");
+                _chat?.Respond("An error occured while spawning the grid!");
             }
 
 
         }
 
-        public void ListGrids(string NameOrSteamID)
+        public void ListGrids(string nameOrSteamId)
         {
-
-
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamId(nameOrSteamId, out var playerSteamId))
                 return;
 
-
-            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
-            PlayersHanger.ListAllGrids();
+            var playersHanger = new PlayerHangar(playerSteamId, _chat, true);
+            playersHanger.ListAllGrids();
         }
 
-        public void SyncHangar(string NameOrSteamID)
+        public void SyncHangar(string nameOrSteamId)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamId(nameOrSteamId, out var playerSteamId))
                 return;
 
-            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
-            PlayersHanger.UpdateHangar();
+            var playersHanger = new PlayerHangar(playerSteamId, _chat, true);
+            playersHanger.UpdateHangar();
         }
 
         public void SyncAll()
@@ -163,17 +149,14 @@ namespace QuantumHangar.HangarChecks
             //Get All hangar folders
             foreach (var folder in Directory.GetDirectories(Hangar.MainPlayerDirectory))
             {
-                string PlayerID = Path.GetFileName(folder);
+                var playerId = Path.GetFileName(folder);
+                var id = ulong.Parse(playerId);
 
-                ulong ID = UInt64.Parse(PlayerID);
-
-
-                if (ID == 0)
+                if (id == 0)
                     continue;
 
-
-                PlayerHangar PlayersHanger = new PlayerHangar(ID, Chat, true);
-                PlayersHanger.UpdateHangar();
+                var playersHanger = new PlayerHangar(id, _chat, true);
+                playersHanger.UpdateHangar();
             }
 
 
@@ -181,59 +164,48 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public void RemoveGrid(string NameOrSteamID, int Index)
+        public void RemoveGrid(string nameOrSteamId, int index)
         {
-            if (!AdminTryGetPlayerSteamID(NameOrSteamID, out ulong PlayerSteamID))
+            if (!AdminTryGetPlayerSteamId(nameOrSteamId, out ulong playerSteamId))
                 return;
 
-            PlayerHangar PlayersHanger = new PlayerHangar(PlayerSteamID, Chat, true);
-            if (PlayersHanger.RemoveGridStamp(Index))
-                Chat.Respond("Successfully removed grid!");
+            var playersHanger = new PlayerHangar(playerSteamId, _chat, true);
+            if (playersHanger.RemoveGridStamp(index))
+                _chat.Respond("Successfully removed grid!");
 
         }
 
-        public bool AdminTryGetPlayerSteamID(string NameOrSteamID, out ulong PSteamID)
+        public bool AdminTryGetPlayerSteamId(string nameOrSteamId, out ulong pSteamId)
         {
-            ulong? SteamID;
-            if (UInt64.TryParse(NameOrSteamID, out ulong PlayerSteamID))
+            ulong? steamId;
+            if (ulong.TryParse(nameOrSteamId, out var playerSteamId))
             {
-                MyIdentity Identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(PlayerSteamID, 0));
+                var identity = MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(playerSteamId, 0));
 
-                if (Identity == null)
+                if (identity == null)
                 {
-                    Chat?.Respond(NameOrSteamID + " doesnt exsist as an Identity!");
-                    PSteamID = 0;
+                    _chat?.Respond(nameOrSteamId + " doesn't exist as an Identity!");
+                    pSteamId = 0;
                     return false;
                 }
 
-                PSteamID = PlayerSteamID;
+                pSteamId = playerSteamId;
                 return true;
             }
-            else
+            try
             {
-                try
-                {
-                    MyIdentity MPlayer;
-                    MPlayer = MySession.Static.Players.GetAllIdentities().FirstOrDefault(x => x.DisplayName.Equals(NameOrSteamID));
-                    SteamID = MySession.Static.Players.TryGetSteamId(MPlayer.IdentityId);
-                }
-                catch (Exception e)
-                {
-                    //Hangar.Debug("Player "+ NameOrID + " dosnt exist on the server!", e, Hangar.ErrorType.Warn);
-                    Chat?.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
-                    PSteamID = 0;
-                    return false;
-                }
+                var mPlayer = MySession.Static.Players.GetAllIdentities().FirstOrDefault(x => x.DisplayName.Equals(nameOrSteamId));
+                steamId = MySession.Static.Players.TryGetSteamId(mPlayer.IdentityId);
             }
-
-            if (!SteamID.HasValue)
+            catch (Exception)
             {
-                Chat?.Respond(NameOrSteamID + " doest exist! Check logs for more details!");
-                PSteamID = 0;
+                //Hangar.Debug("Player "+ NameOrID + " doesn't exist on the server!", e, Hangar.ErrorType.Warn);
+                _chat?.Respond("Player " + nameOrSteamId + " doesn't exist on the server!");
+                pSteamId = 0;
                 return false;
             }
 
-            PSteamID = SteamID.Value;
+            pSteamId = steamId.Value;
             return true;
         }
 

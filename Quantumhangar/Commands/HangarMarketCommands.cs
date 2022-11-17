@@ -1,23 +1,18 @@
 ﻿using QuantumHangar.Commands;
 using QuantumHangar.HangarChecks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Torch.Commands;
 using Torch.Commands.Permissions;
 using VRage.Game.ModAPI;
 
 namespace QuantumHangar.HangarMarket
 {
-
-    [Torch.Commands.Category("hangar")]
+    [Category("hangar")]
     public class HangarMarketCommands : CommandModule
     {
         [Command("sell", "Sells the grid")]
         [Permission(MyPromoteLevel.None)]
-        public async void SellGrid(int ID, long price, string description)
+        public async void SellGrid(int id, long price, string description)
         {
             if (!Hangar.Config.PluginEnabled)
                 return;
@@ -28,10 +23,10 @@ namespace QuantumHangar.HangarMarket
                 Context.Respond("This is a player only command!");
                 return;
             }
-            
 
-            PlayerChecks User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
+
+            var user = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SellGrid(id, price, description), Context);
         }
 
 
@@ -43,25 +38,22 @@ namespace QuantumHangar.HangarMarket
                 return;
 
 
-            StringBuilder Builder = new StringBuilder();
-            foreach(var Value in HangarMarketController.MarketOffers.Values)
-            {
-                Builder.AppendLine($"{Value.Name} - {Value.Price}");
-            }
+            var builder = new StringBuilder();
+            foreach (var value in HangarMarketController.MarketOffers.Values)
+                builder.AppendLine($"{value.Name} - {value.Price}");
 
-            Chat Response = new Chat(Context);
-            Response.Respond(Builder.ToString());
+            var response = new Chat(Context);
+            response.Respond(builder.ToString());
         }
     }
 
 
-
-    [Torch.Commands.Category("h")]
+    [Category("h")]
     public class HangarMarketCommandsSimp : CommandModule
     {
         [Command("sell", "Sells the grid")]
         [Permission(MyPromoteLevel.None)]
-        public async void SellGrid(int ID, long price, string description)
+        public async void SellGrid(int id, long price, string description)
         {
             if (!Hangar.Config.PluginEnabled)
                 return;
@@ -73,8 +65,8 @@ namespace QuantumHangar.HangarMarket
             }
 
 
-            PlayerChecks User = new PlayerChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => User.SellGrid(ID, price, description), Context);
+            var user = new PlayerChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SellGrid(id, price, description), Context);
         }
 
 
@@ -86,15 +78,12 @@ namespace QuantumHangar.HangarMarket
                 return;
 
 
-            StringBuilder Builder = new StringBuilder();
-            foreach (var Value in HangarMarketController.MarketOffers.Values)
-            {
-                Builder.AppendLine($"{Value.Name} - {Value.Price}");
-            }
+            var builder = new StringBuilder();
+            foreach (var value in HangarMarketController.MarketOffers.Values)
+                builder.AppendLine($"{value.Name} - {value.Price}");
 
-            Chat Response = new Chat(Context);
-            Response.Respond(Builder.ToString());
+            var response = new Chat(Context);
+            response.Respond(builder.ToString());
         }
     }
-
 }

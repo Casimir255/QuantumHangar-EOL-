@@ -10,52 +10,47 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
-using VRage.Utils;
 
 namespace QuantumHangar.HangarChecks
 {
-    //This is for all users. Doesnt matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
+    //This is for all users. Doesn't matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
     public class PlayerHangar : IDisposable
     {
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
-        private readonly Chat Chat;
+        private readonly Chat _chat;
         public readonly PlayerInfo SelectedPlayerFile;
 
-        private bool IsAdminCalling = false;
-        private readonly ulong SteamID;
-        private readonly MyIdentity Identity;
+        private bool _isAdminCalling;
+        private readonly ulong _steamId;
+        private readonly MyPlayer _player;
 
 
-        public string PlayersFolderPath { get; private set; }
+        public string PlayersFolderPath { get; }
 
 
-        private static Settings Config { get { return Hangar.Config; } }
+        private static Settings Config => Hangar.Config;
 
 
-        public PlayerHangar(ulong SteamID, Chat Respond, bool IsAdminCalling = false)
+        public PlayerHangar(ulong steamId, Chat respond, bool isAdminCalling = false)
         {
             try
             {
+                MySession.Static.Players.TryGetPlayerBySteamId(steamId, out _player);
 
-                MySession.Static.Players.TryGetIdentityFromSteamID(SteamID, out Identity);
+                this._steamId = steamId;
 
-                this.SteamID = SteamID;
-
-                this.IsAdminCalling = IsAdminCalling;
-                Chat = Respond;
+                this._isAdminCalling = isAdminCalling;
+                _chat = respond;
                 SelectedPlayerFile = new PlayerInfo();
 
 
-                PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, SteamID.ToString());
-                SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, SteamID);
-
-
+                PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, steamId.ToString());
+                SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, steamId);
             }
             catch (Exception ex)
             {
@@ -63,87 +58,44 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-
-
-
-        public static bool TransferGrid(ulong From, ulong To, string GridName)
+        public static bool TransferGrid(ulong from, ulong to, string gridName)
         {
-
             try
             {
                 Log.Error("Starting Grid Transfer!");
 
-                var FromInfo = new PlayerInfo();
-                FromInfo.LoadFile(Hangar.MainPlayerDirectory, From);
+                var fromInfo = new PlayerInfo();
+                fromInfo.LoadFile(Hangar.MainPlayerDirectory, from);
 
-                if (!FromInfo.GetGrid(GridName, out GridStamp Stamp, out string error))
+                if (!fromInfo.GetGrid(gridName, out var stamp, out var error))
                 {
-
                     Log.Error("Failed to get grid! " + error);
                     return false;
                 }
 
 
-                string GridPath = Stamp.GetGridPath(FromInfo.PlayerFolderPath);
-                string FileName = Path.GetFileName(GridPath);
+                var gridPath = stamp.GetGridPath(fromInfo.PlayerFolderPath);
+                var fileName = Path.GetFileName(gridPath);
 
+                fromInfo.Grids.Remove(stamp);
+                fromInfo.SaveFile();
 
-
-
-                FromInfo.Grids.Remove(Stamp);
-                FromInfo.SaveFile();
-
-
-
-                var ToInfo = new PlayerInfo();
-                ToInfo.LoadFile(Hangar.MainPlayerDirectory, To);
-                ToInfo.FormatGridName(Stamp);
+                var toInfo = new PlayerInfo();
+                toInfo.LoadFile(Hangar.MainPlayerDirectory, to);
+                toInfo.FormatGridName(stamp);
 
 
                 //Call gridstamp transferred as it will force load near player, and transfer on load
-                Stamp.Transfered();
+                stamp.Transfered();
 
-                ToInfo.Grids.Add(Stamp);
+                toInfo.Grids.Add(stamp);
 
                 //Make sure to create directory
-                Directory.CreateDirectory(ToInfo.PlayerFolderPath);
-                File.Move(GridPath, Path.Combine(ToInfo.PlayerFolderPath, Stamp.GridName + ".sbc"));
+                Directory.CreateDirectory(toInfo.PlayerFolderPath);
+                File.Move(gridPath, Path.Combine(toInfo.PlayerFolderPath, stamp.GridName + ".sbc"));
 
-                ToInfo.SaveFile();
+                toInfo.SaveFile();
                 Log.Error("Moved Grid!");
-            }
-            catch (Exception Ex)
-            {
-                Log.Error(Ex);
-                return false;
-            }
-
-
-            return true;
-        }
-
-        public static bool TransferGrid(PlayerInfo To, GridStamp Stamp)
-        {
-            try
-            {
-
-
-                string GridName = Stamp.GridName;
-                To.FormatGridName(Stamp);
-
-                //Make sure to create the directory!
-                Directory.CreateDirectory(To.PlayerFolderPath);
-
-                File.Copy(Stamp.OriginalGridPath, Path.Combine(To.PlayerFolderPath, Stamp.GridName + ".sbc"));
-                Stamp.Transfered();
-
-                To.ServerOfferPurchased(GridName);
-
-                To.Grids.Add(Stamp);
-                To.SaveFile();
-
-
-
             }
             catch (Exception ex)
             {
@@ -154,43 +106,64 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
+        public static bool TransferGrid(PlayerInfo to, GridStamp stamp)
+        {
+            try
+            {
+                var gridName = stamp.GridName;
+                to.FormatGridName(stamp);
 
-        
+                //Make sure to create the directory!
+                Directory.CreateDirectory(to.PlayerFolderPath);
 
+                File.Copy(stamp.OriginalGridPath, Path.Combine(to.PlayerFolderPath, stamp.GridName + ".sbc"));
+                stamp.Transfered();
 
+                to.ServerOfferPurchased(gridName);
 
+                to.Grids.Add(stamp);
+                to.SaveFile();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+                return false;
+            }
+
+            return true;
+        }
 
         /* Private Methods */
-        private bool RemoveStamp(int ID)
+        private bool RemoveStamp(int id)
         {
             //Log.Warn($"HitA: {ID}");
 
             //Input valid for ID - X
-            if (!SelectedPlayerFile.IsInputValid(ID, out string Error))
+            if (!SelectedPlayerFile.IsInputValid(id, out string error))
             {
-                Chat.Respond(Error);
+                _chat.Respond(error);
                 return false;
             }
 
             //Log.Warn("HitB");
-            if (!IsAdminCalling)
+            if (!_isAdminCalling)
             {
-                TimeStamp stamp = new TimeStamp();
-                stamp.OldTime = DateTime.Now;
+                var stamp = new TimeStamp
+                {
+                    OldTime = DateTime.Now
+                };
                 SelectedPlayerFile.Timer = stamp;
             }
 
             //Log.Warn("HitC");
             try
             {
-
-                string a = Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[ID - 1].GridName + ".sbc");
+                var a = Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[id - 1].GridName + ".sbc");
                 Log.Info(a);
 
                 File.Delete(a);
-                SelectedPlayerFile.Grids.RemoveAt(ID - 1);
+                SelectedPlayerFile.Grids.RemoveAt(id - 1);
                 SelectedPlayerFile.SaveFile();
-
 
 
                 return true;
@@ -201,21 +174,18 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
         }
-        private bool CheckGridLimits(GridStamp Grid)
+
+        private bool CheckGridLimits(GridStamp grid)
         {
             //Backwards compatibale
             if (Config.OnLoadTransfer)
                 return true;
 
-
-
-
-            if (Grid.ShipPCU.Count == 0)
+            if (grid.ShipPcu.Count == 0)
             {
+                var blockLimits = _player.Identity.BlockLimits;
 
-                MyBlockLimits blockLimits = Identity.BlockLimits;
-
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+                var a = MySession.Static.GlobalBlockLimits;
 
                 if (a.PCU <= 0)
                 {
@@ -229,12 +199,12 @@ namespace QuantumHangar.HangarChecks
                 //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
                 //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
 
-                int CurrentPcu = blockLimits.PCUBuilt;
+                var currentPcu = blockLimits.PCUBuilt;
                 //Hangar.Debug("Current PCU: " + CurrentPcu);
 
-                int MaxPcu = blockLimits.PCU + CurrentPcu;
+                var maxPcu = blockLimits.PCU + currentPcu;
 
-                int pcu = MaxPcu - CurrentPcu;
+                var pcu = maxPcu - currentPcu;
                 //Main.Debug("MaxPcu: " + pcu);
                 //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
 
@@ -242,29 +212,23 @@ namespace QuantumHangar.HangarChecks
                 //Hangar.Debug("Current player PCU:" + CurrentPcu);
 
                 //Find the difference
-                if (MaxPcu - CurrentPcu <= Grid.GridPCU)
-                {
-                    int Need = Grid.GridPCU - (MaxPcu - CurrentPcu);
-                    Chat.Respond("PCU limit reached! You need an additional " + Need + " pcu to perform this action!");
-                    return false;
-                }
-
-                return true;
+                if (maxPcu - currentPcu > grid.GridPcu) return true;
+                var need = grid.GridPcu - (maxPcu - currentPcu);
+                _chat.Respond("PCU limit reached! You need an additional " + need + " pcu to perform this action!");
+                return false;
             }
 
 
-            foreach (KeyValuePair<long, int> Player in Grid.ShipPCU)
+            foreach (var player in grid.ShipPcu)
             {
-
-                MyIdentity Identity = MySession.Static.Players.TryGetIdentity(Player.Key);
-                if (Identity == null)
+                var identity = MySession.Static.Players.TryGetIdentity(player.Key);
+                if (identity == null)
                 {
                     continue;
                 }
 
-
-                MyBlockLimits blockLimits = Identity.BlockLimits;
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+                var blockLimits = identity.BlockLimits;
+                var a = MySession.Static.GlobalBlockLimits;
 
                 if (a.PCU <= 0)
                 {
@@ -278,12 +242,12 @@ namespace QuantumHangar.HangarChecks
                 //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
                 //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
 
-                int CurrentPcu = blockLimits.PCUBuilt;
+                var currentPcu = blockLimits.PCUBuilt;
                 //Hangar.Debug("Current PCU: " + CurrentPcu);
 
-                int MaxPcu = blockLimits.PCU + CurrentPcu;
+                var maxPcu = blockLimits.PCU + currentPcu;
 
-                int pcu = MaxPcu - CurrentPcu;
+                var pcu = maxPcu - currentPcu;
                 //Main.Debug("MaxPcu: " + pcu);
                 //Hangar.Debug("Grid PCU: " + Grid.GridPCU);
 
@@ -291,548 +255,434 @@ namespace QuantumHangar.HangarChecks
                 //Hangar.Debug("Current player PCU:" + CurrentPcu);
 
                 //Find the difference
-                if (MaxPcu - CurrentPcu <= Player.Value)
-                {
-                    int Need = Player.Value - (MaxPcu - CurrentPcu);
-                    Chat.Respond("PCU limit reached! " + Identity.DisplayName + " needs an additional " + Need + " PCU to load this grid!");
-                    return false;
-                }
-
+                if (maxPcu - currentPcu > player.Value) continue;
+                var need = player.Value - (maxPcu - currentPcu);
+                _chat.Respond("PCU limit reached! " + identity.DisplayName + " needs an additional " + need +
+                             " PCU to load this grid!");
+                return false;
             }
 
             return true;
         }
-        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipblueprints)
+
+        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipBlueprints)
         {
-            int BiggestGrid = 0;
-            int blocksToBuild = 0;
+            var biggestGrid = 0;
+            var blocksToBuild = 0;
             //failedBlockType = null;
             //Need dictionary for each player AND their blocks they own. (Players could own stuff on the same grid)
-            Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits = new Dictionary<long, Dictionary<string, int>>();
+            var blocksAndOwnerForLimits = new Dictionary<long, Dictionary<string, int>>();
 
 
             //Total PCU and Blocks
-            int FinalBlocksCount = 0;
-            int FinalBlocksPCU = 0;
+            var finalBlocksCount = 0;
+            var finalBlocksPcu = 0;
 
 
-            Dictionary<string, int> BlockPairNames = new Dictionary<string, int>();
-            Dictionary<string, int> BlockSubTypeNames = new Dictionary<string, int>();
-
-
-            //Go ahead and check if the block limits is enabled server side! If it isnt... continue!
+            //Go ahead and check if the block limits is enabled server side! If it isn't... return true!
             if (!Config.EnableBlackListBlocks)
             {
                 return true;
             }
 
-
-            else
+            //If we are using built in server block limits..
+            if (Config.SBlockLimits)
             {
-                //If we are using built in server block limits..
-                if (Config.SBlockLimits)
+                //& the server blocklimits is not enabled... Return true
+                if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.NONE)
                 {
-                    //& the server blocklimits is not enabled... Return true
-                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.NONE)
+                    return true;
+                }
+
+
+                //Cycle each grid in the ship blueprints
+                foreach (var cubeGrid in shipBlueprints)
+                {
+                    //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
+                    if (biggestGrid < cubeGrid.CubeBlocks.Count())
                     {
-                        return true;
+                        biggestGrid = cubeGrid.CubeBlocks.Count();
                     }
 
+                    blocksToBuild += cubeGrid.CubeBlocks.Count();
 
-                    //Cycle each grid in the ship blueprints
-
-                    foreach (var CubeGrid in shipblueprints)
+                    foreach (var block in cubeGrid.CubeBlocks)
                     {
+                        var defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
 
-                        //Main.Debug("CubeBlocks count: " + CubeGrid.GetType());
-                        if (BiggestGrid < CubeGrid.CubeBlocks.Count())
+                        if (!MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId,
+                                out var myCubeBlockDefinition)) continue;
+                        //Check for BlockPair or SubType?
+                        var blockName = "";
+                        //Server Block Limits
+                        blockName = Config.SBlockLimits
+                            ? myCubeBlockDefinition.BlockPairName
+                            : /*Custom Block SubType Limits */ myCubeBlockDefinition.Id.SubtypeName;
+
+                        var blockOwner2 = 0L;
+                        blockOwner2 = block.BuiltBy;
+
+                        //If the player dictionary already has a Key, we need to retrieve it
+                        if (blocksAndOwnerForLimits.ContainsKey(blockOwner2))
                         {
-                            BiggestGrid = CubeGrid.CubeBlocks.Count();
+                            //if the dictionary already contains the same block type
+                            var dictForUser = blocksAndOwnerForLimits[blockOwner2];
+                            if (dictForUser.ContainsKey(blockName))
+                            {
+                                dictForUser[blockName]++;
+                            }
+                            else
+                            {
+                                dictForUser.Add(blockName, 1);
+                            }
+
+                            blocksAndOwnerForLimits[blockOwner2] = dictForUser;
                         }
-                        blocksToBuild = blocksToBuild + CubeGrid.CubeBlocks.Count();
-
-                        foreach (MyObjectBuilder_CubeBlock block in CubeGrid.CubeBlocks)
+                        else
                         {
-
-                            MyDefinitionId defId = new MyDefinitionId(block.TypeId, block.SubtypeId);
-
-                            if (MyDefinitionManager.Static.TryGetCubeBlockDefinition(defId, out MyCubeBlockDefinition myCubeBlockDefinition))
-                            {
-                                //Check for BlockPair or SubType?
-                                string BlockName = "";
-                                if (Config.SBlockLimits)
-                                {
-                                    //Server Block Limits
-                                    BlockName = myCubeBlockDefinition.BlockPairName;
-
-                                }
-                                else
-                                {
-                                    //Custom Block SubType Limits
-                                    BlockName = myCubeBlockDefinition.Id.SubtypeName;
-                                }
-
-                                long blockowner2 = 0L;
-                                blockowner2 = block.BuiltBy;
-
-                                //If the player dictionary already has a Key, we need to retrieve it
-                                if (BlocksAndOwnerForLimits.ContainsKey(blockowner2))
-                                {
-                                    //if the dictionary already contains the same block type
-                                    Dictionary<string, int> dictforuser = BlocksAndOwnerForLimits[blockowner2];
-                                    if (dictforuser.ContainsKey(BlockName))
-                                    {
-                                        dictforuser[BlockName]++;
-                                    }
-                                    else
-                                    {
-                                        dictforuser.Add(BlockName, 1);
-                                    }
-                                    BlocksAndOwnerForLimits[blockowner2] = dictforuser;
-                                }
-                                else
-                                {
-                                    BlocksAndOwnerForLimits.Add(blockowner2, new Dictionary<string, int>
+                            blocksAndOwnerForLimits.Add(blockOwner2, new Dictionary<string, int>
                             {
                                 {
-                                    BlockName,
+                                    blockName,
                                     1
                                 }
                             });
-                                }
-
-                                FinalBlocksPCU += myCubeBlockDefinition.PCU;
-
-
-                                //if()
-
-                            }
-
-
                         }
 
-                        FinalBlocksCount += CubeGrid.CubeBlocks.Count;
-
+                        finalBlocksPcu += myCubeBlockDefinition.PCU;
+                        //if()
                     }
 
-
-
-
-                    if (MySession.Static.MaxGridSize != 0 && BiggestGrid > MySession.Static.MaxGridSize)
-                    {
-                        Chat.Respond("Biggest grid is over Max grid size! ");
-                        return false;
-                    }
-
-                    //Need too loop player identities in dictionary. Do this via seperate function
-                    if (PlayerIdentityLoop(BlocksAndOwnerForLimits, FinalBlocksCount) == true)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
+                    finalBlocksCount += cubeGrid.CubeBlocks.Count;
                 }
-                else
-                {
-                    //BlockLimiter
-                    if (!PluginDependencies.BlockLimiterInstalled)
-                    {
-                        //BlockLimiter is null!
-                        Chat.Respond("Blocklimiter Plugin not installed or Loaded!");
-                        Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
-                        return false;
-                    }
 
+                if (MySession.Static.MaxGridSize == 0 || biggestGrid <= MySession.Static.MaxGridSize)
+                    return PlayerIdentityLoop(blocksAndOwnerForLimits, finalBlocksCount);
+                _chat.Respond("Biggest grid is over Max grid size! ");
+                return false;
 
-                    List<MyObjectBuilder_CubeGrid> grids = new List<MyObjectBuilder_CubeGrid>();
-
-                    foreach (var CubeGrid in shipblueprints)
-                    {
-                        grids.Add(CubeGrid);
-                    }
-
-
-
-                    bool ValueReturn = PluginDependencies.CheckGridLimits(grids, Identity.IdentityId);
-
-                    //Convert to value return type
-                    if (!ValueReturn)
-                    {
-                        //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
-                        return true;
-                    }
-                    else
-                    {
-                        Chat.Respond("Grid would be over Server-Blocklimiter limits!");
-                        return false;
-                    }
-                }
+                //Need too loop player identities in dictionary. Do this via seperate function
             }
-        }
-        private bool PlayerIdentityLoop(Dictionary<long, Dictionary<string, int>> BlocksAndOwnerForLimits, int blocksToBuild)
-        {
-            foreach (KeyValuePair<long, Dictionary<string, int>> Player in BlocksAndOwnerForLimits)
+
+            //BlockLimiter
+            if (!PluginDependencies.BlockLimiterInstalled)
             {
+                //BlockLimiter is null!
+                _chat.Respond("Blocklimiter Plugin not installed or Loaded!");
+                Log.Warn("BLimiter plugin not installed or loaded! May require a server restart!");
+                return false;
+            }
 
-                Dictionary<string, int> PlayerBuiltBlocks = Player.Value;
-                MyIdentity myIdentity = MySession.Static.Players.TryGetIdentity(Player.Key);
-                if (myIdentity != null)
+            var grids = shipBlueprints.ToList();
+            var valueReturn = PluginDependencies.CheckGridLimits(grids, _player.Identity.IdentityId);
+
+            //Convert to value return type
+            if (!valueReturn)
+            {
+                //Main.Debug("Cannont load grid in due to BlockLimiter Configs!");
+                return true;
+            }
+
+            _chat.Respond("Grid would be over Server-Blocklimiter limits!");
+            return false;
+        }
+
+        private bool PlayerIdentityLoop(Dictionary<long, Dictionary<string, int>> blocksAndOwnerForLimits,
+            int blocksToBuild)
+        {
+            foreach (var (k, playerBuiltBlocks) in blocksAndOwnerForLimits)
+            {
+                var myIdentity = MySession.Static.Players.TryGetIdentity(k);
+                if (myIdentity == null) continue;
+                var blockLimits = myIdentity.BlockLimits;
+                if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.PER_FACTION &&
+                    MySession.Static.Factions.GetPlayerFaction(myIdentity.IdentityId) == null)
                 {
-                    MyBlockLimits blockLimits = myIdentity.BlockLimits;
-                    if (MySession.Static.BlockLimitsEnabled == MyBlockLimitsEnabledEnum.PER_FACTION && MySession.Static.Factions.GetPlayerFaction(myIdentity.IdentityId) == null)
+                    _chat.Respond("ServerLimits are set PerFaction. You are not in a faction! Contact an Admin!");
+                    return false;
+                }
+
+                if (blockLimits == null) continue;
+                if (MySession.Static.MaxBlocksPerPlayer != 0 &&
+                    blockLimits.BlocksBuilt + blocksToBuild > blockLimits.MaxBlocks)
+                {
+                    _chat.Respond("Cannot load grid! You would be over your Max Blocks!");
+                    return false;
+                }
+
+                //Double check to see if the list is null
+                if (playerBuiltBlocks == null) continue;
+                foreach (var serverBlockLimits in MySession.Static.BlockTypeLimits)
+                {
+                    if (!playerBuiltBlocks.ContainsKey(serverBlockLimits.Key)) continue;
+                    var totalNumberOfBlocks = playerBuiltBlocks[serverBlockLimits.Key];
+
+                    if (blockLimits.BlockTypeBuilt.TryGetValue(serverBlockLimits.Key,
+                            out MyBlockLimits.MyTypeLimitData limitData))
                     {
-                        Chat.Respond("ServerLimits are set PerFaction. You are not in a faction! Contact an Admin!");
-                        return false;
+                        //Grab their existing block count for the block limit
+                        totalNumberOfBlocks += limitData.BlocksBuilt;
                     }
 
-                    if (blockLimits != null)
-                    {
-
-
-                        if (MySession.Static.MaxBlocksPerPlayer != 0 && blockLimits.BlocksBuilt + blocksToBuild > blockLimits.MaxBlocks)
-                        {
-                            Chat.Respond("Cannot load grid! You would be over your Max Blocks!");
-                            return false;
-                        }
-
-                        //Double check to see if the list is null
-                        if (PlayerBuiltBlocks != null)
-                        {
-                            foreach (KeyValuePair<string, short> ServerBlockLimits in MySession.Static.BlockTypeLimits)
-                            {
-                                if (PlayerBuiltBlocks.ContainsKey(ServerBlockLimits.Key))
-                                {
-                                    int TotalNumberOfBlocks = PlayerBuiltBlocks[ServerBlockLimits.Key];
-
-                                    if (blockLimits.BlockTypeBuilt.TryGetValue(ServerBlockLimits.Key, out MyBlockLimits.MyTypeLimitData LimitData))
-                                    {
-                                        //Grab their existing block count for the block limit
-                                        TotalNumberOfBlocks += LimitData.BlocksBuilt;
-                                    }
-
-                                    //Compare to see if they would be over!
-                                    short ServerLimit = MySession.Static.GetBlockTypeLimit(ServerBlockLimits.Key);
-                                    if (TotalNumberOfBlocks > ServerLimit)
-                                    {
-                                        Chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + ServerBlockLimits.Key + " limits! " + TotalNumberOfBlocks + "/" + ServerLimit);
-                                        //Player would be over their block type limits
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-
-
+                    //Compare to see if they would be over!
+                    var serverLimit = MySession.Static.GetBlockTypeLimit(serverBlockLimits.Key);
+                    if (totalNumberOfBlocks <= serverLimit) continue;
+                    _chat.Respond("Player " + myIdentity.DisplayName + " would be over their " + serverBlockLimits.Key +
+                                 " limits! " + totalNumberOfBlocks + "/" + serverLimit);
+                    //Player would be over their block type limits
+                    return false;
                 }
             }
 
             return true;
         }
-        public bool IsGridForSale(GridStamp Grid, bool Admin = false)
+
+        public bool IsGridForSale(GridStamp grid, bool admin)
         {
-            if (Grid.GridForSale)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return admin && grid.GridForSale;
         }
 
-
-
-
-
-
-
-
-        public static bool IsServerSaving(Chat Chat)
+        public static bool IsServerSaving(Chat chat)
         {
-            if (MySession.Static.IsSaveInProgress)
-            {
-                Chat?.Respond("Server has a save in progress... Please wait!");
-                return true;
-            }
-
-            return false;
+            if (!MySession.Static.IsSaveInProgress) return false;
+            chat?.Respond("Server has a save in progress... Please wait!");
+            return true;
         }
+
         public bool CheckPlayerTimeStamp()
         {
             //Check timestamp before continuing!
-            if (SelectedPlayerFile.Timer != null)
+            if (SelectedPlayerFile.Timer == null) return true;
+            var old = SelectedPlayerFile.Timer;
+            var lastUse = old.OldTime;
+
+
+            //When the player can use the command
+            var canUseTime = lastUse + TimeSpan.FromMinutes(Config.WaitTime);
+            //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
+            if (canUseTime > DateTime.Now)
             {
-                TimeStamp Old = SelectedPlayerFile.Timer;
-                DateTime LastUse = Old.OldTime;
-
-
-                //When the player can use the command
-                DateTime CanUseTime = LastUse + TimeSpan.FromMinutes(Config.WaitTime);
-                //Log.Info("TimeSpan: " + Subtracted.TotalMinutes);
-                if (CanUseTime > DateTime.Now)
-                {
-
-                    TimeSpan TimeLeft = DateTime.Now - CanUseTime;
-                    //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                    Chat?.Respond($"You have {TimeLeft.ToString(@"hh\:mm\:ss")} until you can perform this action!");
-                    return false;
-                }
-                else
-                {
-                    SelectedPlayerFile.Timer = null;
-                    return true;
-                }
+                var timeLeft = DateTime.Now - canUseTime;
+                //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
+                _chat?.Respond($"You have {timeLeft:hh\\:mm\\:ss} until you can perform this action!");
+                return false;
             }
 
+            SelectedPlayerFile.Timer = null;
             return true;
         }
-        public bool ExtensiveLimitChecker(GridStamp Stamp)
+
+        public bool ExtensiveLimitChecker(GridStamp stamp)
         {
             //Begin Single Slot Save!
-
-
             if (Config.SingleMaxBlocks != 0)
             {
-                if (Stamp.NumberofBlocks > Config.SingleMaxBlocks)
+                if (stamp.NumberofBlocks > Config.SingleMaxBlocks)
                 {
-                    int remainder = Stamp.NumberofBlocks - Config.SingleMaxBlocks;
-                    Chat?.Respond("Grid is " + remainder + " blocks over the max slot block limit! " + Stamp.NumberofBlocks + "/" + Config.SingleMaxBlocks);
+                    var remainder = stamp.NumberofBlocks - Config.SingleMaxBlocks;
+                    _chat?.Respond("Grid is " + remainder + " blocks over the max slot block limit! " +
+                                  stamp.NumberofBlocks + "/" + Config.SingleMaxBlocks);
                     return false;
                 }
             }
 
-            if (Config.SingleMaxPCU != 0)
+            if (Config.SingleMaxPcu != 0)
             {
-                if (Stamp.GridPCU > Config.SingleMaxPCU)
+                if (stamp.GridPcu > Config.SingleMaxPcu)
                 {
-                    int remainder = Stamp.GridPCU - Config.SingleMaxPCU;
-                    Chat?.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + Stamp.GridPCU + "/" + Config.SingleMaxPCU);
+                    var remainder = stamp.GridPcu - Config.SingleMaxPcu;
+                    _chat?.Respond("Grid is " + remainder + " PCU over the slot hangar PCU limit! " + stamp.GridPcu +
+                                  "/" + Config.SingleMaxPcu);
                     return false;
                 }
             }
 
             if (Config.AllowStaticGrids)
             {
-                if (Config.SingleMaxLargeGrids != 0 && Stamp.StaticGrids > Config.SingleMaxStaticGrids)
+                if (Config.SingleMaxLargeGrids != 0 && stamp.StaticGrids > Config.SingleMaxStaticGrids)
                 {
-                    int remainder = Stamp.StaticGrids - Config.SingleMaxStaticGrids;
-                    Chat?.Respond("You are " + remainder + " static grid over the hangar slot limit!");
+                    var remainder = stamp.StaticGrids - Config.SingleMaxStaticGrids;
+                    _chat?.Respond("You are " + remainder + " static grid over the hangar slot limit!");
                     return false;
                 }
             }
             else
             {
-                if (Stamp.StaticGrids > 0)
+                if (stamp.StaticGrids > 0)
                 {
-                    Chat?.Respond("Saving Static Grids is disabled!");
+                    _chat?.Respond("Saving Static Grids is disabled!");
                     return false;
                 }
             }
 
             if (Config.AllowLargeGrids)
             {
-                if (Config.SingleMaxLargeGrids != 0 && Stamp.LargeGrids > Config.SingleMaxLargeGrids)
+                if (Config.SingleMaxLargeGrids != 0 && stamp.LargeGrids > Config.SingleMaxLargeGrids)
                 {
-                    int remainder = Stamp.LargeGrids - Config.SingleMaxLargeGrids;
-
-                    Chat?.Respond("You are " + remainder + " large grids over the hangar slot limit!");
+                    var remainder = stamp.LargeGrids - Config.SingleMaxLargeGrids;
+                    _chat?.Respond("You are " + remainder + " large grids over the hangar slot limit!");
                     return false;
                 }
             }
             else
             {
-                if (Stamp.LargeGrids > 0)
+                if (stamp.LargeGrids > 0)
                 {
-                    Chat?.Respond("Saving Large Grids is disabled!");
+                    _chat?.Respond("Saving Large Grids is disabled!");
                     return false;
                 }
             }
 
             if (Config.AllowSmallGrids)
             {
-                if (Config.SingleMaxSmallGrids != 0 && Stamp.SmallGrids > Config.SingleMaxSmallGrids)
+                if (Config.SingleMaxSmallGrids != 0 && stamp.SmallGrids > Config.SingleMaxSmallGrids)
                 {
-                    int remainder = Stamp.SmallGrids - Config.SingleMaxLargeGrids;
-
-                    Chat?.Respond("You are " + remainder + " small grid over the hangar slot limit!");
+                    var remainder = stamp.SmallGrids - Config.SingleMaxLargeGrids;
+                    _chat?.Respond("You are " + remainder + " small grid over the hangar slot limit!");
                     return false;
                 }
             }
             else
             {
-                if (Stamp.SmallGrids > 0)
+                if (stamp.SmallGrids > 0)
                 {
-                    Chat?.Respond("Saving Small Grids is disabled!");
+                    _chat?.Respond("Saving Small Grids is disabled!");
                     return false;
                 }
             }
 
 
-            int TotalBlocks = 0;
-            int TotalPCU = 0;
-            int StaticGrids = 0;
-            int LargeGrids = 0;
-            int SmallGrids = 0;
+            var totalBlocks = 0;
+            var totalPcu = 0;
+            var staticGrids = 0;
+            var largeGrids = 0;
+            var smallGrids = 0;
 
             //Hangar total limit!
-            foreach (GridStamp Grid in SelectedPlayerFile.Grids)
+            foreach (var grid in SelectedPlayerFile.Grids)
             {
-                TotalBlocks += Grid.NumberofBlocks;
-                TotalPCU += Grid.GridPCU;
+                totalBlocks += grid.NumberofBlocks;
+                totalPcu += grid.GridPcu;
 
-                StaticGrids += Grid.StaticGrids;
-                LargeGrids += Grid.LargeGrids;
-                SmallGrids += Grid.SmallGrids;
+                staticGrids += grid.StaticGrids;
+                largeGrids += grid.LargeGrids;
+                smallGrids += grid.SmallGrids;
             }
 
-            if (Config.TotalMaxBlocks != 0 && TotalBlocks > Config.TotalMaxBlocks)
+            if (Config.PlayerMaxBlocks != 0 && totalBlocks > Config.PlayerMaxBlocks)
             {
-                int remainder = TotalBlocks - Config.TotalMaxBlocks;
-
-                Chat?.Respond("Grid is " + remainder + " blocks over the total hangar block limit! " + TotalBlocks + "/" + Config.TotalMaxBlocks);
+                var remainder = totalBlocks - Config.PlayerMaxBlocks;
+                _chat?.Respond("Grid is " + remainder + " blocks over your hangar block limit! " + totalBlocks + "/" +
+                              Config.PlayerMaxBlocks);
                 return false;
             }
 
-            if (Config.TotalMaxPCU != 0 && TotalPCU > Config.TotalMaxPCU)
+            if (Config.PlayerMaxPcu != 0 && totalPcu > Config.PlayerMaxPcu)
             {
-
-                int remainder = TotalPCU - Config.TotalMaxPCU;
-                Chat?.Respond("Grid is " + remainder + " PCU over the total hangar PCU limit! " + TotalPCU + "/" + Config.TotalMaxPCU);
+                var remainder = totalPcu - Config.PlayerMaxPcu;
+                _chat?.Respond("Grid is " + remainder + " PCU over your hangar PCU limit! " + totalPcu + "/" +
+                              Config.PlayerMaxPcu);
                 return false;
             }
 
-
-            if (Config.TotalMaxStaticGrids != 0 && StaticGrids > Config.TotalMaxStaticGrids)
+            if (Config.PlayerMaxStaticGrids != 0 && staticGrids > Config.PlayerMaxStaticGrids)
             {
-                int remainder = StaticGrids - Config.TotalMaxStaticGrids;
-
-                Chat?.Respond("You are " + remainder + " static grid over the total hangar limit!");
+                var remainder = staticGrids - Config.PlayerMaxStaticGrids;
+                _chat?.Respond("You are " + remainder + " static grid over your hangar limit!");
                 return false;
             }
 
-
-            if (Config.TotalMaxLargeGrids != 0 && LargeGrids > Config.TotalMaxLargeGrids)
+            if (Config.TotalMaxLargeGrids != 0 && largeGrids > Config.TotalMaxLargeGrids)
             {
-                int remainder = LargeGrids - Config.TotalMaxLargeGrids;
-
-                Chat?.Respond("You are " + remainder + " large grid over the total hangar limit!");
+                var remainder = largeGrids - Config.TotalMaxLargeGrids;
+                _chat?.Respond("You are " + remainder + " large grid over your hangar limit!");
                 return false;
             }
 
-
-            if (Config.TotalMaxSmallGrids != 0 && SmallGrids > Config.TotalMaxSmallGrids)
+            if (Config.PlayerMaxSmallGrids == 0 || smallGrids <= Config.PlayerMaxSmallGrids) return true;
             {
-                int remainder = LargeGrids - Config.TotalMaxSmallGrids;
-
-                Chat?.Respond("You are " + remainder + " small grid over the total hangar limit!");
+                var remainder = largeGrids - Config.PlayerMaxSmallGrids;
+                _chat?.Respond("You are " + remainder + " small grid over your hangar limit!");
                 return false;
             }
-
-            return true;
-        }
-        public bool CheckHanagarLimits()
-        {
-            if (SelectedPlayerFile.Grids.Count >= SelectedPlayerFile._MaxHangarSlots)
-            {
-                Chat?.Respond("You have reached your hangar limit!");
-                return false;
-            }
-
-            return true;
-
         }
 
-        public bool SellSelectedGrid(GridStamp Stamp, long Price, string Description)
+        public bool CheckHangarLimits()
         {
+            if (SelectedPlayerFile.Grids.Count < SelectedPlayerFile.MaxHangarSlots) return true;
+            _chat?.Respond("You have reached your hangar limit!");
+            return false;
+        }
 
-            Stamp.GridForSale = true;
+        public bool SellSelectedGrid(GridStamp stamp, long price, string description)
+        {
+            stamp.GridForSale = true;
 
-
-            MarketListing NewListing = new MarketListing(Stamp);
-            NewListing.SetUserInputs(Description, Price);
-            NewListing.Seller = Identity.DisplayName;
-            //We will set this into the file. (in the block we will dynamically get palyer name and faction)
-            NewListing.SetPlayerData(SteamID, Identity.IdentityId);
-            HangarMarketController.SaveNewMarketFile(NewListing);
-
-
-
-            //Save player file
+            var newListing = new MarketListing(stamp);
+            newListing.SetUserInputs(description, price);
+            newListing.Seller = _player.Identity.DisplayName;
+            newListing.SetPlayerData(_steamId, _player.Identity.IdentityId);
+            HangarMarketController.SaveNewMarketFile(newListing);
             SavePlayerFile();
 
-            HangarMarketController.NewGridOfferListed(NewListing);
+            HangarMarketController.NewGridOfferListed(newListing);
             return true;
         }
 
-
-
-        public void SaveGridStamp(GridStamp Stamp, bool Admin = false, bool IgnoreSave = false)
+        public void SaveGridStamp(GridStamp targetStamp, bool admin = false, bool ignoreSave = false)
         {
-            if (!Admin)
+            if (!admin)
             {
-                TimeStamp stamp = new TimeStamp();
-                stamp.OldTime = DateTime.Now;
+                var stamp = new TimeStamp
+                {
+                    OldTime = DateTime.Now
+                };
                 SelectedPlayerFile.Timer = stamp;
             }
 
+            SelectedPlayerFile.Grids.Add(targetStamp);
 
-
-            SelectedPlayerFile.Grids.Add(Stamp);
-
-            if (!IgnoreSave)
+            if (!ignoreSave)
                 SelectedPlayerFile.SaveFile();
         }
-
 
         public void SavePlayerFile()
         {
             SelectedPlayerFile.SaveFile();
         }
 
-
-
-        public bool RemoveGridStamp(int ID)
+        public bool RemoveGridStamp(int id)
         {
-            return RemoveStamp(ID);
+            return RemoveStamp(id);
         }
 
-
-
-
-        public async Task<bool> SaveGridsToFile(GridResult Grids, string FileName)
+        public async Task<bool> SaveGridsToFile(GridResult grids, string fileName)
         {
-            return await GridSerializer.SaveGridsAndClose(Grids.Grids, PlayersFolderPath, FileName, Identity.IdentityId);
+            return await GridSerializer.SaveGridsAndClose(grids.Grids, PlayersFolderPath, fileName,
+                _player.Identity.IdentityId);
         }
 
         public void ListAllGrids()
         {
-
             if (SelectedPlayerFile.Grids.Count == 0)
             {
-                if (IsAdminCalling)
-                    Chat.Respond("There are no grids in this players hangar!");
-                else
-                    Chat.Respond("You have no grids in your hangar!");
+                _chat.Respond(_isAdminCalling
+                    ? "There are no grids in this players hangar!"
+                    : "You have no grids in your hangar!");
 
                 return;
             }
 
-
-
             var sb = new StringBuilder();
 
-            if (IsAdminCalling)
-                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
+            if (_isAdminCalling)
+                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" +
+                              SelectedPlayerFile.MaxHangarSlots + " stored grids:");
             else
-                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile._MaxHangarSlots + " stored grids:");
+                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile.MaxHangarSlots +
+                              " stored grids:");
 
-
-            int count = 1;
+            var count = 1;
             foreach (var grid in SelectedPlayerFile.Grids)
             {
                 if (grid.GridForSale)
@@ -847,96 +697,78 @@ namespace QuantumHangar.HangarChecks
                 count++;
             }
 
-
-
-
-            Chat.Respond(sb.ToString());
-
-            return;
-
+            _chat.Respond(sb.ToString());
         }
 
-        public void DetailedReport(int ID)
+        public void DetailedReport(int id)
         {
-            StringBuilder Response = new StringBuilder();
-            string Prefix = "";
-            if (ID == 0)
+            var response = new StringBuilder();
+            string prefix;
+            if (id == 0)
             {
-                Prefix = $"HangarSlots: { SelectedPlayerFile.Grids.Count()}/{ SelectedPlayerFile._MaxHangarSlots}";
-                Response.AppendLine("- - Global Limits - -");
-                Response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{ Config.TotalMaxBlocks}");
-                Response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPCU}/{ Config.TotalMaxPCU}");
-                Response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{ Config.TotalMaxStaticGrids}");
-                Response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{ Config.TotalMaxLargeGrids}");
-                Response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{ Config.TotalMaxSmallGrids}");
-                Response.AppendLine();
-                Response.AppendLine("- - Individual Hangar Slots - -");
-                for (int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+                prefix = $"HangarSlots: {SelectedPlayerFile.Grids.Count()}/{SelectedPlayerFile.MaxHangarSlots}";
+                response.AppendLine("- - Global Limits - -");
+                response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{Config.PlayerMaxBlocks}");
+                response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPcu}/{Config.PlayerMaxPcu}");
+                response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{Config.PlayerMaxStaticGrids}");
+                response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{Config.TotalMaxLargeGrids}");
+                response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{Config.PlayerMaxSmallGrids}");
+                response.AppendLine();
+                response.AppendLine("- - Individual Hangar Slots - -");
+                for (var i = 0; i < SelectedPlayerFile.Grids.Count; i++)
                 {
-                    GridStamp Stamp = SelectedPlayerFile.Grids[i];
-                    Response.AppendLine($" * * Slot {i + 1} : {Stamp.GridName} * *");
-                    Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
-                    Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
-                    Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
-                    Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
-                    Response.AppendLine($"SmallGrids: {Stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
-                    Response.AppendLine($"TotalGridCount: {Stamp.NumberOfGrids}");
-                    Response.AppendLine($"Mass: {Stamp.GridMass}kg");
-                    Response.AppendLine($"Built%: {Stamp.GridBuiltPercent * 100}%");
-                    Response.AppendLine($" * * * * * * * * * * * * * * * * ");
-                    Response.AppendLine();
+                    var stamp = SelectedPlayerFile.Grids[i];
+                    response.AppendLine($" * * Slot {i + 1} : {stamp.GridName} * *");
+                    response.AppendLine($"PCU: {stamp.GridPcu}/{Config.SingleMaxPcu}");
+                    response.AppendLine($"Blocks: {stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                    response.AppendLine($"StaticGrids: {stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
+                    response.AppendLine($"LargeGrids: {stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
+                    response.AppendLine($"SmallGrids: {stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
+                    response.AppendLine($"TotalGridCount: {stamp.NumberOfGrids}");
+                    response.AppendLine($"Mass: {stamp.GridMass}kg");
+                    response.AppendLine($"Built%: {stamp.GridBuiltPercent * 100}%");
+                    response.AppendLine($" * * * * * * * * * * * * * * * * ");
+                    response.AppendLine();
                 }
             }
             else
             {
-
-                if (!SelectedPlayerFile.GetGrid(ID, out GridStamp Stamp, out string Error))
+                if (!SelectedPlayerFile.GetGrid(id, out var stamp, out var error))
                 {
-                    Chat.Respond(Error);
+                    _chat.Respond(error);
                     return;
                 }
 
-                Prefix = $"Slot {ID} : {Stamp.GridName}";
-                Response.AppendLine($"PCU: {Stamp.GridPCU}/{Config.SingleMaxPCU}");
-                Response.AppendLine($"Blocks: {Stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
-                Response.AppendLine($"StaticGrids: {Stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
-                Response.AppendLine($"LargeGrids: {Stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
-                Response.AppendLine($"SmallGrids: {Stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
-                Response.AppendLine($"TotalGridCount: {Stamp.NumberOfGrids}");
-                Response.AppendLine($"Mass: {Stamp.GridMass}kg");
-                Response.AppendLine($"Built%: {Stamp.GridBuiltPercent * 100}%");
-                Response.AppendLine();
+                prefix = $"Slot {id} : {stamp.GridName}";
+                response.AppendLine($"PCU: {stamp.GridPcu}/{Config.SingleMaxPcu}");
+                response.AppendLine($"Blocks: {stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                response.AppendLine($"StaticGrids: {stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
+                response.AppendLine($"LargeGrids: {stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
+                response.AppendLine($"SmallGrids: {stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
+                response.AppendLine($"TotalGridCount: {stamp.NumberOfGrids}");
+                response.AppendLine($"Mass: {stamp.GridMass}kg");
+                response.AppendLine($"Built%: {stamp.GridBuiltPercent * 100}%");
+                response.AppendLine();
             }
 
-            ModCommunication.SendMessageTo(new DialogMessage("Hangar Info", Prefix, Response.ToString()), SteamID);
-            //Chat.Respond(Response.ToString());
-
-
+            ModCommunication.SendMessageTo(new DialogMessage("Hangar Info", prefix, response.ToString()), _steamId);
         }
 
-
-
-        public bool TryGetGridStamp(int ID, out GridStamp Stamp)
+        public bool TryGetGridStamp(int id, out GridStamp stamp)
         {
-            if (!SelectedPlayerFile.GetGrid(ID, out Stamp, out string Error))
-            {
-                Chat.Respond(Error);
-                return false;
-            }
-
-            return true;
+            if (SelectedPlayerFile.GetGrid(id, out stamp, out var error)) return true;
+            _chat.Respond(error);
+            return false;
         }
-        public bool LoadGrid(GridStamp Stamp, out IEnumerable<MyObjectBuilder_CubeGrid> Grids)
+
+        public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
-            Grids = null;
-
-
-            if (!Stamp.TryGetGrids(PlayersFolderPath, out Grids))
+            if (!stamp.TryGetGrids(PlayersFolderPath, out grids))
                 return false;
 
 
-            PluginDependencies.BackupGrid(Grids.ToList(), Identity.IdentityId);
-            GridSerializer.TransferGridOwnership(Grids, Identity.IdentityId, Stamp.TransferOwnerShipOnLoad);
+            PluginDependencies.BackupGrid(grids.ToList(), _player.Identity.IdentityId);
+            GridSerializer.TransferGridOwnership(grids, _player.Identity.IdentityId, stamp.TransferOwnerShipOnLoad);
 
             return true;
         }
@@ -945,95 +777,73 @@ namespace QuantumHangar.HangarChecks
         {
             if (!Directory.Exists(PlayersFolderPath))
             {
-                Chat?.Respond("This players hangar doesnt exsist! Skipping sync!");
+                _chat?.Respond("This players hangar doesn't exist! Skipping sync!");
                 return;
             }
 
-            IEnumerable<string> myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
+            var myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
-            if (myFiles.Count() == 0)
+            if (!myFiles.Any())
                 return;
             //Scan for new grids
 
 
-            List<GridStamp> NewGrids = new List<GridStamp>();
-            int AddedGrids = 0;
+            var newGrids = new List<GridStamp>();
+            var addedGrids = 0;
             foreach (var file in myFiles)
             {
-
-                string name = Path.GetFileNameWithoutExtension(file);
+                var name = Path.GetFileNameWithoutExtension(file);
                 Log.Info(name);
                 if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(name)))
                     continue;
 
-                AddedGrids++;
-                GridStamp Stamp = new GridStamp(file);
-                NewGrids.Add(Stamp);
+                addedGrids++;
+                var stamp = new GridStamp(file);
+                newGrids.Add(stamp);
             }
 
-            int RemovedGrids = 0;
-            for (int i = SelectedPlayerFile.Grids.Count - 1; i >= 0; i--)
+            var removedGrids = 0;
+            for (var i = SelectedPlayerFile.Grids.Count - 1; i >= 0; i--)
             {
-                if (!myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
-                {
-                    RemovedGrids++;
-                    SelectedPlayerFile.Grids.RemoveAt(i);
-                }
+                if (myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
+                    continue;
+                removedGrids++;
+                SelectedPlayerFile.Grids.RemoveAt(i);
             }
 
-            SelectedPlayerFile.Grids.AddRange(NewGrids);
+            SelectedPlayerFile.Grids.AddRange(newGrids);
             SelectedPlayerFile.SaveFile();
 
-            Chat?.Respond($"Removed {RemovedGrids} grids and added {AddedGrids} new grids to hangar for player {SteamID}");
-
-
+            _chat?.Respond(
+                $"Removed {removedGrids} grids and added {addedGrids} new grids to hangar for player {_steamId}");
         }
 
         public void Dispose()
         {
-
         }
 
-        public bool CheckLimits(GridStamp Grid, IEnumerable<MyObjectBuilder_CubeGrid> Blueprint)
+        public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint)
         {
-
-            if (CheckGridLimits(Grid) == false || BlockLimitChecker(Blueprint) == false)
-                return false;
-
-            return true;
-
+            return CheckGridLimits(grid) && BlockLimitChecker(blueprint);
         }
 
 
-        public bool ParseInput(string selection, out int ID)
+        public bool ParseInput(string selection, out int id)
         {
-
-            if (Int32.TryParse(selection, out ID))
+            if (int.TryParse(selection, out id))
                 return true;
-            else
+            for (var i = 0; i < SelectedPlayerFile.Grids.Count; i++)
             {
-
-                for (int i = 0; i < SelectedPlayerFile.Grids.Count; i++)
-                {
-                    GridStamp s = SelectedPlayerFile.Grids[i];
-                    if (s.GridName == selection)
-                    {
-                        ID = i+1;
-                        return true;
-                    }
-                }
-
-
-
-
-                return false;
+                var s = SelectedPlayerFile.Grids[i];
+                if (s.GridName != selection) continue;
+                id = i + 1;
+                return true;
             }
 
+            return false;
         }
     }
-
-
-
 
 
     [JsonObject(MemberSerialization.OptIn)]
@@ -1043,36 +853,31 @@ namespace QuantumHangar.HangarChecks
 
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty] public TimeStamp Timer;
-        [JsonProperty] public int? MaxHangarSlots;
-        [JsonProperty] public Dictionary<string, int> ServerOfferPurchases = new Dictionary<string, int>();
+        [JsonProperty] private int? _maxHangarSlots;
+        [JsonProperty] private Dictionary<string, int> _serverOfferPurchases = new Dictionary<string, int>();
 
 
-        public int _MaxHangarSlots = 0;
-
-
-
-
+        public int MaxHangarSlots { get; set; }
         public string FilePath { get; set; }
-        public ulong SteamID { get; set; }
+        public ulong SteamId { get; set; }
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public int TotalBlocks { get; private set; } = 0;
-        public int TotalPCU { get; private set; } = 0;
-        public int StaticGrids { get; private set; } = 0;
-        public int LargeGrids { get; private set; } = 0;
-        public int SmallGrids { get; private set; } = 0;
+        public int TotalBlocks { get; private set; }
+        public int TotalPcu { get; private set; }
+        public int StaticGrids { get; private set; }
+        public int LargeGrids { get; private set; }
+        public int SmallGrids { get; private set; }
 
-        private Settings Config { get { return Hangar.Config; } }
+        private Settings Config => Hangar.Config;
 
         public string PlayerFolderPath;
 
 
-        public bool LoadFile(string FolderPath, ulong SteamID)
+        public bool LoadFile(string folderPath, ulong steamId)
         {
-
-            this.SteamID = SteamID;
-            PlayerFolderPath = Path.Combine(FolderPath, SteamID.ToString());
+            this.SteamId = steamId;
+            PlayerFolderPath = Path.Combine(folderPath, steamId.ToString());
             FilePath = Path.Combine(PlayerFolderPath, "PlayerInfo.json");
 
             GetMaxHangarSlot();
@@ -1083,17 +888,14 @@ namespace QuantumHangar.HangarChecks
 
             try
             {
-                PlayerInfo ScannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
-                this.Grids = ScannedFile.Grids;
-                this.Timer = ScannedFile.Timer;
-                this.ServerOfferPurchases = ScannedFile.ServerOfferPurchases;
+                var scannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
+                Grids = scannedFile.Grids;
+                Timer = scannedFile.Timer;
+                _serverOfferPurchases = scannedFile._serverOfferPurchases;
 
-                if (ScannedFile.MaxHangarSlots.HasValue)
-                    _MaxHangarSlots = ScannedFile.MaxHangarSlots.Value;
-
-
-                PerfromDataScan();
-
+                if (scannedFile._maxHangarSlots.HasValue)
+                    MaxHangarSlots = scannedFile._maxHangarSlots.Value;
+                PerformDataScan();
             }
             catch (Exception e)
             {
@@ -1105,161 +907,126 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        private void PerfromDataScan()
+        private void PerformDataScan()
         {
             //Accumulate Grid Data
-            foreach (GridStamp Grid in Grids)
+            foreach (var grid in Grids)
             {
-                TotalBlocks += Grid.NumberofBlocks;
-                TotalPCU += Grid.GridPCU;
+                TotalBlocks += grid.NumberofBlocks;
+                TotalPcu += grid.GridPcu;
 
-                StaticGrids += Grid.StaticGrids;
-                LargeGrids += Grid.LargeGrids;
-                SmallGrids += Grid.SmallGrids;
+                StaticGrids += grid.StaticGrids;
+                LargeGrids += grid.LargeGrids;
+                SmallGrids += grid.SmallGrids;
             }
         }
 
 
-        public bool CheckTimeStamp(out string Response)
+        public bool CheckTimeStamp(out string response)
         {
-            Response = null;
+            response = null;
             if (Timer == null)
                 return true;
 
-            TimeSpan Subtracted = DateTime.Now.Subtract(Timer.OldTime);
-            TimeSpan WaitTimeSpawn = new TimeSpan(0, (int)Config.WaitTime, 0);
-            TimeSpan Remainder = WaitTimeSpawn - Subtracted;
-
-            if (Subtracted.TotalMinutes <= Config.WaitTime)
-            {
-                //int RemainingTime = (int)Plugin.Config.WaitTime - Convert.ToInt32(Subtracted.TotalMinutes);
-                Response = string.Format("{0:mm}min & {0:ss}s", Remainder);
-                //Chat?.Respond("You have " + Timeformat + "  before you can perform this action!", Context);
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        public bool ReachedHangarLimit(int MaxAmount)
-        {
-            if (Grids.Count >= MaxAmount)
-            {
-                return true;
-            }
-
+            var subtracted = DateTime.Now.Subtract(Timer.OldTime);
+            var waitTimeSpawn = new TimeSpan(0, (int)Config.WaitTime, 0);
+            var remainder = waitTimeSpawn - subtracted;
+            if (!(subtracted.TotalMinutes <= Config.WaitTime)) return true;
+            response = string.Format("{0:mm}min & {0:ss}s", remainder);
             return false;
         }
 
-        public bool AnyGridsMatch(string GridName)
+        public bool ReachedHangarLimit(int maxAmount)
         {
-            return Grids.Any(x => x.GridName.Equals(GridName, StringComparison.Ordinal));
+            return Grids.Count >= maxAmount;
         }
 
-        public bool TryFindGridIndex(string GridName, out int result)
+        public bool AnyGridsMatch(string gridName)
         {
-            short? FoundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(GridName, StringComparison.Ordinal));
-            result = FoundIndex ?? -1;
-            return FoundIndex.HasValue;
+            return Grids.Any(x => x.GridName.Equals(gridName, StringComparison.Ordinal));
         }
 
-        public bool GetGrid<T>(T GridNameOrNumber, out GridStamp Stamp, out string Message)
+        public bool TryFindGridIndex(string gridName, int result)
         {
-            Message = string.Empty;
-            Stamp = null;
+            var foundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(gridName, StringComparison.Ordinal));
+            return foundIndex != -1;
+        }
 
-            if (GridNameOrNumber is int)
+        public bool GetGrid<T>(T gridNameOrNumber, out GridStamp stamp, out string message)
+        {
+            message = string.Empty;
+            stamp = null;
+
+            switch (gridNameOrNumber)
             {
-
-                int Target = Convert.ToInt32(GridNameOrNumber);
-                if (!IsInputValid(Target, out Message))
-                    return false;
-
-
-                Stamp = Grids[Target - 1];
-                return true;
-            }
-            else if (GridNameOrNumber is string)
-            {
-                //IsInputValid(SelectedIndex); ;
-
-                if (!Int32.TryParse(Convert.ToString(GridNameOrNumber), out int SelectedIndex))
+                case int _:
                 {
-                    Stamp = Grids.FirstOrDefault(x => x.GridName == Convert.ToString(GridNameOrNumber));
-                    if (Stamp != null)
-                        return true;
+                    var target = Convert.ToInt32(gridNameOrNumber);
+                    if (!IsInputValid(target, out message))
+                        return false;
+
+
+                    stamp = Grids[target - 1];
+                    return true;
                 }
+                case string _:
+                {
+                    //IsInputValid(SelectedIndex); ;
+
+                    if (!int.TryParse(Convert.ToString(gridNameOrNumber), out var selectedIndex))
+                    {
+                        stamp = Grids.FirstOrDefault(x => x.GridName == Convert.ToString(gridNameOrNumber));
+                        if (stamp != null)
+                            return true;
+                    }
 
 
+                    if (!IsInputValid(selectedIndex, out message))
+                        return false;
 
-                if (!IsInputValid(SelectedIndex, out Message))
+
+                    stamp = Grids[selectedIndex - 1];
+                    return true;
+                }
+                default:
                     return false;
-
-
-                Stamp = Grids[SelectedIndex - 1];
-                return true;
-            }
-            else
-            {
-                //Dafuq
-                return false;
-
             }
         }
-
 
         private void GetMaxHangarSlot()
         {
-
-            if (MaxHangarSlots.HasValue)
+            if (_maxHangarSlots.HasValue)
             {
-                _MaxHangarSlots = MaxHangarSlots.Value;
+                MaxHangarSlots = _maxHangarSlots.Value;
             }
             else
             {
-
-                MyPromoteLevel UserLvl = MySession.Static.GetUserPromoteLevel(SteamID);
-                _MaxHangarSlots = Config.NormalHangarAmount;
-                if (UserLvl == MyPromoteLevel.Scripter)
+                var userLvl = MySession.Static.GetUserPromoteLevel(SteamId);
+                MaxHangarSlots = userLvl switch
                 {
-                    _MaxHangarSlots = Config.ScripterHangarAmount;
-                }
-                else if (UserLvl == MyPromoteLevel.Moderator)
-                {
-                    _MaxHangarSlots = Config.ScripterHangarAmount * 2;
-                }
-                else if (UserLvl >= MyPromoteLevel.Admin)
-                {
-                    _MaxHangarSlots = Config.ScripterHangarAmount * 10;
-                }
+                    MyPromoteLevel.Scripter => Config.ScripterHangarAmount,
+                    MyPromoteLevel.Moderator => Config.ScripterHangarAmount * 2,
+                    MyPromoteLevel.Admin => Config.ScripterHangarAmount * 10,
+                    _ => Config.NormalHangarAmount
+                };
             }
         }
 
-        public bool IsInputValid(int Index, out string Message)
+        public bool IsInputValid(int index, out string message)
         {
             //Is input valid for index 1 - X
+            message = string.Empty;
 
-
-            Message = string.Empty;
-
-            if (Index <= 0)
+            if (index <= 0)
             {
-                Message = "Please input a positive non-zero number";
+                message = "Please input a positive non-zero number";
                 return false;
             }
 
-           
-            if (Index > Grids.Count)
-            {
-                Message = "This hangar slot is empty! Select a grid that is in your hangar!";
-                return false;
-            }
-
-            return true;
+            if (index <= Grids.Count) return true;
+            message = "This hangar slot is empty! Select a grid that is in your hangar!";
+            return false;
         }
-
 
         public void FormatGridName(GridStamp result)
         {
@@ -1268,28 +1035,25 @@ namespace QuantumHangar.HangarChecks
                 result.GridName = FileSaver.CheckInvalidCharacters(result.GridName);
                 // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
 
-                if (AnyGridsMatch(result.GridName))
+                if (!AnyGridsMatch(result.GridName)) return;
+                //There is already a grid with that name!
+                var nameCheckDone = false;
+                var a = 1;
+                while (!nameCheckDone)
                 {
-                    //There is already a grid with that name!
-                    bool NameCheckDone = false;
-                    int a = 1;
-                    while (!NameCheckDone)
+                    if (AnyGridsMatch(result.GridName + "[" + a + "]"))
                     {
-                        if (AnyGridsMatch(result.GridName + "[" + a + "]"))
-                        {
-                            a++;
-                        }
-                        else
-                        {
-                            //Hangar.Debug("Name check done! " + a);
-                            NameCheckDone = true;
-                            break;
-                        }
-
+                        a++;
                     }
-                    //Main.Debug("Saving grid name: " + GridName);
-                    result.GridName = result.GridName + "[" + a + "]";
+                    else
+                    {
+                        //Hangar.Debug("Name check done! " + a);
+                        nameCheckDone = true;
+                    }
                 }
+
+                //Main.Debug("Saving grid name: " + GridName);
+                result.GridName = result.GridName + "[" + a + "]";
             }
             catch (Exception e)
             {
@@ -1299,47 +1063,30 @@ namespace QuantumHangar.HangarChecks
 
         public void ServerOfferPurchased(string name)
         {
-
-            string Val = name.Trim();
+            var val = name.Trim();
             //Log.Info("SetServerOfferCount: " + Val);
 
-            if (ServerOfferPurchases.ContainsKey(Val))
+            if (_serverOfferPurchases.ContainsKey(val))
             {
-                ServerOfferPurchases[Val] = ServerOfferPurchases[Val] + 1;
+                _serverOfferPurchases[val] = _serverOfferPurchases[val] + 1;
             }
             else
             {
-                ServerOfferPurchases.Add(Val, 1);
+                _serverOfferPurchases.Add(val, 1);
             }
         }
 
         public int GetServerOfferPurchaseCount(string name)
         {
-            string Val = name.Trim();
-
+            var val = name.Trim();
             //Log.Info("GetServerOfferCount: " + Val);
-            if (ServerOfferPurchases.ContainsKey(Val))
-            {
-                return ServerOfferPurchases[Val];
-            }
-
-            return 0;
+            return _serverOfferPurchases.ContainsKey(val) ? _serverOfferPurchases[val] : 0;
         }
-
-
 
         public async void SaveFile()
         {
             Directory.CreateDirectory(PlayerFolderPath);
-             await FileSaver.SaveAsync(FilePath, this);
+            await FileSaver.SaveAsync(FilePath, this);
         }
-
-
-
-
-
     }
-
-
-
 }
