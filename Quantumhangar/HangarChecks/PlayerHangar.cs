@@ -86,7 +86,7 @@ namespace QuantumHangar.HangarChecks
 
 
                 //Call gridstamp transferred as it will force load near player, and transfer on load
-                stamp.Transfered();
+                stamp.Transferred();
 
                 toInfo.Grids.Add(stamp);
 
@@ -117,7 +117,7 @@ namespace QuantumHangar.HangarChecks
                 Directory.CreateDirectory(to.PlayerFolderPath);
 
                 File.Copy(stamp.OriginalGridPath, Path.Combine(to.PlayerFolderPath, stamp.GridName + ".sbc"));
-                stamp.Transfered();
+                stamp.Transferred();
 
                 to.ServerOfferPurchased(gridName);
 
@@ -477,11 +477,11 @@ namespace QuantumHangar.HangarChecks
             //Begin Single Slot Save!
             if (Config.SingleMaxBlocks != 0)
             {
-                if (stamp.NumberofBlocks > Config.SingleMaxBlocks)
+                if (stamp.NumberOfBlocks > Config.SingleMaxBlocks)
                 {
-                    var remainder = stamp.NumberofBlocks - Config.SingleMaxBlocks;
+                    var remainder = stamp.NumberOfBlocks - Config.SingleMaxBlocks;
                     _chat?.Respond("Grid is " + remainder + " blocks over the max slot block limit! " +
-                                  stamp.NumberofBlocks + "/" + Config.SingleMaxBlocks);
+                                  stamp.NumberOfBlocks + "/" + Config.SingleMaxBlocks);
                     return false;
                 }
             }
@@ -561,7 +561,7 @@ namespace QuantumHangar.HangarChecks
             //Hangar total limit!
             foreach (var grid in SelectedPlayerFile.Grids)
             {
-                totalBlocks += grid.NumberofBlocks;
+                totalBlocks += grid.NumberOfBlocks;
                 totalPcu += grid.GridPcu;
 
                 staticGrids += grid.StaticGrids;
@@ -720,7 +720,7 @@ namespace QuantumHangar.HangarChecks
                     var stamp = SelectedPlayerFile.Grids[i];
                     response.AppendLine($" * * Slot {i + 1} : {stamp.GridName} * *");
                     response.AppendLine($"PCU: {stamp.GridPcu}/{Config.SingleMaxPcu}");
-                    response.AppendLine($"Blocks: {stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                    response.AppendLine($"Blocks: {stamp.NumberOfBlocks}/{Config.SingleMaxBlocks}");
                     response.AppendLine($"StaticGrids: {stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
                     response.AppendLine($"LargeGrids: {stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
                     response.AppendLine($"SmallGrids: {stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
@@ -741,7 +741,7 @@ namespace QuantumHangar.HangarChecks
 
                 prefix = $"Slot {id} : {stamp.GridName}";
                 response.AppendLine($"PCU: {stamp.GridPcu}/{Config.SingleMaxPcu}");
-                response.AppendLine($"Blocks: {stamp.NumberofBlocks}/{Config.SingleMaxBlocks}");
+                response.AppendLine($"Blocks: {stamp.NumberOfBlocks}/{Config.SingleMaxBlocks}");
                 response.AppendLine($"StaticGrids: {stamp.StaticGrids}/{Config.SingleMaxStaticGrids}");
                 response.AppendLine($"LargeGrids: {stamp.LargeGrids}/{Config.SingleMaxLargeGrids}");
                 response.AppendLine($"SmallGrids: {stamp.SmallGrids}/{Config.SingleMaxSmallGrids}");
@@ -912,7 +912,7 @@ namespace QuantumHangar.HangarChecks
             //Accumulate Grid Data
             foreach (var grid in Grids)
             {
-                TotalBlocks += grid.NumberofBlocks;
+                TotalBlocks += grid.NumberOfBlocks;
                 TotalPcu += grid.GridPcu;
 
                 StaticGrids += grid.StaticGrids;

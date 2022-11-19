@@ -32,7 +32,6 @@ namespace QuantumHangar
         ForceLoadMearPlayer,
         Optional,
         ForceLoadNearOriginalPosition
-
     }
 
     public enum MessageType
@@ -41,24 +40,23 @@ namespace QuantumHangar
         AddOne,
         RemoveOne,
         SendDefinition,
-        PurchasedGrid,
+        PurchasedGrid
     }
 
 
     public class FileSaver
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
         //A regex invalidCharCollection
-        private static Regex _invalidNameScanner = new Regex(string.Format("[{0}]", Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))));
+        private static Regex _invalidNameScanner = new Regex(string.Format("[{0}]",
+            Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars()))));
 
         public static async Task SaveAsync(string dir, object data)
         {
-            
-
             //All methods calling this should still actually be in another thread... So we dont need to call it again.
             await WriteAsync(dir, data);
         }
-
 
 
         public static async Task WriteAsync(string dir, object data)
@@ -71,8 +69,8 @@ namespace QuantumHangar
                 }
 
                 Log.Info("Done saving!");
-
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Log.Fatal(ex);
             }
@@ -112,8 +110,6 @@ namespace QuantumHangar
         public double Z { get; set; }
 
         public double Radius { get; set; }
-
-
     }
 
 
@@ -142,13 +138,12 @@ namespace QuantumHangar
         public bool TransferOwnerShipOnLoad = false;
 
 
-
         public string SellerFaction = "N/A";
         public float GridMass = 0;
         public int StaticGrids = 0;
         public int SmallGrids = 0;
         public int LargeGrids = 0;
-        public int NumberofBlocks = 0;
+        public int NumberOfBlocks = 0;
         public float MaxPowerOutput = 0;
         public float GridBuiltPercent = 0;
         public long JumpDistance = 0;
@@ -164,15 +159,12 @@ namespace QuantumHangar
         public Dictionary<string, double> StoredMaterials = new Dictionary<string, double>();
 
 
-        [JsonIgnore]
-        private Settings Config { get { return Hangar.Config; } }
+        [JsonIgnore] private static Settings Config => Hangar.Config;
 
-        [JsonIgnore]
-        public string OriginalGridPath { get; }
+        [JsonIgnore] public string OriginalGridPath { get; }
 
         public GridStamp(List<MyCubeGrid> grids)
         {
-
             float disassembleRatio = 0;
             double estimatedValue = 0;
 
@@ -182,7 +174,7 @@ namespace QuantumHangar
             BlockTypeCount.Add("Refineries", 0);
             BlockTypeCount.Add("Assemblers", 0);
 
-            foreach (MyCubeGrid singleGrid in grids)
+            foreach (var singleGrid in grids)
             {
                 if (singleGrid.GridSizeEnum == MyCubeSize.Large)
                 {
@@ -204,43 +196,39 @@ namespace QuantumHangar
                 }
 
 
-                foreach (MyCubeBlock singleBlock in singleGrid.GetFatBlocks())
+                foreach (var singleBlock in singleGrid.GetFatBlocks())
                 {
                     var block = (IMyCubeBlock)singleBlock;
 
 
                     if (singleBlock.BuiltBy != 0)
-                    {
                         UpdatePcuCounter(singleBlock.BuiltBy, singleBlock.BlockDefinition.PCU);
+
+                    switch (block)
+                    {
+                        case IMyLargeTurretBase _:
+                        case IMySmallGatlingGun _:
+                            BlockTypeCount["Turrets"] += 1;
+                            break;
                     }
 
-                    if (block as IMyLargeTurretBase != null)
+                    switch (block)
                     {
-                        BlockTypeCount["Turrets"] += 1;
-                    }
-                    if (block as IMySmallGatlingGun != null)
-                    {
-                        BlockTypeCount["Turrets"] += 1;
-                    }
-
-                    if (block as IMyGunBaseUser != null)
-                    {
-                        BlockTypeCount["StaticGuns"] += 1;
-                    }
-
-                    if (block as IMyRefinery != null)
-                    {
-                        BlockTypeCount["Refineries"] += 1;
-                    }
-                    if (block as IMyAssembler != null)
-                    {
-                        BlockTypeCount["Assemblers"] += 1;
+                        case IMyGunBaseUser _:
+                            BlockTypeCount["StaticGuns"] += 1;
+                            break;
+                        case IMyRefinery _:
+                            BlockTypeCount["Refineries"] += 1;
+                            break;
+                        case IMyAssembler _:
+                            BlockTypeCount["Assemblers"] += 1;
+                            break;
                     }
 
 
                     //Main.Debug("Block:" + Block.BlockDefinition + " ratio: " + Block.BlockDefinition.);
                     disassembleRatio += singleBlock.BlockDefinition.DeformationRatio;
-                   NumberofBlocks += 1;
+                    NumberOfBlocks += 1;
                 }
 
                 BlockTypeCount["Reactors"] += singleGrid.NumberOfReactors;
@@ -253,23 +241,22 @@ namespace QuantumHangar
                 grids[0].GridSystems.JumpSystem.GetMaxJumpDistance(grids[0].BigOwners[0]);
 
             //Get Total Build Percent
-            GridBuiltPercent = disassembleRatio / NumberofBlocks;
+            GridBuiltPercent = disassembleRatio / NumberOfBlocks;
             MarketValue = estimatedValue;
         }
 
-        public GridStamp() { }
+        public GridStamp()
+        {
+        }
 
-        public GridStamp(string file) {
+        public GridStamp(string file)
+        {
             OriginalGridPath = file;
             GridName = Path.GetFileNameWithoutExtension(file);
             ForceSpawnNearPlayer = true;
             GridSavePosition = Vector3D.Zero;
             TransferOwnerShipOnLoad = true;
         }
-
-
-
-       
 
 
         public void UpdateBiggestGrid(MyCubeGrid biggestGrid)
@@ -279,6 +266,7 @@ namespace QuantumHangar
             GridId = biggestGrid.EntityId;
             GridSavePosition = biggestGrid.PositionComp.GetPosition();
         }
+
         public bool CheckGridLimits(Chat response, MyIdentity targetIdentity)
         {
             //No need to check limits
@@ -287,88 +275,73 @@ namespace QuantumHangar
 
             if (ShipPcu.Count == 0)
             {
-                MyBlockLimits blockLimits = targetIdentity.BlockLimits;
+                var blockLimits = targetIdentity.BlockLimits;
 
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+                var a = MySession.Static.GlobalBlockLimits;
 
                 if (a.PCU <= 0)
-                {
                     //PCU Limits on server is 0
                     //Skip PCU Checks
                     //Hangar.Debug("PCU Server limits is 0!");
                     return true;
-                }
 
                 //Main.Debug("PCU Limit from Server:"+a.PCU);
                 //Main.Debug("PCU Limit from Player: " + blockLimits.PCU);
                 //Main.Debug("PCU Built from Player: " + blockLimits.PCUBuilt);
 
-                int currentPcu = blockLimits.PCUBuilt;
+                var currentPcu = blockLimits.PCUBuilt;
                 //Hangar.Debug("Current PCU: " + CurrentPcu);
 
-                int maxPcu = blockLimits.PCU + currentPcu;
+                var maxPcu = blockLimits.PCU + currentPcu;
 
-                int pcu = maxPcu - currentPcu;
+                var pcu = maxPcu - currentPcu;
 
                 //Find the difference
-                if (maxPcu - currentPcu <= GridPcu)
-                {
-                    int need = GridPcu - (maxPcu - currentPcu);
-                    response.Respond("PCU limit reached! You need an additional " + need + " pcu to perform this action!");
-                    return false;
-                }
+                if (maxPcu - currentPcu > GridPcu) return true;
+                var need = GridPcu - (maxPcu - currentPcu);
+                response.Respond("PCU limit reached! You need an additional " + need +
+                                 " pcu to perform this action!");
+                return false;
 
-                return true;
             }
 
 
-            foreach (KeyValuePair<long, int> player in ShipPcu)
+            foreach (var player in ShipPcu)
             {
-
-                MyIdentity identity = MySession.Static.Players.TryGetIdentity(player.Key);
-                if (identity == null)
-                {
-                    continue;
-                }
+                var identity = MySession.Static.Players.TryGetIdentity(player.Key);
+                if (identity == null) continue;
 
 
-                MyBlockLimits blockLimits = identity.BlockLimits;
-                MyBlockLimits a = MySession.Static.GlobalBlockLimits;
+                var blockLimits = identity.BlockLimits;
+                var a = MySession.Static.GlobalBlockLimits;
 
                 if (a.PCU <= 0)
-                {
                     //PCU Limits on server is 0
                     //Skip PCU Checks
                     //Hangar.Debug("PCU Server limits is 0!");
                     continue;
-                }
 
-                int currentPcu = blockLimits.PCUBuilt;
-                int maxPcu = blockLimits.PCU + currentPcu;
-                int pcu = maxPcu - currentPcu;
+                var currentPcu = blockLimits.PCUBuilt;
+                var maxPcu = blockLimits.PCU + currentPcu;
+                var pcu = maxPcu - currentPcu;
 
                 //Find the difference
-                if (maxPcu - currentPcu <= player.Value)
-                {
-                    int need = player.Value - (maxPcu - currentPcu);
-                    response.Respond("PCU limit reached! " + identity.DisplayName + " needs an additional " + need + " PCU to load this grid!");
-                    return false;
-                }
-
+                if (maxPcu - currentPcu > player.Value) continue;
+                var need = player.Value - (maxPcu - currentPcu);
+                response.Respond("PCU limit reached! " + identity.DisplayName + " needs an additional " + need +
+                                 " PCU to load this grid!");
+                return false;
             }
 
             return true;
         }
+
         public void UpdatePcuCounter(long player, int amount)
         {
             if (ShipPcu.ContainsKey(player))
-            {
                 ShipPcu[player] += amount;
-            }
             else
-            {
                 ShipPcu.Add(player, amount);
-            }
         }
 
         public string GetGridPath(string playersFolderPath)
@@ -377,16 +350,12 @@ namespace QuantumHangar
         }
 
 
-
         public bool TryGetGrids(string playersFolderPath, out IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
             grids = null;
-            string gridPath = Path.Combine(playersFolderPath, GridName + ".sbc");
+            var gridPath = Path.Combine(playersFolderPath, GridName + ".sbc");
 
-            if (!GridSerializer.LoadGrid(gridPath, out grids))
-                return false;
-
-            return true;
+            return GridSerializer.LoadGrid(gridPath, out grids);
         }
 
         public bool IsGridForSale()
@@ -394,14 +363,13 @@ namespace QuantumHangar
             return GridForSale;
         }
 
-        public void Transfered()
+        public void Transferred()
         {
             ForceSpawnNearPlayer = true;
             GridSavePosition = Vector3D.Zero;
             TransferOwnerShipOnLoad = true;
             GridForSale = false;
         }
-
     }
 
     public class GridResult
@@ -414,12 +382,12 @@ namespace QuantumHangar
         public long BiggestOwner;
         public ulong OwnerSteamId;
 
-        private bool _isAdmin = false;
+        private readonly bool _isAdmin;
 
 
         /* Following are types that dont have an ownership tied with them */
-        public static List<MyObjectBuilderType> NoOwnerTypes = new List<MyObjectBuilderType>() 
-        { 
+        public static List<MyObjectBuilderType> NoOwnerTypes = new List<MyObjectBuilderType>()
+        {
             MyObjectBuilderType.Parse("MyObjectBuilder_CubeBlock"),
             MyObjectBuilderType.Parse("MyObjectBuilder_PistonTop"),
             MyObjectBuilderType.Parse("MyObjectBuilder_MotorSuspension"),
@@ -433,16 +401,13 @@ namespace QuantumHangar
         };
 
 
-  
-
         public GridResult(bool admin = false)
         {
             _isAdmin = admin;
         }
 
 
-
-        public static Settings Config { get { return Hangar.Config; } }
+        public static Settings Config => Hangar.Config;
 
 
         public bool GetGrids(Chat response, MyCharacter character, string gridNameOrEntity = null)
@@ -465,19 +430,14 @@ namespace QuantumHangar
             if (!_isAdmin)
             {
                 var fatBlocks = BiggestGrid.GetFatBlocks().ToList();
-                long ownerId = character.GetPlayerIdentityId();
+                var ownerId = character.GetPlayerIdentityId();
 
-                int totalFatBlocks = 0;
-                int ownedFatBlocks = 0;
+                var totalFatBlocks = 0;
+                var ownedFatBlocks = 0;
 
 
-                foreach (var fat in fatBlocks)
+                foreach (var fat in fatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
                 {
-                    //Only count blocks with ownership
-                    if (!fat.IsFunctional || fat.IDModule == null)
-                        continue;
-
-
                     //WTF happened here?
                     //if (fat.OwnerId == 0)
                     //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
@@ -490,29 +450,23 @@ namespace QuantumHangar
                 }
 
 
-                double percent = Math.Round((double)ownedFatBlocks / totalFatBlocks * 100, 3);
-                int totalBlocksLeftNeeded = (totalFatBlocks / 2) + 1 - (ownedFatBlocks);
+                var percent = Math.Round((double)ownedFatBlocks / totalFatBlocks * 100, 3);
+                var totalBlocksLeftNeeded = totalFatBlocks / 2 + 1 - ownedFatBlocks;
 
                 if (percent <= 50)
                 {
-                    response.Respond($"You own {percent}% of the biggest grid! Need {totalBlocksLeftNeeded} more blocks to be the majority owner!");
+                    response.Respond(
+                        $"You own {percent}% of the biggest grid! Need {totalBlocksLeftNeeded} more blocks to be the majority owner!");
                     return false;
                 }
             }
             else
             {
                 //Compute biggest owner
-
-
             }
-                
 
-            if (BiggestGrid.BigOwners.Count == 0)
-                BiggestOwner = 0;
-            else
-                BiggestOwner = BiggestGrid.BigOwners[0];
+            BiggestOwner = BiggestGrid.BigOwners.Count == 0 ? 0 : BiggestGrid.BigOwners[0];
 
-            
             if (!GetOwner(BiggestOwner, out OwnerSteamId))
             {
                 response.Respond("Unable to get owners SteamID! Are you an NPC?");
@@ -526,7 +480,7 @@ namespace QuantumHangar
 
         public GridStamp GenerateGridStamp()
         {
-            GridStamp stamp = new GridStamp(Grids);
+            var stamp = new GridStamp(Grids);
             stamp.UpdateBiggestGrid(BiggestGrid);
             return stamp;
         }
@@ -534,7 +488,6 @@ namespace QuantumHangar
 
         public bool GetOwner(long biggestOwner, out ulong steamId)
         {
-
             steamId = 0;
             if (MySession.Static.Players.IdentityIsNpc(biggestOwner))
             {
@@ -543,16 +496,11 @@ namespace QuantumHangar
             }
 
             steamId = MySession.Static.Players.TryGetSteamId(biggestOwner);
-            if (steamId == 0)
-            {
-                Log.Error($"{biggestOwner} doesnt have a steamID!");
-                return false;
-            }
-                
+            if (steamId != 0) return true;
+            Log.Error($"{biggestOwner} doesnt have a steamID!");
+            return false;
 
-            return true;
+
         }
-
-
     }
 }

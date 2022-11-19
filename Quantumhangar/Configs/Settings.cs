@@ -153,19 +153,19 @@ namespace QuantumHangar
         public int SingleMaxSmallGrids { get => _singleMaxSmallGrids; set => SetValue(ref _singleMaxSmallGrids, value); }
 
         //Max Configs
-        private int _playerMaxBlocks;
+        private int _playerMaxBlocks = 0;
         public int PlayerMaxBlocks { get => _playerMaxBlocks; set => SetValue(ref _playerMaxBlocks, value); }
 
-        private int _playerMaxPcu;
+        private int _playerMaxPcu = 0;
         public int PlayerMaxPcu { get => _playerMaxPcu; set => SetValue(ref _playerMaxPcu, value); }
 
-        private int _playerMaxStaticGrids;
+        private int _playerMaxStaticGrids = 0;
         public int PlayerMaxStaticGrids { get => _playerMaxStaticGrids; set => SetValue(ref _playerMaxStaticGrids, value); }
 
-        private int _totalMaxLargeGrids;
+        private int _totalMaxLargeGrids = 0;
         public int TotalMaxLargeGrids { get => _totalMaxLargeGrids; set => SetValue(ref _totalMaxLargeGrids, value); }
 
-        private int _playerMaxSmallGrids;
+        private int _playerMaxSmallGrids = 0;
         public int PlayerMaxSmallGrids { get => _playerMaxSmallGrids; set => SetValue(ref _playerMaxSmallGrids, value); }
 
         // Other configs

@@ -141,7 +141,7 @@ namespace QuantumHangar.UI
                     
 
                     NewList.GridBuiltPercent = stamp.GridBuiltPercent;
-                    NewList.NumberofBlocks = stamp.NumberofBlocks;
+                    NewList.NumberOfBlocks = stamp.NumberOfBlocks;
                     NewList.SmallGrids = stamp.SmallGrids;
                     NewList.LargeGrids = stamp.LargeGrids;
                     NewList.BlockTypeCount = stamp.BlockTypeCount;

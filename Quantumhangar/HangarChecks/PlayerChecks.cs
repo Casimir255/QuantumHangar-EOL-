@@ -269,7 +269,7 @@ namespace QuantumHangar.HangarChecks
                 {
                     case CostType.BlockCount:
                         //If grid is station
-                        loadCost = Convert.ToInt64(grid.NumberofBlocks * Config.LoadStaticGridCurrency);
+                        loadCost = Convert.ToInt64(grid.NumberOfBlocks * Config.LoadStaticGridCurrency);
                         break;
 
 

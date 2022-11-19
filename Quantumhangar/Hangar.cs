@@ -1,36 +1,19 @@
-﻿using System;
+﻿using NLog;
+using QuantumHangar.HangarMarket;
+using QuantumHangar.UI;
+using QuantumHangar.Utils;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
-using System.Threading;
-using Sandbox.Game.World;
-using Sandbox.ModAPI;
+using System.Windows.Controls;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
 using Torch.API.Plugins;
-using Torch.Managers;
-using VRage.Game;
-using VRage.Game.ModAPI;
-using NLog;
-using System.Windows.Controls;
-using QuantumHangar.UI;
-using Newtonsoft.Json;
-using Sandbox.Game.Entities.Character;
-using Torch.Managers.ChatManager;
-using VRage.ObjectBuilders;
-using System.ComponentModel;
-using Torch.Session;
 using Torch.API.Session;
-using System.Collections.ObjectModel;
-using System.Reflection;
-using QuantumHangar.Utilities;
+using Torch.Managers;
 using Torch.Managers.PatchManager;
-using Sandbox.Game.GameSystems.BankingAndCurrency;
-using VRageMath;
-using QuantumHangar.Utils;
-using QuantumHangar.HangarMarket;
+using Torch.Session;
 
 namespace QuantumHangar
 {
@@ -40,7 +23,9 @@ namespace QuantumHangar
 
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
-        public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } = new Dictionary<long, CurrentCooldown>();
+
+        public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } =
+            new Dictionary<long, CurrentCooldown>();
 
 
         public TorchSessionManager TorchSession { get; private set; }
@@ -59,7 +44,11 @@ namespace QuantumHangar
 
 
         public UserControl Control;
-        public UserControl GetControl() => Control ?? (Control = new UserControlInterface());
+
+        public UserControl GetControl()
+        {
+            return Control ??= new UserControlInterface();
+        }
 
         private HangarMarketController _controller;
 
@@ -70,11 +59,11 @@ namespace QuantumHangar
 
             base.Init(torch);
             //Grab Settings
-            string path = Path.Combine(StoragePath, "QuantumHangar.cfg");
+            var path = Path.Combine(StoragePath, "QuantumHangar.cfg");
 
             _config = Persistent<Settings>.Load(path);
 
-            if (Config.FolderDirectory == null || Config.FolderDirectory == "")
+            if (string.IsNullOrEmpty(Config.FolderDirectory))
             {
                 Config.FolderDirectory = Path.Combine(StoragePath, "QuantumHangar");
                 Directory.CreateDirectory(Config.FolderDirectory);
@@ -90,82 +79,62 @@ namespace QuantumHangar
 
 
             if (Config.GridMarketEnabled)
-            {
                 _controller = new HangarMarketController();
-            }
             else
-            {
                 Log.Info("Starting plugin WITHOUT the Hangar Market!");
-            }
-
-
-
-            PatchManager manager = DependencyProviderExtensions.GetManager<PatchManager>(Torch.Managers);
-            Patcher patcher = new Patcher();
-            patcher.Apply(manager.AcquireContext(), this);
-            //Load files
 
             MigrateHangar();
         }
 
         private void MigrateHangar()
         {
-  
+            var dirs = Directory.GetDirectories(Config.FolderDirectory, "*", SearchOption.TopDirectoryOnly);
 
-            string[] dirs = Directory.GetDirectories(Config.FolderDirectory, "*", SearchOption.TopDirectoryOnly);
-      
-            foreach (string dir in dirs)
+            foreach (var dir in dirs)
             {
-                DirectoryInfo info = new DirectoryInfo(dir);
+                var info = new DirectoryInfo(dir);
 
-                if(UInt64.TryParse(info.Name, out _))
-                {
-                    Log.Warn("Moving!");
+                if (!ulong.TryParse(info.Name, out _)) continue;
+                Log.Warn("Moving!");
 
-                    string destination = Path.Combine(MainPlayerDirectory, info.Name);
-                    Log.Warn($"Destination: {destination}");
+                var destination = Path.Combine(MainPlayerDirectory, info.Name);
+                Log.Warn($"Destination: {destination}");
 
-                    Directory.Move(dir, destination);
-
-                }
+                Directory.Move(dir, destination);
             }
         }
-
 
 
         private void SessionChanged(ITorchSession session, TorchSessionState state)
         {
             switch (state)
             {
-
                 case TorchSessionState.Loading:
-                    Hangar.Config.RefreshModel();
+                    Config.RefreshModel();
                     break;
 
                 case TorchSessionState.Loaded:
 
                     //MP = Torch.CurrentSession.Managers.GetManager<MultiplayerManagerBase>();
                     //ChatManager = Torch.CurrentSession.Managers.GetManager<ChatManagerServer>();
-                    PluginManager plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
+                    var plugins = Torch.CurrentSession.Managers.GetManager<PluginManager>();
                     PluginDependencies.InitPluginDependencies(plugins);
                     ServerRunning = true;
                     AutoHangar.StartAutoHangar();
                     _controller?.ServerStarted();
                     break;
 
-                    
+
                 case TorchSessionState.Unloading:
                     ServerRunning = false;
                     PluginDispose();
                     break;
-
-
             }
         }
 
         // 60 frames =~ 1 sec, run update about every min
-        int _maxUpdateTime = 60 * 60;
-        int _currentFrameCount = 0;
+        private readonly int _maxUpdateTime = 60 * 60;
+        private int _currentFrameCount = 0;
 
         public override void Update()
         {
@@ -185,7 +154,6 @@ namespace QuantumHangar
         }
 
 
-
         public void PluginDispose()
         {
             _controller?.Close();
@@ -197,34 +165,25 @@ namespace QuantumHangar
 
     public class CurrentCooldown
     {
-
         private long _startTime;
         //private long _currentCooldown;
 
         private string _grid;
+
         public void StartCooldown(string command)
         {
-            this._grid = command;
+            _grid = command;
             _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
+
         public bool CheckCommandStatus(string command)
         {
-
-            if (this._grid != command)
+            if (_grid != command)
                 return true;
 
-            long elapsedTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _startTime;
+            var elapsedTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _startTime;
 
-            if (elapsedTime >= 30000)
-                return true;
-
-            return false;
-
+            return elapsedTime >= 30000;
         }
     }
-
-
 }
-
-
-
