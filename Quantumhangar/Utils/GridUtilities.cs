@@ -73,14 +73,14 @@ namespace QuantumHangar.Utils
                 foreach (var gridList in MyCubeGridGroups.Static.Physical.Groups.ToList()
                              .Select(group =>
                                  group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid =>
-                                     grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash).ToList())
+                                     grid is { MarkedForClose: false, MarkedAsTrash: false }).ToList())
                              .Where(gridList => gridList.Count != 0 && gridList.IsPlayerOwner(playerId)))
                     grids.Add(gridList);
             else
                 foreach (var gridList in MyCubeGridGroups.Static.Mechanical.Groups.ToList()
                              .Select(group =>
                                  group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid =>
-                                     grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash).ToList())
+                                     grid is { MarkedForClose: false, MarkedAsTrash: false }).ToList())
                              .Where(gridList => gridList.Count != 0 && gridList.IsPlayerOwner(playerId)))
                     grids.Add(gridList);
 

@@ -80,7 +80,7 @@ namespace QuantumHangar.HangarMarket
             SmallGrids = stamp.SmallGrids;
             LargeGrids = stamp.LargeGrids;
             StaticGrids = stamp.StaticGrids;
-            NumberofBlocks = stamp.NumberofBlocks;
+            NumberofBlocks = stamp.NumberOfBlocks;
             MaxPowerOutput = stamp.MaxPowerOutput;
             GridBuiltPercent = stamp.GridBuiltPercent;
             JumpDistance = stamp.JumpDistance;

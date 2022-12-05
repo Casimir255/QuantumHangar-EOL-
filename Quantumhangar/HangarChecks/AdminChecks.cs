@@ -1,13 +1,10 @@
 ﻿using NLog;
-using QuantumHangar.Utils;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.World;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Torch.Commands;
-using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 
@@ -119,7 +116,7 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                _chat?.Respond("An error occured while spawning the grid!");
+                _chat?.Respond("An error occurred while spawning the grid!");
             }
 
 
