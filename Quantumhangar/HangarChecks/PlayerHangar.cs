@@ -21,7 +21,7 @@ namespace QuantumHangar.HangarChecks
     //This is for all users. Doesn't matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
     public class PlayerHangar : IDisposable
     {
-        private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(PlayerHangar));
+        private static Logger Log;
         private readonly Chat _chat;
         public readonly PlayerInfo SelectedPlayerFile;
 
@@ -42,6 +42,7 @@ namespace QuantumHangar.HangarChecks
             try
             {
                 MySession.Static.Players.TryGetIdentityFromSteamId(steamId, out _identity);
+                Log = LogManager.GetLogger($"Hangar.{_identity.DisplayName}");
 
                 this._steamId = steamId;
 
