@@ -131,25 +131,25 @@ namespace QuantumHangar
         private int _singleMaxBlocks;
         public int SingleMaxBlocks { get => _singleMaxBlocks; set => SetValue(ref _singleMaxBlocks, value); }
 
-        private int _singleMaxPcu;
+        private int _singleMaxPcu = 0;
         public int SingleMaxPcu { get => _singleMaxPcu; set => SetValue(ref _singleMaxPcu, value); }
 
         private bool _allowStaticGrids = true;
         public bool AllowStaticGrids { get => _allowStaticGrids; set => SetValue(ref _allowStaticGrids, value); }
 
-        private int _singleMaxStaticGrids;
+        private int _singleMaxStaticGrids = 0;
         public int SingleMaxStaticGrids { get => _singleMaxStaticGrids; set => SetValue(ref _singleMaxStaticGrids, value); }
 
         private bool _allowLargeGrids = true;
         public bool AllowLargeGrids { get => _allowLargeGrids; set => SetValue(ref _allowLargeGrids, value); }
 
-        private int _singleMaxLargeGrids;
+        private int _singleMaxLargeGrids = 0;
         public int SingleMaxLargeGrids { get => _singleMaxLargeGrids; set => SetValue(ref _singleMaxLargeGrids, value); }
 
         private bool _allowSmallGrids = true;
         public bool AllowSmallGrids { get => _allowSmallGrids; set => SetValue(ref _allowSmallGrids, value); }
 
-        private int _singleMaxSmallGrids;
+        private int _singleMaxSmallGrids = 0;
         public int SingleMaxSmallGrids { get => _singleMaxSmallGrids; set => SetValue(ref _singleMaxSmallGrids, value); }
 
         //Max Configs
@@ -172,11 +172,11 @@ namespace QuantumHangar
         private bool _allowInGravity = true;
         public bool AllowInGravity { get => _allowInGravity; set => SetValue(ref _allowInGravity, value); }
 
-        private double _maxGravityAmount;
+        private double _maxGravityAmount = 0;
         public double MaxGravityAmount { get => _maxGravityAmount; set => SetValue(ref _maxGravityAmount, value); }
 
 
-        private bool _gridMarketEnabled;
+        private bool _gridMarketEnabled = false;
         public bool GridMarketEnabled { get => _gridMarketEnabled; set => SetValue(ref _gridMarketEnabled, value); }
 
 
