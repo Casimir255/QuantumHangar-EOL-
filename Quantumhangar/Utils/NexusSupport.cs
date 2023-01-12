@@ -24,14 +24,15 @@ namespace QuantumHangar.Utils
 
         public static void Init()
         {
-            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(QuantumHangarNexusModId, ReceivePacket);
+            
             _thisServerId = NexusApi.GetThisServer().ServerId;
             Log.Info("QuantumHangar -> Nexus integration has been initilized with serverID " + _thisServerId);
 
-
+            return;
             if (!NexusApi.IsRunningNexus())
                 return;
 
+            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(QuantumHangarNexusModId, ReceivePacket);
             Log.Error("Running Nexus!");
 
             RunningNexus = true;
@@ -46,7 +47,7 @@ namespace QuantumHangar.Utils
 
         public static void Dispose()
         {
-            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(QuantumHangarNexusModId, ReceivePacket);
+            //MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(QuantumHangarNexusModId, ReceivePacket);
         }
 
         // RelayLoadIfNecessary relays the load grid command to another server if necessary.
@@ -129,7 +130,7 @@ namespace QuantumHangar.Utils
                     return;
 
                 case NexusHangarMessageType.SendGps:
-                    GpsSender.SendGps(msg.Position, msg.Name, msg.EntityId);
+                    GpsSender.SendGps(msg.Position, msg.Name, msg.EntityId, msg.Time, msg.Color, msg.desc);
                     return;
 
                 case NexusHangarMessageType.LoadGrid:
@@ -147,14 +148,19 @@ namespace QuantumHangar.Utils
                             MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
                     });
 
-                    var gpsOverNexus = new GpsSender((position, name, entityId) =>
+                    var gpsOverNexus = new GpsSender((position, name, entityId, time, color, desc) =>
                     {
                         var m = new NexusHangarMessage
                         {
                             Type = NexusHangarMessageType.SendGps,
                             Name = name,
                             Position = position,
-                            EntityId = entityId
+                            EntityId = entityId,
+                            Time = time,
+                            Color= color,
+                            desc = desc
+
+
                         };
                         Api.SendMessageToServer(msg.ServerId,
                             MyAPIGateway.Utilities.SerializeToBinary<NexusHangarMessage>(m));
@@ -203,5 +209,7 @@ namespace QuantumHangar.Utils
         [ProtoMember(12)] public string Name;
         [ProtoMember(13)] public Vector3D Position;
         [ProtoMember(14)] public long EntityId;
+        [ProtoMember(15)] public int Time;
+        [ProtoMember(16)] public string desc;
     }
 }

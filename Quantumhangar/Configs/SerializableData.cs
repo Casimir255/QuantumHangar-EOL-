@@ -12,10 +12,12 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ObjectBuilders;
 using VRageMath;
+using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar
 {
@@ -149,6 +151,8 @@ namespace QuantumHangar
         public long JumpDistance = 0;
         public int NumberOfGrids = 0;
         public Vector3D GridSavePosition = new Vector3D(0, 0, 0);
+
+        public MyOrientedBoundingBoxD BoundingBox = new MyOrientedBoundingBoxD();
 
 
         //Server blocklimits Block
@@ -482,9 +486,30 @@ namespace QuantumHangar
         {
             var stamp = new GridStamp(Grids);
             stamp.UpdateBiggestGrid(BiggestGrid);
+            stamp.BoundingBox = GetBoundingBox(Grids, BiggestGrid);
             return stamp;
         }
 
+        private static MyOrientedBoundingBoxD GetBoundingBox(List<MyCubeGrid> Grids, MyCubeGrid BiggestGrid)
+        {
+            MatrixD BiggestGridMatrix = BiggestGrid.WorldMatrix;
+
+            BoundingBox myAabb = BiggestGrid.PositionComp.LocalAABB;
+            MatrixD orientatedMatrix = BiggestGrid.PositionComp.WorldMatrixNormalizedInv;
+
+            foreach (var grid in Grids)
+            {
+                if (grid == BiggestGrid)
+                    continue;
+
+                Quaternion localQuat = Quaternion.CreateFromRotationMatrix(grid.WorldMatrix);
+                MyOrientedBoundingBox localOBB = new MyOrientedBoundingBox(grid.PositionComp.WorldAABB.Center, grid.PositionComp.LocalAABB.HalfExtents, localQuat);
+                localOBB.Transform(orientatedMatrix);
+                myAabb.Include(localOBB.GetAABB());
+            }
+
+            return new MyOrientedBoundingBoxD(myAabb, BiggestGridMatrix);
+        }
 
         public bool GetOwner(long biggestOwner, out ulong steamId)
         {

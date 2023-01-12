@@ -127,20 +127,20 @@ namespace QuantumHangar.Utils
             {
             }
 
-            private readonly Action<Vector3D, string, long> _send;
+            private readonly Action<Vector3D, string, long, int, Color, string> _send;
 
             // Delegate how to send the GPS, e.g. via a Nexus message.
-            public GpsSender(Action<Vector3D, string, long> sender)
+            public GpsSender(Action<Vector3D, string, long, int, Color, string> sender)
             {
                 _send = sender;
             }
 
             // SendGps adds a yellow GPS point in the player GPS list that expires after 5 minutes.
-            public void SendGps(Vector3D position, string name, long entityId)
+            public void SendGps(Vector3D position, string name, long entityId, int time = 5, Color color = default(Color), string desc = "Hangar location for loading grid at or around this position")
             {
                 if (_send != null)
                 {
-                    _send(position, name, entityId);
+                    _send(position, name, entityId, time, color, desc);
                     return;
                 }
 
@@ -149,12 +149,13 @@ namespace QuantumHangar.Utils
                     ShowOnHud = true,
                     Coords = position,
                     Name = name,
-                    Description = "Hangar location for loading grid at or around this position",
+                    Description = desc,
                     AlwaysVisible = true
                 };
 
                 var gps = myGps;
-                gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + 5);
+                gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + time);
+
                 gps.GPSColor = Color.Yellow;
                 MySession.Static.Gpss.SendAddGpsRequest(entityId, ref gps, 0L, true);
             }

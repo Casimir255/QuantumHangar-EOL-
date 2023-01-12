@@ -108,7 +108,7 @@ namespace QuantumHangar.HangarChecks
 
 
 
-            var spawner = new ParallelSpawner(grids, _chat);
+            var spawner = new ParallelSpawner(grids, _chat, stamp.BoundingBox);
             if (spawner.Start(loadPos, fromSavePos))
             {
                 _chat?.Respond($"Spawning Completed! \n Location: {loadPos}");

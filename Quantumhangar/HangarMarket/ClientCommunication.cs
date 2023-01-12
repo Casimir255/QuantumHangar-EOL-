@@ -16,6 +16,8 @@ namespace QuantumHangar.HangarMarket
 
         public ClientCommunication()
         {
+
+
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(NetworkId, ClientMessageReceived);
         }
 

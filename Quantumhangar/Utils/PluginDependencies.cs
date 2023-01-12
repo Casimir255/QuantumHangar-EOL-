@@ -23,7 +23,7 @@ namespace QuantumHangar.Utils
         private static ITorchPlugin _gridBackupRef;
 
         public static bool BlockLimiterInstalled { get; private set; }
-        public static bool NexusInstalled { get; private set; }
+        public static bool NexusInstalled { get; private set; } = false;
 
 
         public static void InitPluginDependencies(PluginManager plugins)
@@ -34,8 +34,8 @@ namespace QuantumHangar.Utils
             if (plugins.Plugins.TryGetValue(BlockLimiterGuid, out var blockLimiterPlugin))
                 AcquireBlockLimiter(blockLimiterPlugin);
 
-            if (plugins.Plugins.TryGetValue(NexusGuid, out var nexusPlugin))
-                AcquireNexus(nexusPlugin);
+            //if (plugins.Plugins.TryGetValue(NexusGuid, out var nexusPlugin))
+            //    AcquireNexus(nexusPlugin);
         }
 
         public static void Dispose()

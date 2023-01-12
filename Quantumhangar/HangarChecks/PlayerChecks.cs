@@ -123,7 +123,7 @@ namespace QuantumHangar.HangarChecks
             //Calculates incoming grids data
             var gridData = result.GenerateGridStamp();
 
-
+            return;
             //PlayersHanger.CheckGridLimits(GridData);
 
             //Checks for single and all slot block and grid limits
@@ -140,6 +140,8 @@ namespace QuantumHangar.HangarChecks
 
 
             PlayersHanger.SelectedPlayerFile.FormatGridName(gridData);
+
+       
 
             var val = await PlayersHanger.SaveGridsToFile(result, gridData.GridName);
             if (val)
@@ -272,7 +274,7 @@ namespace QuantumHangar.HangarChecks
                         loadCost = Convert.ToInt64(grid.NumberOfBlocks * Config.LoadStaticGridCurrency);
                         break;
 
-
+                        
                     case CostType.Fixed:
 
                         loadCost = Convert.ToInt64(Config.LoadStaticGridCurrency);
@@ -355,7 +357,7 @@ namespace QuantumHangar.HangarChecks
             PlayersHanger.DetailedReport(id);
         }
 
-        public void LoadGrid(string input, bool loadNearPlayer)
+        public async void LoadGrid(string input, bool loadNearPlayer)
         {
             if (!PerformMainChecks(false))
                 return;
@@ -405,7 +407,8 @@ namespace QuantumHangar.HangarChecks
                     _playerPosition))
                 return;
 
-            var spawner = new ParallelSpawner(grids, _chat, SpawnedGridsSuccessful);
+            var spawner = new ParallelSpawner(grids, _chat, stamp.BoundingBox, SpawnedGridsSuccessful);
+
             Log.Info("Attempting Grid Spawning @" + spawnPos.ToString());
             if (spawner.Start(spawnPos, keepOriginalPosition))
             {
@@ -441,13 +444,14 @@ namespace QuantumHangar.HangarChecks
 
         public void RemoveGrid(string input)
         {
+            PlayersHanger = new PlayerHangar(SteamId, _chat);
+
             if (!PlayersHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
-            PlayersHanger = new PlayerHangar(SteamId, _chat);
             if (PlayersHanger.RemoveGridStamp(id))
                 _chat.Respond("Successfully removed grid!");
         }

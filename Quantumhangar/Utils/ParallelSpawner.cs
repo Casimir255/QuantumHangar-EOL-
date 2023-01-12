@@ -1,4 +1,5 @@
 ﻿using NLog;
+using ParallelTasks;
 using QuantumHangar.Utilities;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
@@ -6,18 +7,22 @@ using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.Multiplayer;
+using Sandbox.Game.Screens.Helpers;
 using Sandbox.Game.World;
 using Sandbox.Game.World.Generator;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using Torch.Commands;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRageMath;
+using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar
 {
@@ -26,8 +31,11 @@ namespace QuantumHangar
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
         private readonly int _maxCount;
+        private readonly int _spawnedCount;
+
         private readonly IEnumerable<MyObjectBuilder_CubeGrid> _grids;
         private readonly Action<HashSet<MyCubeGrid>> _callback;
+
         private readonly HashSet<MyCubeGrid> _spawned;
         private readonly Chat _response;
         private MyObjectBuilder_CubeGrid _biggestGrid;
@@ -45,14 +53,15 @@ namespace QuantumHangar
         private Vector3D _targetPos = Vector3D.Zero;
 
 
-        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat,
-            Action<HashSet<MyCubeGrid>> callback = null)
+        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, MyOrientedBoundingBoxD boxD, Action<HashSet<MyCubeGrid>> callback = null)
         {
+            _boxD = boxD;
             _grids = grids;
             _maxCount = grids.Count();
             _callback = callback;
             _spawned = new HashSet<MyCubeGrid>();
             _response = chat;
+            
         }
 
 
@@ -63,6 +72,7 @@ namespace QuantumHangar
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
                 return true;
 
+            
 
             // Fix for recent keen update. (if grids have projected grids saved then they will get the infinite streaming bug)
             foreach (var cubeGrid in _grids)
@@ -93,16 +103,16 @@ namespace QuantumHangar
 
             if (spawn.Wait(Timeout))
             {
-                if (spawn.Result)
-                {
-                    foreach (var o in _grids)
-                        MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
-                    return true;
-                }
-                else
-                {
+                if (spawn.Result == false)
                     return false;
+
+                foreach (var o in _grids)
+                {
+                    IMyEntity entity = MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
+                    Log.Warn($"Queued {entity.EntityId} for spawning!");
                 }
+
+                return true;
             }
             else
             {
@@ -117,8 +127,11 @@ namespace QuantumHangar
             try
             {
                 //Calculate all required grid bounding objects
+
+
                 FindGridBounds();
 
+                
                 //The center of the grid is not the actual center
                 // Log.Info("SphereD Center: " + SphereD.Center);
                 _delta3D = _sphereD.Center - _biggestGrid.PositionAndOrientation.Value.Position;
@@ -126,6 +139,7 @@ namespace QuantumHangar
 
 
                 //This has to be ran on the main game thread!
+                Log.Info($"KeepOriginalPos: {keepOriginalLocation}");
                 if (keepOriginalLocation)
                     //If the original spot is clear, return true and spawn
                     if (OriginalSpotClear())
@@ -313,31 +327,38 @@ namespace QuantumHangar
 
         private void FindGridBounds()
         {
-            _boxAab = new BoundingBoxD();
-            _boxAab.Include(_biggestGrid.CalculateBoundingBox());
-
-            var biggestGridMatrix = _biggestGrid.PositionAndOrientation.Value.GetMatrix();
-            var biggestGridMatrixToLocal = MatrixD.Invert(biggestGridMatrix);
-
-
-            var corners = new Vector3D[8];
-            foreach (var grid in _grids)
+            if (_boxD == null)
             {
-                if (grid == _biggestGrid)
-                    continue;
+                _boxAab = new BoundingBoxD();
 
 
-                BoundingBoxD box = grid.CalculateBoundingBox();
+                var biggestGridMatrix = _biggestGrid.PositionAndOrientation.Value.GetMatrix();
 
-                var worldBox = new MyOrientedBoundingBoxD(box, grid.PositionAndOrientation.Value.GetMatrix());
-                worldBox.Transform(biggestGridMatrixToLocal);
-                worldBox.GetCorners(corners, 0);
 
-                foreach (var corner in corners) _boxAab.Include(corner);
+
+                Log.Warn($"F/UP: F {biggestGridMatrix.Forward}, U {biggestGridMatrix.Up}");
+                Log.Warn($"Orientation: X {_biggestGrid.PositionAndOrientation.Value.Orientation.X}, Y {_biggestGrid.PositionAndOrientation.Value.Orientation.Y}, Z {_biggestGrid.PositionAndOrientation.Value.Orientation.Z}, W {_biggestGrid.PositionAndOrientation.Value.Orientation.W}");
+
+                _boxAab.Matrix.SetFrom(biggestGridMatrix);
+
+
+
+
+                var corners = new Vector3D[8];
+                foreach (var grid in _grids)
+                {
+                    BoundingBoxD box = grid.CalculateBoundingBox();
+                    box.Matrix.SetFrom(grid.PositionAndOrientation.Value.GetMatrix());
+                    _boxAab.Include(ref box);
+                }
+
+                
+                _boxD = new MyOrientedBoundingBoxD(_boxAab, biggestGridMatrix);
             }
 
+
+
             var sphere = BoundingSphereD.CreateFromBoundingBox(_boxAab);
-            _boxD = new MyOrientedBoundingBoxD(_boxAab, biggestGridMatrix);
             _sphereD = new BoundingSphereD(_boxD.Center, sphere.Radius);
 
 
@@ -361,19 +382,39 @@ namespace QuantumHangar
         private bool OriginalSpotClear()
         {
             var entities = new List<MyEntity>();
-            MyGamePruningStructure.GetAllEntitiesInOBB(ref _boxD, entities);
+            MyGamePruningStructure.GetAllEntitiesInOBB(ref _boxD, entities, MyEntityQueryType.Both);
 
-            var spotCleared = true;
-            if (!entities.OfType<MyCubeGrid>()
-                    .Select(entity => new MyOrientedBoundingBoxD(entity.PositionComp.LocalAABB, entity.WorldMatrix))
-                    .Select(obb => _boxD.Contains(ref obb))
-                    .Any(type => type == ContainmentType.Contains || type == ContainmentType.Intersects))
-                return spotCleared;
-            spotCleared = false;
+            displaySpawnArea(_boxD, _response);
+            Log.Info("Hit!");
+            Log.Warn($"F/UP: F {_boxD.Orientation.Forward}, U {_boxD.Orientation.Up}");
+            Log.Warn($"Orientation: X {_boxD.Orientation.X}, Y {_boxD.Orientation.Y}, Z {_boxD.Orientation.Z}, W {_boxD.Orientation.W}");
+
+           
+            foreach(var entity in entities)
+            {
+
+                if(entity is MyCubeGrid grid) 
+                {
+                    Log.Warn($"grid {grid.DisplayName} is inside the orientated bounding box!");
+
+                }else if (entity is MyVoxelBase voxel)
+                {
+                    Log.Warn($"Voxel {voxel.DisplayName} is inside the orientated bounding box!");
+                }
+
+                
+
+            }
+
+            return true;
+
+
+   
+            
             _response.Respond(
                 "There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
 
-            return spotCleared;
+            return false;
         }
 
 
@@ -399,13 +440,15 @@ namespace QuantumHangar
 
         public void Increment(IMyEntity entity)
         {
+            //confirm that the
             var grid = (MyCubeGrid)entity;
             _spawned.Add(grid);
 
             if (_spawned.Count < _maxCount)
                 return;
 
-            foreach (var g in _spawned) MyAPIGateway.Entities.AddEntity(g, true);
+            foreach (var g in _spawned) 
+                MyAPIGateway.Entities.AddEntity(g, true);
 
             _callback?.Invoke(_spawned);
         }
@@ -462,7 +505,7 @@ namespace QuantumHangar
             var gravityRotation = 0f;
 
             var gravityDirectionalVector = MyGravityProviderSystem.CalculateNaturalGravityInPoint(target);
-            
+
             if (gravityDirectionalVector == Vector3.Zero)
                 return false;
 
@@ -537,6 +580,30 @@ namespace QuantumHangar
             });
         }
 
+        public void displaySpawnArea(MyOrientedBoundingBoxD spawnArea, Chat _response)
+        {
+
+            //If response is null, its running as a console command
+            if (_response._context == null)
+                return;
+
+            long ID = _response._context.Player.Identity.IdentityId;
+            GpsSender sender = new GpsSender();
+            Random random = new Random((int)DateTime.Now.Ticks);
+
+            Color newColor = new Color(random.Next(255), random.Next(255), random.Next(255));
+
+            Vector3D[] allCorners = new Vector3D[8];
+            spawnArea.GetCorners(allCorners, 0);
+
+            for (int j = 0; j < allCorners.Length; j++)
+            {
+                sender.SendGps(allCorners[j], $"Corner {j}", ID, 5, newColor, "Spawn Corner");
+            }
+
+        }
+
+
         public static MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
         {
             var resultMatrix = MatrixD.Identity;
@@ -580,13 +647,14 @@ namespace QuantumHangar
 
             return resultMatrix;
         }
+
     }
 
 
     // Simple chat class so i can control the colors easily.
     public class Chat
     {
-        private readonly CommandContext _context;
+        public readonly CommandContext _context;
         private readonly bool _mod;
         private readonly Action<string, Color, string> _send;
         private static readonly Logger Log = LogManager.GetLogger("Hangar." + nameof(Chat));
