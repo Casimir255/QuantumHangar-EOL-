@@ -31,7 +31,6 @@ namespace QuantumHangar.Utilities
             return ctx.Task;
         }
 
-
         public static Task<T> InvokeAsync<T>(Func<T> action, [CallerMemberName] string caller = "")
         {
             //Jimm thank you. This is the best
@@ -108,7 +107,6 @@ namespace QuantumHangar.Utilities
             }, caller);
             return ctx.Task;
         }
-
 
         public static Task<T6> InvokeAsync<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6> action, T1 arg, T2 arg2, T3 arg3, T4 arg4, T5 arg5, [CallerMemberName] string caller = "")
         {

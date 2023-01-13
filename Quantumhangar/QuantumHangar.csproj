@@ -73,6 +73,7 @@
     <Compile Include="Utils\NexusAPI.cs" />
     <Compile Include="Utils\PluginDependencies.cs" />
     <Compile Include="Utils\NexusSupport.cs" />
+    <Compile Include="Utils\PreviewBoxTimer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="HavokWrapper">

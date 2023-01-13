@@ -150,7 +150,9 @@ namespace QuantumHangar
 
         public void Update1Min()
         {
+            Log.Info("Hit update!");
             AutoHangar.UpdateAutoHangar();
+            PreviewBoxTimer.Update();
         }
 
 

@@ -13,6 +13,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using Torch.Mod.Messages;
+using Torch.Mod;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ObjectBuilders;
@@ -152,7 +154,10 @@ namespace QuantumHangar
         public int NumberOfGrids = 0;
         public Vector3D GridSavePosition = new Vector3D(0, 0, 0);
 
+
         public MyOrientedBoundingBoxD BoundingBox = new MyOrientedBoundingBoxD();
+        public BoundingBoxD Box = new BoundingBoxD();
+        public Vector3D MatrixTranslation = new Vector3D();
 
 
         //Server blocklimits Block
@@ -486,15 +491,21 @@ namespace QuantumHangar
         {
             var stamp = new GridStamp(Grids);
             stamp.UpdateBiggestGrid(BiggestGrid);
-            stamp.BoundingBox = GetBoundingBox(Grids, BiggestGrid);
+            GetBoundingBox(Grids, BiggestGrid, OwnerSteamId, out MyOrientedBoundingBoxD obb, out MatrixD matrix, out BoundingBox myAaabb);
+            
+            //Save box and matrix. Saves time later on
+            stamp.BoundingBox = obb;
+            stamp.MatrixTranslation = matrix.Translation;
+            stamp.Box = myAaabb;
+
             return stamp;
         }
 
-        private static MyOrientedBoundingBoxD GetBoundingBox(List<MyCubeGrid> Grids, MyCubeGrid BiggestGrid)
+        private static void GetBoundingBox(List<MyCubeGrid> Grids, MyCubeGrid BiggestGrid, ulong steamid, out MyOrientedBoundingBoxD OBB, out MatrixD Matrix, out BoundingBox myAabb)
         {
-            MatrixD BiggestGridMatrix = BiggestGrid.WorldMatrix;
+            Matrix = BiggestGrid.WorldMatrix;
 
-            BoundingBox myAabb = BiggestGrid.PositionComp.LocalAABB;
+            myAabb = BiggestGrid.PositionComp.LocalAABB;
             MatrixD orientatedMatrix = BiggestGrid.PositionComp.WorldMatrixNormalizedInv;
 
             foreach (var grid in Grids)
@@ -508,7 +519,12 @@ namespace QuantumHangar
                 myAabb.Include(localOBB.GetAABB());
             }
 
-            return new MyOrientedBoundingBoxD(myAabb, BiggestGridMatrix);
+
+            DrawDebug sphere = new DrawDebug("Hangar2");
+            Color color = new Color(255, 0, 0, 10);
+            sphere.addOBB(myAabb, Matrix.Translation, Matrix.Forward, Matrix.Up, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
+
+            OBB = new MyOrientedBoundingBoxD(myAabb, Matrix);
         }
 
         public bool GetOwner(long biggestOwner, out ulong steamId)

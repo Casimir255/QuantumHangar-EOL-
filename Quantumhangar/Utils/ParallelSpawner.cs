@@ -1,9 +1,11 @@
 ﻿using NLog;
 using ParallelTasks;
 using QuantumHangar.Utilities;
+using QuantumHangar.Utils;
 using Sandbox;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Engine.Multiplayer;
+using Sandbox.Engine.Physics;
 using Sandbox.Game.Entities;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.Multiplayer;
@@ -13,14 +15,19 @@ using Sandbox.Game.World.Generator;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using Torch.Commands;
+using Torch.Mod;
+using Torch.Mod.Messages;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
+using VRage.Noise.Patterns;
 using VRageMath;
 using static QuantumHangar.Utils.CharacterUtilities;
 
@@ -28,8 +35,12 @@ namespace QuantumHangar
 {
     public class ParallelSpawner
     {
+        private static Dictionary<ulong, long> recentCommands = new Dictionary<ulong, long>();
+
+
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
+        private ulong _playerSteamID;
         private readonly int _maxCount;
         private readonly int _spawnedCount;
 
@@ -39,6 +50,7 @@ namespace QuantumHangar
         private readonly HashSet<MyCubeGrid> _spawned;
         private readonly Chat _response;
         private MyObjectBuilder_CubeGrid _biggestGrid;
+        private PreviewBoxTimer shapeDisplay;
         private const int Timeout = 6000;
         public static Settings Config => Hangar.Config;
 
@@ -46,22 +58,32 @@ namespace QuantumHangar
         //Bounds
         private BoundingSphereD _sphereD;
         private MyOrientedBoundingBoxD _boxD;
+        private MatrixD _matrix;
         private BoundingBoxD _boxAab;
+        private Vector3D _translation;
 
         //Delta
         private Vector3D _delta3D; //This should be a vector from the grids center, to that of the CENTER of the grid
         private Vector3D _targetPos = Vector3D.Zero;
 
 
-        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, MyOrientedBoundingBoxD boxD, Action<HashSet<MyCubeGrid>> callback = null)
+        public ParallelSpawner(IEnumerable<MyObjectBuilder_CubeGrid> grids, Chat chat, ulong steamid, Action<HashSet<MyCubeGrid>> callback = null)
         {
-            _boxD = boxD;
             _grids = grids;
             _maxCount = grids.Count();
             _callback = callback;
             _spawned = new HashSet<MyCubeGrid>();
             _response = chat;
-            
+            _playerSteamID = steamid;
+
+            shapeDisplay = new PreviewBoxTimer(steamid);
+        }
+
+        public void setBounds(MyOrientedBoundingBoxD boxD, BoundingBoxD _boxAab, Vector3D translation)
+        {
+            this._boxD = boxD;
+            this._boxAab = _boxAab;
+            this._translation = translation;
         }
 
 
@@ -72,7 +94,7 @@ namespace QuantumHangar
                 //Simple grid/objectbuilder null check. If there are no gridys then why continue?
                 return true;
 
-            
+
 
             // Fix for recent keen update. (if grids have projected grids saved then they will get the infinite streaming bug)
             foreach (var cubeGrid in _grids)
@@ -92,19 +114,22 @@ namespace QuantumHangar
             }
 
 
-            //Remap to fix entity conflicts
-            MyEntities.RemapObjectBuilderCollection(_grids);
+
 
 
             //This should return more than a bool (we only need to run on game thread to find a safe spot)
 
             var spawn = GameEvents.InvokeAsync(CalculateSafePositionAndSpawn, loadInOriginalPosition);
 
+       
 
             if (spawn.Wait(Timeout))
             {
                 if (spawn.Result == false)
                     return false;
+
+                //Remap to fix entity conflicts
+                MyEntities.RemapObjectBuilderCollection(_grids);
 
                 foreach (var o in _grids)
                 {
@@ -127,11 +152,24 @@ namespace QuantumHangar
             try
             {
                 //Calculate all required grid bounding objects
+                bool foundPreviousAttempt = false;
+
+                Log.Warn($"total Count: {recentCommands.Count}");
+
+                //Get previous attempt
+                if(recentCommands.TryGetValue(_playerSteamID, out long biggestGridEntityID))
+                {
+                    Log.Warn($"Found record: {biggestGridEntityID} -> {_biggestGrid.EntityId}");
+                    if (biggestGridEntityID == _biggestGrid.EntityId)
+                        foundPreviousAttempt = true;
+                    else
+                        recentCommands.Remove(_playerSteamID);
+                }
 
 
                 FindGridBounds();
 
-                
+
                 //The center of the grid is not the actual center
                 // Log.Info("SphereD Center: " + SphereD.Center);
                 _delta3D = _sphereD.Center - _biggestGrid.PositionAndOrientation.Value.Position;
@@ -139,14 +177,37 @@ namespace QuantumHangar
 
 
                 //This has to be ran on the main game thread!
-                Log.Info($"KeepOriginalPos: {keepOriginalLocation}");
+                Log.Info($"KeepOriginalPos: {keepOriginalLocation}, Found Previous Attempt: {foundPreviousAttempt}");
+
                 if (keepOriginalLocation)
-                    //If the original spot is clear, return true and spawn
-                    if (OriginalSpotClear())
+                {
+                    if (!OriginalSpotClear(foundPreviousAttempt))
                     {
-                        if (Config.DigVoxels) DigVoxels();
+                        //If the original spot is not clear and this is first time running, return false to display warning
+                        if (!foundPreviousAttempt)
+                        {
+                            Log.Warn("Displaying spawn area!");
+                            displaySpawnArea(_boxD);
+
+                            //sends boxes to client
+                            shapeDisplay.display();
+                            recentCommands.Add(_playerSteamID, _biggestGrid.EntityId);
+                            return false;
+                        }
+                            
+
+                        //Found previous attempt, and spot isnt clear still. Continue spawning around player
+
+                    }
+                    else
+                    {
+                        //If the original spot is clear, return true and spawn
+                        if (Config.DigVoxels) 
+                            DigVoxels();
+                        
                         return true;
                     }
+                }
 
 
                 //This is for aligning to gravity. If we are trying to find a safe spot, lets check gravity, and if we did recalculate, lets re-calc grid bounds
@@ -171,7 +232,14 @@ namespace QuantumHangar
                 _targetPos = pos.Value;
                 UpdateGridsPosition(_targetPos);
 
-                if (Config.DigVoxels) DigVoxels();
+                if (Config.DigVoxels) 
+                    DigVoxels();
+
+
+                //Remove the attempt after it found a good spot
+                if (foundPreviousAttempt)
+                    recentCommands.Remove(_playerSteamID);
+
                 return true;
             }
             catch (Exception ex)
@@ -231,6 +299,7 @@ namespace QuantumHangar
                 MyAPIGateway.Session.VoxelMaps.CutOutShape(voxel, shape);
             }
         }
+
 
         private Vector3D? FindPastePosition(Vector3D target)
         {
@@ -325,8 +394,12 @@ namespace QuantumHangar
         }
 
 
+
+
         private void FindGridBounds()
         {
+
+            //Legacy grid bounds calculated
             if (_boxD == null)
             {
                 _boxAab = new BoundingBoxD();
@@ -336,8 +409,8 @@ namespace QuantumHangar
 
 
 
-                Log.Warn($"F/UP: F {biggestGridMatrix.Forward}, U {biggestGridMatrix.Up}");
-                Log.Warn($"Orientation: X {_biggestGrid.PositionAndOrientation.Value.Orientation.X}, Y {_biggestGrid.PositionAndOrientation.Value.Orientation.Y}, Z {_biggestGrid.PositionAndOrientation.Value.Orientation.Z}, W {_biggestGrid.PositionAndOrientation.Value.Orientation.W}");
+                //Log.Warn($"F/UP: F {biggestGridMatrix.Forward}, U {biggestGridMatrix.Up}");
+                //Log.Warn($"Orientation: X {_biggestGrid.PositionAndOrientation.Value.Orientation.X}, Y {_biggestGrid.PositionAndOrientation.Value.Orientation.Y}, Z {_biggestGrid.PositionAndOrientation.Value.Orientation.Z}, W {_biggestGrid.PositionAndOrientation.Value.Orientation.W}");
 
                 _boxAab.Matrix.SetFrom(biggestGridMatrix);
 
@@ -352,7 +425,7 @@ namespace QuantumHangar
                     _boxAab.Include(ref box);
                 }
 
-                
+
                 _boxD = new MyOrientedBoundingBoxD(_boxAab, biggestGridMatrix);
             }
 
@@ -360,59 +433,77 @@ namespace QuantumHangar
 
             var sphere = BoundingSphereD.CreateFromBoundingBox(_boxAab);
             _sphereD = new BoundingSphereD(_boxD.Center, sphere.Radius);
-
-
-            //Test bounds to make sure they are in the right spot
-
-            /*
-
-            long ID = MySession.Static.Players.TryGetIdentityId(76561198045096439);
-            Vector3D[] array = new Vector3D[8];
-            BoxD.GetCorners(array, 0);
-
-            for (int i = 0; i <= 7; i++)
-            {
-                CharacterUtilities.SendGps(array[i], i.ToString(), ID, 10);
-            }
-            */
-
-            //Log.Info($"HangarDebug: {BoxD.ToString()}");
         }
 
-        private bool OriginalSpotClear()
+
+        private bool OriginalSpotClear(bool foundPreviousAttempt)
         {
             var entities = new List<MyEntity>();
             MyGamePruningStructure.GetAllEntitiesInOBB(ref _boxD, entities, MyEntityQueryType.Both);
 
-            displaySpawnArea(_boxD, _response);
-            Log.Info("Hit!");
-            Log.Warn($"F/UP: F {_boxD.Orientation.Forward}, U {_boxD.Orientation.Up}");
-            Log.Warn($"Orientation: X {_boxD.Orientation.X}, Y {_boxD.Orientation.Y}, Z {_boxD.Orientation.Z}, W {_boxD.Orientation.W}");
 
-           
-            foreach(var entity in entities)
+            //We will use this to determine if its in console or not
+            bool hasSteamID = (_response._context.Player != null);
+
+            StringBuilder builder = new StringBuilder();
+            GpsSender sender = new GpsSender();
+            Color warningColor = new Color(255, 108, 0);
+            int totalInterferences = 0;
+
+            foreach (var entity in entities)
             {
-
-                if(entity is MyCubeGrid grid) 
+                if (entity is MyCubeGrid grid)
                 {
-                    Log.Warn($"grid {grid.DisplayName} is inside the orientated bounding box!");
+                    BoundingBox box = grid.PositionComp.LocalAABB;
+                    var Matrix = grid.WorldMatrix;
 
-                }else if (entity is MyVoxelBase voxel)
-                {
-                    Log.Warn($"Voxel {voxel.DisplayName} is inside the orientated bounding box!");
+                    //Double check for more percise control
+                    MyOrientedBoundingBoxD gridBox = new MyOrientedBoundingBoxD(box, Matrix);
+                    if (!gridBox.Intersects(ref _boxD))
+                        continue;
+
+                    string stringdesc = $"Grid {grid.DisplayName} interference";
+                    builder.AppendLine(stringdesc);
+
+                    //Log.Warn($"grid {grid.DisplayName} is inside the orientated bounding box!");
+                    if (hasSteamID && !foundPreviousAttempt)
+                    {
+                        sender.SendLinkedGPS(grid.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 5, warningColor, "This grid interferes with spawn area!");
+                        displaySpawnArea(entity);
+                    }
+
+                    totalInterferences++;
+
+
                 }
+                else if (entity is MyVoxelBase voxel && !_biggestGrid.IsStatic)
+                {
+                    string stringdesc = $"Voxel {voxel.DisplayName} interference";
+                    builder.AppendLine(stringdesc);
 
-                
+                    if (hasSteamID && !foundPreviousAttempt)
+                    {
+                        sender.SendLinkedGPS(voxel.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 5, warningColor, "This voxel interferes with spawn area!");
+                        displaySpawnArea(entity);
+                    }
+                        
 
+
+                    totalInterferences++;
+                }
             }
 
-            return true;
 
+            //If there is nothing interfering we are good to spawn
+            if (totalInterferences == 0)
+                return true;
 
-   
-            
-            _response.Respond(
-                "There are potentially other grids in the way. Attempting to spawn around the location to avoid collisions.");
+            builder.AppendLine($"Total interferences: {totalInterferences}");
+
+            if (!foundPreviousAttempt && hasSteamID)
+                _response.Respond($"Detected {totalInterferences} spawn interferences. Run command again to spawn grid near.");
+            else if (!foundPreviousAttempt && !hasSteamID)
+                _response.Respond(builder.ToString());
 
             return false;
         }
@@ -447,7 +538,7 @@ namespace QuantumHangar
             if (_spawned.Count < _maxCount)
                 return;
 
-            foreach (var g in _spawned) 
+            foreach (var g in _spawned)
                 MyAPIGateway.Entities.AddEntity(g, true);
 
             _callback?.Invoke(_spawned);
@@ -580,27 +671,25 @@ namespace QuantumHangar
             });
         }
 
-        public void displaySpawnArea(MyOrientedBoundingBoxD spawnArea, Chat _response)
+        public void displaySpawnArea(MyOrientedBoundingBoxD spawnArea)
         {
-
+            
             //If response is null, its running as a console command
             if (_response._context == null)
                 return;
 
-            long ID = _response._context.Player.Identity.IdentityId;
-            GpsSender sender = new GpsSender();
-            Random random = new Random((int)DateTime.Now.Ticks);
+ 
+            Color color = new Color(255, 255, 0, 10);
+            shapeDisplay.drawobjectMessage.addOBB(_boxAab, _translation, spawnArea.Orientation.Forward, spawnArea.Orientation.Up, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
+            Log.Warn("Display spawn area!");
+            //ModCommunication.SendMessageTo(sphere, _playerSteamID);
+        }
 
-            Color newColor = new Color(random.Next(255), random.Next(255), random.Next(255));
-
-            Vector3D[] allCorners = new Vector3D[8];
-            spawnArea.GetCorners(allCorners, 0);
-
-            for (int j = 0; j < allCorners.Length; j++)
-            {
-                sender.SendGps(allCorners[j], $"Corner {j}", ID, 5, newColor, "Spawn Corner");
-            }
-
+        public void displaySpawnArea(MyEntity entity)
+        {
+            Color color = new Color(255, 0, 0, 10);
+            shapeDisplay.drawobjectMessage.addOBBLinkedEntity(entity.EntityId, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
+            
         }
 
 

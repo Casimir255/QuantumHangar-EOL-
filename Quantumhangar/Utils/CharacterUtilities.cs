@@ -7,6 +7,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using VRage.Game.Entity;
 using VRageMath;
 
 namespace QuantumHangar.Utils
@@ -151,11 +152,36 @@ namespace QuantumHangar.Utils
                     Name = name,
                     Description = desc,
                     AlwaysVisible = true
+
                 };
 
                 var gps = myGps;
                 gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + time);
 
+                gps.GPSColor = Color.Yellow;
+                MySession.Static.Gpss.SendAddGpsRequest(entityId, ref gps, 0L, true);
+            }
+
+            public void SendLinkedGPS(Vector3D position, MyEntity ent,  string name, long entityId, int time = 5, Color color = default(Color), string desc = "Hangar location for loading grid at or around this position")
+            {
+                if (_send != null)
+                {
+                    _send(position, name, entityId, time, color, desc);
+                    return;
+                }
+
+                var myGps = new MyGps
+                {
+                    ShowOnHud = true,
+                    Coords = position,
+                    Name = name,
+                    Description = desc,
+                    AlwaysVisible = true
+                };
+
+                var gps = myGps;
+                gps.DiscardAt = TimeSpan.FromMinutes(MySession.Static.ElapsedPlayTime.TotalMinutes + time);
+                gps.SetEntity(ent);
                 gps.GPSColor = Color.Yellow;
                 MySession.Static.Gpss.SendAddGpsRequest(entityId, ref gps, 0L, true);
             }

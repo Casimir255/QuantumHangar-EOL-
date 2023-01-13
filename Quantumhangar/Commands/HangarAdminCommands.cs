@@ -1,8 +1,12 @@
 ﻿using QuantumHangar.HangarChecks;
 using System;
+using System.Net.Mime;
 using Torch.Commands;
 using Torch.Commands.Permissions;
+using Torch.Mod;
+using Torch.Mod.Messages;
 using VRage.Game.ModAPI;
+using VRageMath;
 
 namespace QuantumHangar.Commands
 {
@@ -112,6 +116,44 @@ namespace QuantumHangar.Commands
         {
             await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, true, true, true, true));
         }
+
+
+        [Command("ttmod", "Tests all torch mod functions")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public void testTorchMod()
+        {
+            DialogMessage msg = new DialogMessage("This is title", "This is subtitle", "This is content");
+            NotificationMessage nmsg = new NotificationMessage("This is message", 5000, "White");
+
+            DrawDebug sphere = new DrawDebug("Hangar");
+
+            Color c = new Color(0, 255, 255, 10);
+
+
+            sphere.addSphere(Context.Player.GetPosition(), 1000, c, VRage.Game.MySimpleObjectRasterizer.SolidAndWireframe, 1, 0.001f);
+
+
+            ModCommunication.SendMessageTo(sphere, Context.Player.SteamUserId);
+            ModCommunication.SendMessageTo(msg, Context.Player.SteamUserId);
+           // ModCommunication.SendMessageTo(nmsg, Context.Player.SteamUserId);
+
+        }
+
+
+        [Command("clearSpheres", "Tests all torch mod functions")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public void testTorchMod2()
+        {
+
+            DrawDebug sphere = new DrawDebug(Context.Player.SteamUserId.ToString());
+
+            sphere.remove = true;
+
+            ModCommunication.SendMessageTo(sphere, Context.Player.SteamUserId);
+            // ModCommunication.SendMessageTo(nmsg, Context.Player.SteamUserId);
+
+        }
+
 
     }
 

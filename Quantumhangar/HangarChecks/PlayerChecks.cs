@@ -122,8 +122,8 @@ namespace QuantumHangar.HangarChecks
 
             //Calculates incoming grids data
             var gridData = result.GenerateGridStamp();
+         
 
-            return;
             //PlayersHanger.CheckGridLimits(GridData);
 
             //Checks for single and all slot block and grid limits
@@ -407,7 +407,8 @@ namespace QuantumHangar.HangarChecks
                     _playerPosition))
                 return;
 
-            var spawner = new ParallelSpawner(grids, _chat, stamp.BoundingBox, SpawnedGridsSuccessful);
+            var spawner = new ParallelSpawner(grids, _chat, SteamId, SpawnedGridsSuccessful);
+            spawner.setBounds(stamp.BoundingBox, stamp.Box, stamp.MatrixTranslation);
 
             Log.Info("Attempting Grid Spawning @" + spawnPos.ToString());
             if (spawner.Start(spawnPos, keepOriginalPosition))
@@ -417,7 +418,7 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                _chat?.Respond("An error occured while spawning the grid!");
+                //_chat?.Respond("An error occured while spawning the grid!");
             }
         }
 
