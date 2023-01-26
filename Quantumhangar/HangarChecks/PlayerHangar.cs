@@ -1008,6 +1008,7 @@ namespace QuantumHangar.HangarChecks
                     MyPromoteLevel.Scripter => Config.ScripterHangarAmount,
                     MyPromoteLevel.Moderator => Config.ScripterHangarAmount * 2,
                     MyPromoteLevel.Admin => Config.ScripterHangarAmount * 10,
+                    MyPromoteLevel.Owner => Config.ScripterHangarAmount * 10,
                     _ => Config.NormalHangarAmount
                 };
             }

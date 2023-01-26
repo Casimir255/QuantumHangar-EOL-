@@ -1,4 +1,5 @@
 ﻿using NLog;
+using NLog.Targets.Wrappers;
 using ParallelTasks;
 using QuantumHangar.Utilities;
 using QuantumHangar.Utils;
@@ -28,6 +29,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Noise.Patterns;
+using VRage.Utils;
 using VRageMath;
 using static QuantumHangar.Utils.CharacterUtilities;
 
@@ -35,7 +37,20 @@ namespace QuantumHangar
 {
     public class ParallelSpawner
     {
-        private static Dictionary<ulong, long> recentCommands = new Dictionary<ulong, long>();
+        private static List<commandTimer> recentCommands = new List<commandTimer>();
+
+        private class commandTimer
+        {
+            public long gridID;
+            public int timer = 0;
+            public ulong steamID;
+
+            public commandTimer(ulong steam, long gridId) { 
+                this.steamID= steam;
+                this.gridID= gridId;
+            }
+        }
+
 
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
@@ -78,13 +93,13 @@ namespace QuantumHangar
 
             shapeDisplay = new PreviewBoxTimer(steamid);
         }
-
         public void setBounds(MyOrientedBoundingBoxD boxD, BoundingBoxD _boxAab, Vector3D translation)
         {
             this._boxD = boxD;
             this._boxAab = _boxAab;
             this._translation = translation;
         }
+
 
 
         public bool Start(Vector3D target, bool loadInOriginalPosition = true)
@@ -134,7 +149,6 @@ namespace QuantumHangar
                 foreach (var o in _grids)
                 {
                     IMyEntity entity = MyAPIGateway.Entities.CreateFromObjectBuilderParallel(o, false, Increment);
-                    Log.Warn($"Queued {entity.EntityId} for spawning!");
                 }
 
                 return true;
@@ -157,13 +171,16 @@ namespace QuantumHangar
                 Log.Warn($"total Count: {recentCommands.Count}");
 
                 //Get previous attempt
-                if(recentCommands.TryGetValue(_playerSteamID, out long biggestGridEntityID))
+
+
+                commandTimer t = recentCommands.FirstOrDefault(x => x.steamID == _playerSteamID);
+                if (t != null)
                 {
-                    Log.Warn($"Found record: {biggestGridEntityID} -> {_biggestGrid.EntityId}");
-                    if (biggestGridEntityID == _biggestGrid.EntityId)
+                    Log.Warn($"Found record: {t.gridID} -> {_biggestGrid.EntityId}");
+                    if (t.gridID == _biggestGrid.EntityId)
                         foundPreviousAttempt = true;
                     else
-                        recentCommands.Remove(_playerSteamID);
+                        recentCommands.Remove(t);
                 }
 
 
@@ -191,7 +208,7 @@ namespace QuantumHangar
 
                             //sends boxes to client
                             shapeDisplay.display();
-                            recentCommands.Add(_playerSteamID, _biggestGrid.EntityId);
+                            recentCommands.Add(new commandTimer(_playerSteamID, _biggestGrid.EntityId));
                             return false;
                         }
                             
@@ -204,7 +221,8 @@ namespace QuantumHangar
                         //If the original spot is clear, return true and spawn
                         if (Config.DigVoxels) 
                             DigVoxels();
-                        
+
+                        PreviewBoxTimer.removeAll(_playerSteamID);
                         return true;
                     }
                 }
@@ -215,8 +233,6 @@ namespace QuantumHangar
                 {
                     //We only need to align to gravity if a new spawn position is required
                     EnableRequiredItemsOnLoad();
-
-                    FindGridBounds();
                 }
 
 
@@ -238,8 +254,9 @@ namespace QuantumHangar
 
                 //Remove the attempt after it found a good spot
                 if (foundPreviousAttempt)
-                    recentCommands.Remove(_playerSteamID);
+                    recentCommands.Remove(t);
 
+                PreviewBoxTimer.removeAll(_playerSteamID);
                 return true;
             }
             catch (Exception ex)
@@ -310,8 +327,26 @@ namespace QuantumHangar
                 //following method is what SEworldgen uses. We only really need to use this in space
                 return FindSuitableJumpLocationSpace(target);
 
-            return MyEntities.FindFreePlaceCustom(target, (float)_sphereD.Radius, 90, 10, 1.5f, 10);
+
+
+            MyPlanet planet = MyGamePruningStructure.GetClosestPlanet(target);
+            Vector3D closestSurfacePoint = planet.GetClosestSurfacePointGlobal(target);
+            Vector3D planetCenter = planet.PositionComp.GetPosition();
+            double Targetdistance = Vector3D.Distance(target, planetCenter);
+            double lowestPointDistance = Vector3D.Distance(closestSurfacePoint, planetCenter);
+
+            Log.Warn($"T{Targetdistance} L{lowestPointDistance}");
+            if (Targetdistance < lowestPointDistance || Targetdistance - lowestPointDistance < 350)
+            {
+                return MyEntities.FindFreePlaceCustom(closestSurfacePoint, (float)_sphereD.Radius, 125, 15, 1.5f, 2.5f);
+            }
+          
+
+            return MyEntities.FindFreePlaceCustom(target, (float)_sphereD.Radius, 125, 15, 1.5f, 5);
         }
+
+
+
 
 
         private Vector3D? FindSuitableJumpLocationSpace(Vector3D desiredLocation)
@@ -468,7 +503,7 @@ namespace QuantumHangar
                     //Log.Warn($"grid {grid.DisplayName} is inside the orientated bounding box!");
                     if (hasSteamID && !foundPreviousAttempt)
                     {
-                        sender.SendLinkedGPS(grid.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 5, warningColor, "This grid interferes with spawn area!");
+                        //sender.SendLinkedGPS(grid.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 1, warningColor, "This grid interferes with spawn area!");
                         displaySpawnArea(entity);
                     }
 
@@ -483,13 +518,13 @@ namespace QuantumHangar
 
                     if (hasSteamID && !foundPreviousAttempt)
                     {
-                        sender.SendLinkedGPS(voxel.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 5, warningColor, "This voxel interferes with spawn area!");
-                        displaySpawnArea(entity);
+                        //sender.SendLinkedGPS(voxel.PositionComp.GetPosition(), entity, stringdesc, _response._context.Player.IdentityId, 1, warningColor, "Beware this voxel interferes with spawn area!");
+                        //displaySpawnArea(entity);
                     }
                         
 
 
-                    totalInterferences++;
+                    //totalInterferences++;
                 }
             }
 
@@ -501,7 +536,7 @@ namespace QuantumHangar
             builder.AppendLine($"Total interferences: {totalInterferences}");
 
             if (!foundPreviousAttempt && hasSteamID)
-                _response.Respond($"Detected {totalInterferences} spawn interferences. Run command again to spawn grid near.");
+                _response.Respond($"{totalInterferences} spawn interferences. Run command again in next 15s to spawn grid near you.");
             else if (!foundPreviousAttempt && !hasSteamID)
                 _response.Respond(builder.ToString());
 
@@ -671,6 +706,27 @@ namespace QuantumHangar
             });
         }
 
+
+
+        private static int displayfor = 15;
+        public static void update()
+        {
+            for (int i = recentCommands.Count - 1; i >= 0; i--)
+            {
+                if (recentCommands[i].timer > displayfor)
+                {
+                    recentCommands.RemoveAt(i);
+                    continue;
+                }
+
+                recentCommands[i].timer++;
+            }
+        }
+
+
+
+
+
         public void displaySpawnArea(MyOrientedBoundingBoxD spawnArea)
         {
             
@@ -679,7 +735,7 @@ namespace QuantumHangar
                 return;
 
  
-            Color color = new Color(255, 255, 0, 10);
+            Color color = new Color(0, 255, 00, 10);
             shapeDisplay.drawobjectMessage.addOBB(_boxAab, _translation, spawnArea.Orientation.Forward, spawnArea.Orientation.Up, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
             Log.Warn("Display spawn area!");
             //ModCommunication.SendMessageTo(sphere, _playerSteamID);
@@ -691,7 +747,6 @@ namespace QuantumHangar
             shapeDisplay.drawobjectMessage.addOBBLinkedEntity(entity.EntityId, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
             
         }
-
 
         public static MatrixD FindRotationMatrix(MyObjectBuilder_CubeGrid cubeGrid)
         {
@@ -738,6 +793,9 @@ namespace QuantumHangar
         }
 
     }
+
+
+
 
 
     // Simple chat class so i can control the colors easily.

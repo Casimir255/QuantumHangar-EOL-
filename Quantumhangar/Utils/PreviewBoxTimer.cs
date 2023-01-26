@@ -30,7 +30,7 @@ namespace QuantumHangar.Utils
         public void display()
         {
             PreviewBoxTimer exsisting = list.FirstOrDefault(x => x == this);
-            if(exsisting != null )
+            if (exsisting != null)
             {
                 exsisting.remove();
                 list.Remove(exsisting);
@@ -45,6 +45,7 @@ namespace QuantumHangar.Utils
             drawobjectMessage.drawObjects.Clear();
         }
 
+
         public static void Update()
         {
             for (int i = list.Count - 1; i >= 0; i--)
@@ -57,6 +58,19 @@ namespace QuantumHangar.Utils
                 }
 
                 list[i].timeDisplayed++;
+            }
+        }
+
+        public static void removeAll(ulong id)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (list[i]._target != id)
+                    continue;
+
+
+                list[i].remove();
+                list.RemoveAt(i);
             }
         }
 

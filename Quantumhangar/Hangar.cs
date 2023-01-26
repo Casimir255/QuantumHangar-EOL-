@@ -136,23 +136,35 @@ namespace QuantumHangar
         private readonly int _maxUpdateTime = 60 * 60;
         private int _currentFrameCount = 0;
 
+        private static readonly int _maxUpdateTimeSeconds = 60;
+        private static int _currentFrameCountSeconds = 0;
+
         public override void Update()
         {
+
+            _currentFrameCount++;
+            _currentFrameCountSeconds++;
+
+
             if (_currentFrameCount >= _maxUpdateTime)
             {
                 Update1Min();
                 _currentFrameCount = 0;
-                return;
+
+            }
+            
+            if(_currentFrameCountSeconds >= _maxUpdateTimeSeconds)
+            {
+                PreviewBoxTimer.Update();
+                ParallelSpawner.update();
+                _currentFrameCountSeconds = 0;
             }
 
-            _currentFrameCount++;
         }
 
         public void Update1Min()
         {
-            Log.Info("Hit update!");
             AutoHangar.UpdateAutoHangar();
-            PreviewBoxTimer.Update();
         }
 
 
