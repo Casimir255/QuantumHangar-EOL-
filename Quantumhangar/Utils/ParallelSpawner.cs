@@ -435,11 +435,11 @@ namespace QuantumHangar
         {
 
             //Legacy grid bounds calculated
-            if (_boxD == null)
+            if (_boxD == null || _boxD.HalfExtent == Vector3D.Zero)
             {
                 _boxAab = new BoundingBoxD();
 
-
+                Log.Info("Null box!");
                 var biggestGridMatrix = _biggestGrid.PositionAndOrientation.Value.GetMatrix();
 
 
