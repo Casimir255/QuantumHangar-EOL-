@@ -112,7 +112,7 @@ namespace QuantumHangar.UI
                     string GridFilePath = System.IO.Path.Combine(PublicOfferPath, offer.Name + ".sbc");
                     Hangar.Debug("Blueprint Path: "+ GridFilePath);
 
-                    MyObjectBuilderSerializer.DeserializeXML(GridFilePath, out MyObjectBuilder_Definitions myObjectBuilder_Definitions);
+                    MyObjectBuilderSerializerKeen.DeserializeXML(GridFilePath, out MyObjectBuilder_Definitions myObjectBuilder_Definitions);
                     MyObjectBuilder_ShipBlueprintDefinition[] shipBlueprint = null;
                     try
                     {
