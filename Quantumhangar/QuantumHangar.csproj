@@ -81,7 +81,8 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\..\..\Desktop\TorchServers\torch-server1\lib\Torch\Newtonsoft.Json.dll</HintPath>
+      <HintPath>TorchBinaries\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="NLog">
       <HintPath>GameBinaries\NLog.dll</HintPath>
@@ -162,10 +163,6 @@
     </Reference>
     <Reference Include="VRage.XmlSerializers">
       <HintPath>GameBinaries\VRage.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Nexus">
-      <HintPath>NexusBinaries\Nexus.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="WindowsBase" />
