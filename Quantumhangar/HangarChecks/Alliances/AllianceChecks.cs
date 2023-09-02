@@ -60,6 +60,11 @@ namespace QuantumHangar.HangarChecks
 
         private Guid GetAllianceId()
         {
+            if (Hangar.Alliances == null)
+            {
+                _chat?.Respond("Alliances is not installed!");
+                return Guid.Empty;
+            }
             var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
             if (faction == null)
             {
@@ -81,11 +86,7 @@ namespace QuantumHangar.HangarChecks
         }
         private bool PerformMainChecks(bool isSaving, bool isLoading)
         {
-            if (Hangar.Alliances == null)
-            {
-                _chat?.Respond("Alliances is not installed!");
-                return false;
-            }
+     
             //remove in a month
             _chat?.Respond("For old alliance hangar use !oldah");
             if (!Config.PluginEnabled)
