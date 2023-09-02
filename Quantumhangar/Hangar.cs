@@ -32,6 +32,8 @@ namespace QuantumHangar
         public static bool ServerRunning { get; private set; }
 
         public static string MainPlayerDirectory { get; private set; }
+        public static string MainFactionDirectory { get; private set; }
+        public static string MainAllianceDirectory { get; private set; }
 
 
         public enum ErrorType
@@ -71,6 +73,12 @@ namespace QuantumHangar
 
             MainPlayerDirectory = Path.Combine(Config.FolderDirectory, "PlayerHangars");
             Directory.CreateDirectory(MainPlayerDirectory);
+
+            MainFactionDirectory = Path.Combine(Config.FolderDirectory, "FactionHangars");
+            Directory.CreateDirectory(MainFactionDirectory);
+
+            MainAllianceDirectory = Path.Combine(Config.FolderDirectory, "AllianceHangars");
+            Directory.CreateDirectory(MainAllianceDirectory);
 
 
             TorchSession = Torch.Managers.GetManager<TorchSessionManager>();

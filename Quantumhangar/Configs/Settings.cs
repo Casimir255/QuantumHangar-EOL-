@@ -33,6 +33,13 @@ namespace QuantumHangar
         private int _normalHangarAmount = 2;
         public int NormalHangarAmount { get => _normalHangarAmount; set => SetValue(ref _normalHangarAmount, value); }
 
+        private int _factionHangarAmount = 2;
+        public int FactionHangarAmount { get => _factionHangarAmount; set => SetValue(ref _factionHangarAmount, value); }
+
+        private int _allianceHangarAmount = 2;
+        public int AllianceHangarAmount { get => _allianceHangarAmount; set => SetValue(ref _allianceHangarAmount, value); }
+
+
 
         private bool _enableBlackListBlocks;
         public bool EnableBlackListBlocks { get => _enableBlackListBlocks; set => SetValue(ref _enableBlackListBlocks, value); }

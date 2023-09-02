@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using Torch.Mod.Messages;
 using Torch.Mod;
 using VRage.Game;
+using VRage.Game.Factions.Definitions;
 using VRage.Game.ModAPI;
 using VRage.ObjectBuilders;
 using VRageMath;
@@ -419,7 +420,7 @@ namespace QuantumHangar
         public static Settings Config => Hangar.Config;
 
 
-        public bool GetGrids(Chat response, MyCharacter character, string gridNameOrEntity = null)
+        public bool GetGrids(Chat response, MyCharacter character, string gridNameOrEntity = null, long factionId = 0)
         {
             if (!GridUtilities.FindGridList(gridNameOrEntity, character, out Grids))
             {
@@ -440,34 +441,55 @@ namespace QuantumHangar
             {
                 var fatBlocks = BiggestGrid.GetFatBlocks().ToList();
                 var ownerId = character.GetPlayerIdentityId();
-
-                var totalFatBlocks = 0;
-                var ownedFatBlocks = 0;
-
-
-                foreach (var fat in fatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
+                if (factionId != 0)
                 {
-                    //WTF happened here?
-                    //if (fat.OwnerId == 0)
-                    //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+                    var owner = GridUtilities.GetBiggestOwner(BiggestGrid);
+                    var faction = MySession.Static.Factions.GetPlayerFaction(owner);
+                    if (faction == null)
+                    {
+                        response.Respond(
+                            $"Grid is not owned by a faction!");
+                        return false;
+                    }
 
-
-                    totalFatBlocks++;
-
-                    if (fat.OwnerId == ownerId)
-                        ownedFatBlocks++;
+                    if (faction.FactionId != factionId)
+                    {
+                        response.Respond(
+                            $"Grid is not owned by your faction!");
+                        return false;
+                    }
                 }
-
-
-                var percent = Math.Round((double)ownedFatBlocks / totalFatBlocks * 100, 3);
-                var totalBlocksLeftNeeded = totalFatBlocks / 2 + 1 - ownedFatBlocks;
-
-                if (percent <= 50)
+                else
                 {
-                    response.Respond(
-                        $"You own {percent}% of the biggest grid! Need {totalBlocksLeftNeeded} more blocks to be the majority owner!");
-                    return false;
+                    var totalFatBlocks = 0;
+                    var ownedFatBlocks = 0;
+
+
+                    foreach (var fat in fatBlocks.Where(fat => fat.IsFunctional && fat.IDModule != null))
+                    {
+                        //WTF happened here?
+                        //if (fat.OwnerId == 0)
+                        //   Log.Error($"WTF: {fat.BlockDefinition.Id} - {fat.GetType()} - {fat.OwnerId}");
+
+
+                        totalFatBlocks++;
+
+                        if (fat.OwnerId == ownerId)
+                            ownedFatBlocks++;
+                    }
+
+
+                    var percent = Math.Round((double)ownedFatBlocks / totalFatBlocks * 100, 3);
+                    var totalBlocksLeftNeeded = totalFatBlocks / 2 + 1 - ownedFatBlocks;
+
+                    if (percent <= 50)
+                    {
+                        response.Respond(
+                            $"You own {percent}% of the biggest grid! Need {totalBlocksLeftNeeded} more blocks to be the majority owner!");
+                        return false;
+                    }
                 }
+           
             }
             else
             {
