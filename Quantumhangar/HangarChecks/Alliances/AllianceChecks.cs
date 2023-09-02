@@ -86,16 +86,17 @@ namespace QuantumHangar.HangarChecks
         }
         private bool PerformMainChecks(bool isSaving, bool isLoading)
         {
-     
-            //remove in a month
-            _chat?.Respond("For old alliance hangar use !oldah");
+            if (DateTime.Now < new DateTime(2023, 10, 1))
+            {
+                _chat?.Respond("For old alliance hangar use !oldah");
+            }
+
             if (!Config.PluginEnabled)
             {
                 _chat?.Respond("Plugin is not enabled!");
                 return false;
             }
-      
-
+            
             this.AllianceId = GetAllianceId();
             if (this.AllianceId == Guid.Empty)
             {
