@@ -58,6 +58,27 @@ namespace QuantumHangar.HangarChecks
             _userCharacter = (MyCharacter)context.Player.Character;
         }
 
+        private Guid GetAllianceId()
+        {
+            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            if (faction == null)
+            {
+                _chat?.Respond("Players without a faction cannot use alliance hanger!");
+                return Guid.Empty;
+            }
+
+            PlayersFaction = faction;
+            var methodInput = new object[] { faction.Tag };
+
+            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
+            if (allianceId == null || allianceId == Guid.Empty)
+            {
+                _chat?.Respond("Players without an alliance cannot use alliance hanger!");
+                return Guid.Empty;
+            }
+
+            return allianceId;
+        }
         private bool PerformMainChecks(bool isSaving, bool isLoading)
         {
             if (Hangar.Alliances == null)
@@ -72,24 +93,13 @@ namespace QuantumHangar.HangarChecks
                 _chat?.Respond("Plugin is not enabled!");
                 return false;
             }
-            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
-            if (faction == null)
+      
+
+            this.AllianceId = GetAllianceId();
+            if (this.AllianceId == Guid.Empty)
             {
-                _chat?.Respond("Players without a faction cannot use alliance hanger!");
                 return false;
             }
-
-            PlayersFaction = faction;
-            var methodInput = new object[] { faction.Tag };
-
-            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
-            if (allianceId == null || allianceId == Guid.Empty)
-            {
-                _chat?.Respond("Players without an alliance cannot use alliance hanger!");
-                return false;
-            }
-
-            this.AllianceId = allianceId;
             if (AllianceHanger.IsServerSaving(_chat))
             {
                 _chat?.Respond("Server is saving or is paused!");
@@ -128,7 +138,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
            
-            AllianceHanger = new AllianceHanger(SteamId, _chat, allianceId);
+            AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
             if (AllianceHanger.CheckPlayerTimeStamp()) return true;
             _chat?.Respond("Command cooldown is still in affect!");
             return false;
@@ -379,12 +389,19 @@ namespace QuantumHangar.HangarChecks
 
         public void ListGrids()
         {
+            this.AllianceId = GetAllianceId();
+            if (this.AllianceId == Guid.Empty)
+            {
+                return;
+            }
             AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
             AllianceHanger.ListAllGrids();
         }
 
         public void DetailedInfo(string input)
         {
+
+            this.AllianceId = GetAllianceId();
             AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
 
             if (!AllianceHanger.ParseInput(input, out var id))
