@@ -9,8 +9,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using VRage.Game;
 using VRage.ObjectBuilders;
+using VRage.ObjectBuilders.Private;
 using VRage.Utils;
 
 namespace QuantumHangar.Serialization
@@ -114,19 +116,19 @@ namespace QuantumHangar.Serialization
         private static bool SaveGridToFile(string savePath, string gridName,
             IEnumerable<MyObjectBuilder_CubeGrid> gridBuilders)
         {
-            var definition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ShipBlueprintDefinition>();
+            var definition = MyObjectBuilderSerializerKeen.CreateNewObject<MyObjectBuilder_ShipBlueprintDefinition>();
 
             definition.Id = new MyDefinitionId(new MyObjectBuilderType(typeof(MyObjectBuilder_ShipBlueprintDefinition)),
                 gridName);
             definition.CubeGrids = gridBuilders.ToArray();
             //PrepareGridForSave(definition);
 
-            var builderDefinition = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_Definitions>();
+            var builderDefinition = MyObjectBuilderSerializerKeen.CreateNewObject<MyObjectBuilder_Definitions>();
             builderDefinition.ShipBlueprints = new[] { definition };
 
 
             Log.Warn("Saving grid @" + Path.Combine(savePath, gridName + ".sbc"));
-            return MyObjectBuilderSerializer.SerializeXML(Path.Combine(savePath, gridName + ".sbc"), false,
+            return MyObjectBuilderSerializerKeen.SerializeXML(Path.Combine(savePath, gridName + ".sbc"), false,
                 builderDefinition);
         }
 
@@ -141,7 +143,10 @@ namespace QuantumHangar.Serialization
 
             try
             {
-                if (MyObjectBuilderSerializer.DeserializeXML(path, out MyObjectBuilder_Definitions def))
+
+                
+
+                if (MyObjectBuilderSerializerKeen.DeserializeXML(path, out MyObjectBuilder_Definitions def))
                 {
                     if (!TryGetGridsFromDefinition(def, out grids))
                         return false;
