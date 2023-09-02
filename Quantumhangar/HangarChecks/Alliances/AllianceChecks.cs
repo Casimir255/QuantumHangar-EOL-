@@ -58,7 +58,7 @@ namespace QuantumHangar.HangarChecks
             _userCharacter = (MyCharacter)context.Player.Character;
         }
 
-        private bool PerformMainChecks(bool isSaving)
+        private bool PerformMainChecks(bool isSaving, bool isLoading)
         {
             if (Hangar.Alliances == null)
             {
@@ -106,7 +106,7 @@ namespace QuantumHangar.HangarChecks
                     return false;
                 }
             }
-            else
+            if (isLoading)
             {
                 var hasAccess = (bool)(Hangar.CanLoadFromAlliance?.Invoke(null, methodInputAccess));
                 if (!hasAccess)
@@ -143,7 +143,7 @@ namespace QuantumHangar.HangarChecks
 
         public async void SaveGrid()
         {
-            if (!PerformMainChecks(true))
+            if (!PerformMainChecks(true, false))
                 return;
 
             if (!AllianceHanger.CheckHangarLimits())
@@ -398,7 +398,7 @@ namespace QuantumHangar.HangarChecks
 
         public async void LoadGrid(string input, bool loadNearPlayer)
         {
-            if (!PerformMainChecks(false))
+            if (!PerformMainChecks(false, true))
                 return;
 
 
