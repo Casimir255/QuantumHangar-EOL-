@@ -42,14 +42,9 @@ namespace QuantumHangar.HangarChecks
             try
             {
                 MySession.Static.Players.TryGetIdentityFromSteamId(steamId, out var _identity);
-                var faction = MySession.Static.Factions.GetPlayerFaction(_identity.IdentityId);
-                if (faction == null)
-                {
-
-                    return;
-                }
+                _faction = MySession.Static.Factions.GetPlayerFaction(_identity.IdentityId);
                 Log = LogManager.GetLogger($"Hangar.{_faction.Name}");
-                this.FactionId = faction.FactionId;
+                this.FactionId = _faction.FactionId;
                 this._steamId = steamId;
 
                 this._isAdminCalling = isAdminCalling;
@@ -57,8 +52,8 @@ namespace QuantumHangar.HangarChecks
                 SelectedFactionFile = new FactionInfo();
 
 
-                FactionFolderPath = Path.Combine(Hangar.MainPlayerDirectory, _faction.FactionId.ToString());
-                SelectedFactionFile.LoadFile(Hangar.MainPlayerDirectory, (ulong)_faction.FactionId);
+                FactionFolderPath = Path.Combine(Hangar.MainFactionDirectory, _faction.FactionId.ToString());
+                SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)_faction.FactionId);
             }
             catch (Exception ex)
             {

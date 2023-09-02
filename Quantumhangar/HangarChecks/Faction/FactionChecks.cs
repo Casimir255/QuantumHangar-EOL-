@@ -64,21 +64,29 @@ namespace QuantumHangar.HangarChecks
                 _chat?.Respond("Plugin is not enabled!");
                 return false;
             }
-
-
+            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            if (faction == null)
+            {
+                _chat?.Respond("Players without a faction cannot use faction hangar!");
+                return false;
+            }
+            if (!faction.IsFounder(_identityId) && !faction.IsLeader(_identityId) &&
+                !faction.PrivateInfo.Contains(SteamId.ToString()))
+            {
+                _chat?.Respond("Only leaders, founders or players with steam id in private info can use faction hangar.");
+                return false;
+            }
             if (FactionHangar.IsServerSaving(_chat))
             {
                 _chat?.Respond("Server is saving or is paused!");
                 return false;
             }
 
-
             if (!CheckZoneRestrictions(isSaving))
             {
                 _chat?.Respond("You are not in the right zone!");
                 return false;
             }
-
 
             if (!CheckGravity())
             {
@@ -91,7 +99,7 @@ namespace QuantumHangar.HangarChecks
             _chat?.Respond("Command cooldown is still in affect!");
             return false;
 
-
+        
             /*
             if (CheckEnemyDistance(LoadingAtSave, PlayerPosition))
                 return false;
@@ -101,21 +109,22 @@ namespace QuantumHangar.HangarChecks
 
         public async void SaveGrid()
         {
+            _chat?.Respond("Finding grids");
             if (!PerformMainChecks(true))
                 return;
 
-
+            _chat?.Respond("Finding grids 1");
             if (!FactionsHangar.CheckHangarLimits())
                 return;
 
 
             var result = new GridResult();
-
+            _chat?.Respond("Finding grids 2");
             //Gets grids player is looking at
             if (!result.GetGrids(_chat, _userCharacter, null, FactionsHangar.FactionId))
                 return;
 
-
+            _chat?.Respond("Found grids 3");
             if (IsAnyGridInsideSafeZone(result))
                 return;
 
