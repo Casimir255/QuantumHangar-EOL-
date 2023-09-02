@@ -373,15 +373,11 @@ namespace QuantumHangar.HangarMarket
             MyIdentity ownerIdentity = null;
             if (MySession.Static.Players.TryGetPlayerBySteamId(owner, out var ownerId))
             {
-                Log.Error($"Check SteamId {owner}");
                 ownerIdentity = ownerId.Identity;
-                Log.Error($"Checked {owner}");
             }
             else
             {
-                Log.Error($"Finding id {owner}");
                 ownerIdentity = MySession.Static.Players.GetAllIdentities().FirstOrDefault(x =>  owner == MySession.Static.Players.TryGetSteamId(x.IdentityId));
-                Log.Error($"Found or default");
             }
 
             if (ownerIdentity == null)
