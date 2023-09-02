@@ -18,8 +18,8 @@ using static QuantumHangar.Utils.CharacterUtilities;
 
 namespace QuantumHangar.HangarChecks
 {
-    //This is when a normal player runs hangar commands
-    public class FactionChecks
+    //This is when a normal player runs hanger commands
+    public class AllianceChecks
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Chat _chat;
@@ -29,15 +29,16 @@ namespace QuantumHangar.HangarChecks
         private readonly Vector3D _playerPosition;
         private readonly MyCharacter _userCharacter;
 
-        private FactionHanger FactionsHanger { get; set; }
-
+        private AllianceHanger AllianceHanger { get; set; }
+        private MyFaction PlayersFaction { get; set; }
+        private Guid AllianceId { get; set; }
         public static Settings Config => Hangar.Config;
 
 
         // PlayerChecks as initiated by another server to call LoadGrid.
         // We don't have a command context nor a player character object to work with,
         // but we receive all required data in the Nexus message.
-        public FactionChecks(Chat chat, GpsSender gpsSender, ulong steamId, long identityId, Vector3D playerPosition)
+        public AllianceChecks(Chat chat, GpsSender gpsSender, ulong steamId, long identityId, Vector3D playerPosition)
         {
             _chat = chat;
             _gpsSender = gpsSender;
@@ -47,7 +48,7 @@ namespace QuantumHangar.HangarChecks
             // UserCharacter can remain null, it is only used by SaveGrid.
         }
 
-        public FactionChecks(CommandContext context)
+        public AllianceChecks(CommandContext context)
         {
             _chat = new Chat(context);
             _gpsSender = new GpsSender();
@@ -59,6 +60,13 @@ namespace QuantumHangar.HangarChecks
 
         private bool PerformMainChecks(bool isSaving)
         {
+            if (Hangar.Alliances == null)
+            {
+                _chat?.Respond("Alliances is not installed!");
+                return false;
+            }
+            //remove in a month
+            _chat?.Respond("For old alliance hangar use !oldah");
             if (!Config.PluginEnabled)
             {
                 _chat?.Respond("Plugin is not enabled!");
@@ -67,19 +75,45 @@ namespace QuantumHangar.HangarChecks
             var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
             if (faction == null)
             {
-                _chat?.Respond("Players without a faction cannot use faction hangar!");
+                _chat?.Respond("Players without a faction cannot use alliance hanger!");
                 return false;
             }
-            if (!faction.IsFounder(_identityId) && !faction.IsLeader(_identityId) &&
-                !faction.PrivateInfo.Contains(SteamId.ToString()))
+
+            PlayersFaction = faction;
+            var methodInput = new object[] { faction.Tag };
+
+            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
+            if (allianceId == null || allianceId == Guid.Empty)
             {
-                _chat?.Respond("Only leaders, founders or players with steam id in private info can use faction hangar.");
+                _chat?.Respond("Players without an alliance cannot use alliance hanger!");
                 return false;
             }
-            if (FactionHanger.IsServerSaving(_chat))
+
+            this.AllianceId = allianceId;
+            if (AllianceHanger.IsServerSaving(_chat))
             {
                 _chat?.Respond("Server is saving or is paused!");
                 return false;
+            }
+            var methodInputAccess = new object[] { SteamId, this.AllianceId };
+            if (isSaving)
+            {
+
+                var hasAccess = (bool)(Hangar.CanSaveToAlliance?.Invoke(null, methodInputAccess));
+                if (!hasAccess)
+                {
+                    _chat?.Respond("You do not have access to save to alliance hanger!");
+                    return false;
+                }
+            }
+            else
+            {
+                var hasAccess = (bool)(Hangar.CanLoadFromAlliance?.Invoke(null, methodInputAccess));
+                if (!hasAccess)
+                {
+                    _chat?.Respond("You do not have access to load from alliance hanger!");
+                    return false;
+                }
             }
 
             if (!CheckZoneRestrictions(isSaving))
@@ -93,9 +127,9 @@ namespace QuantumHangar.HangarChecks
                 _chat?.Respond("Unable to perform this action in gravity!");
                 return false;
             }
-
-            FactionsHanger = new FactionHanger(SteamId, _chat);
-            if (FactionsHanger.CheckPlayerTimeStamp()) return true;
+           
+            AllianceHanger = new AllianceHanger(SteamId, _chat, allianceId);
+            if (AllianceHanger.CheckPlayerTimeStamp()) return true;
             _chat?.Respond("Command cooldown is still in affect!");
             return false;
 
@@ -112,13 +146,13 @@ namespace QuantumHangar.HangarChecks
             if (!PerformMainChecks(true))
                 return;
 
-            if (!FactionsHanger.CheckHangarLimits())
+            if (!AllianceHanger.CheckHangarLimits())
                 return;
 
 
             var result = new GridResult();
             //Gets grids player is looking at
-            if (!result.GetGrids(_chat, _userCharacter, null, FactionsHanger.FactionId))
+            if (!result.GetGrids(_chat, _userCharacter, null, this.PlayersFaction.FactionId))
                 return;
 
             if (IsAnyGridInsideSafeZone(result))
@@ -132,7 +166,7 @@ namespace QuantumHangar.HangarChecks
             //PlayersHanger.CheckGridLimits(GridData);
 
             //Checks for single and all slot block and grid limits
-            if (!FactionsHanger.ExtensiveLimitChecker(gridData))
+            if (!AllianceHanger.ExtensiveLimitChecker(gridData))
                 return;
 
 
@@ -144,14 +178,14 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            FactionsHanger.SelectedFactionFile.FormatGridName(gridData);
+            AllianceHanger.SelectedAllianceFile.FormatGridName(gridData);
 
        
 
-            var val = await FactionsHanger.SaveGridsToFile(result, gridData.GridName, _identityId);
+            var val = await AllianceHanger.SaveGridsToFile(result, gridData.GridName, _identityId);
             if (val)
             {
-                FactionsHanger.SaveGridStamp(gridData);
+                AllianceHanger.SaveGridStamp(gridData);
                 _chat?.Respond("Save Complete!");
             }
             else
@@ -241,12 +275,12 @@ namespace QuantumHangar.HangarChecks
                             ChangeBalance(-1 * saveCost);
                             return true;
                         }
-                        _chat?.Respond("Saving this grid in your hangar will cost " + saveCost +
+                        _chat?.Respond("Saving this grid in your hanger will cost " + saveCost +
                                       " SC. Run this command again within 30 secs to continue!");
                         confirmationCooldown.StartCooldown(command);
                         return false;
                     }
-                    _chat?.Respond("Saving this grid in your hangar will cost " + saveCost +
+                    _chat?.Respond("Saving this grid in your hanger will cost " + saveCost +
                                   " SC. Run this command again within 30 secs to continue!");
                     confirmationCooldown = new CurrentCooldown();
                     confirmationCooldown.StartCooldown(command);
@@ -345,21 +379,21 @@ namespace QuantumHangar.HangarChecks
 
         public void ListGrids()
         {
-            FactionsHanger = new FactionHanger(SteamId, _chat);
-            FactionsHanger.ListAllGrids();
+            AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
+            AllianceHanger.ListAllGrids();
         }
 
         public void DetailedInfo(string input)
         {
-            FactionsHanger = new FactionHanger(SteamId, _chat);
+            AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
 
-            if (!FactionsHanger.ParseInput(input, out var id))
+            if (!AllianceHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
-            FactionsHanger.DetailedReport(id);
+            AllianceHanger.DetailedReport(id);
         }
 
         public async void LoadGrid(string input, bool loadNearPlayer)
@@ -368,14 +402,14 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!FactionsHanger.ParseInput(input, out var id))
+            if (!AllianceHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
 
-            if (!FactionsHanger.TryGetGridStamp(id, out var stamp))
+            if (!AllianceHanger.TryGetGridStamp(id, out var stamp))
                 return;
 
 
@@ -384,14 +418,14 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!FactionsHanger.LoadGrid(stamp, out var grids, _identityId))
+            if (!AllianceHanger.LoadGrid(stamp, out var grids, _identityId))
             {
                 Log.Error($"Loading grid {id} failed for {_identityId}!");
                 _chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
                 return;
             }
 
-            if (!FactionsHanger.CheckLimits(stamp, grids, _identityId))
+            if (!AllianceHanger.CheckLimits(stamp, grids, _identityId))
                 return;
 
             if (!CheckEnemyDistance(Config.LoadType, stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
@@ -419,7 +453,7 @@ namespace QuantumHangar.HangarChecks
             if (spawner.Start(spawnPos, keepOriginalPosition))
             {
                 _chat?.Respond("Spawning Complete!");
-                FactionsHanger.RemoveGridStamp(id);
+                AllianceHanger.RemoveGridStamp(id);
             }
             else
             {
@@ -427,38 +461,17 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        public void SellGrid(int id, long price, string description)
-        {
-            FactionsHanger = new FactionHanger(SteamId, _chat);
-
-            if (!FactionsHanger.TryGetGridStamp(id, out var stamp))
-                return;
-
-            //Check to see if grid is already for sale
-            if (stamp.IsGridForSale())
-            {
-                _chat.Respond("This grid is already for sale!");
-                return;
-            }
-
-
-            if (!FactionsHanger.SellSelectedGrid(stamp, price, description))
-                return;
-
-            _chat.Respond("Grid has been succesfully listed!");
-        }
-
         public void RemoveGrid(string input)
         {
-            FactionsHanger = new FactionHanger(SteamId, _chat);
+            AllianceHanger = new AllianceHanger(SteamId, _chat, this.AllianceId);
 
-            if (!FactionsHanger.ParseInput(input, out var id))
+            if (!AllianceHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
                 return;
             }
 
-            if (FactionsHanger.RemoveGridStamp(id))
+            if (AllianceHanger.RemoveGridStamp(id))
                 _chat.Respond("Successfully removed grid!");
         }
 

@@ -15,8 +15,8 @@ using VRageMath;
 
 namespace QuantumHangar.Commands
 {
-    [Category("factionhangar")]
-    public class FactionHangarCommands : CommandModule
+    [Category("alliancehanger")]
+    public class AllianceHangarCommands : CommandModule
     {
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -29,7 +29,7 @@ namespace QuantumHangar.Commands
             }
 
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
 
@@ -37,7 +37,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void ListGrids()
         {
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.ListGrids(), Context);
         }
 
@@ -51,7 +51,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
 
@@ -65,7 +65,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.RemoveGrid(id), Context);
         }
 
@@ -80,13 +80,13 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.DetailedInfo(id), Context);
         }
     }
 
-    [Category("fh")]
-    public class FactionHangarSimpCommands : CommandModule
+    [Category("ah")]
+    public class AllianceHangarSimpCommands : CommandModule
     {
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -99,7 +99,7 @@ namespace QuantumHangar.Commands
             }
 
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
 
@@ -107,7 +107,7 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.None)]
         public async void ListGrids()
         {
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.ListGrids(), Context);
         }
 
@@ -121,7 +121,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
 
@@ -135,7 +135,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.RemoveGrid(id), Context);
         }
 
@@ -150,7 +150,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var user = new FactionChecks(Context);
+            var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.DetailedInfo(id), Context);
         }
 

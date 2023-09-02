@@ -18,7 +18,7 @@ using VRage.Game.ModAPI;
 
 namespace QuantumHangar.HangarChecks
 {
-    public class FactionHangar : IDisposable
+    public class FactionHanger : IDisposable
     {
         private static Logger Log;
         private readonly Chat _chat;
@@ -37,7 +37,7 @@ namespace QuantumHangar.HangarChecks
         private static Settings Config => Hangar.Config;
 
 
-        public FactionHangar(ulong steamId, Chat respond, bool isAdminCalling = false)
+        public FactionHanger(ulong steamId, Chat respond, bool isAdminCalling = false)
         {
             try
             {
@@ -178,7 +178,7 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        private bool CheckGridLimits(GridStamp grid)
+        private bool CheckGridLimits(GridStamp grid, MyIdentity playerIdentity)
         {
             //Backwards compatibale
             if (Config.OnLoadTransfer)
@@ -659,9 +659,9 @@ namespace QuantumHangar.HangarChecks
             return RemoveStamp(id);
         }
 
-        public async Task<bool> SaveGridsToFile(GridResult grids, string fileName)
+        public async Task<bool> SaveGridsToFile(GridResult grids, string fileName, long identity)
         {
-            return await GridSerializer.SaveGridsAndClose(grids.Grids, FactionFolderPath, fileName, _faction.FactionId);
+            return await GridSerializer.SaveGridsAndClose(grids.Grids, FactionFolderPath, fileName, identity);
         }
 
         public void ListAllGrids()
@@ -827,7 +827,7 @@ namespace QuantumHangar.HangarChecks
 
         public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint, long playerIdentityId)
         {
-            return CheckGridLimits(grid) && BlockLimitChecker(blueprint, playerIdentityId);
+            return CheckGridLimits(grid, MySession.Static.Players.TryGetIdentity(playerIdentityId)) && BlockLimitChecker(blueprint, playerIdentityId);
         }
 
 

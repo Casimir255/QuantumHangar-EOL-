@@ -45,13 +45,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoHangar\Autohangar.cs" />
-    <Compile Include="Commands\Faction\FactionHangarCommands.cs" />
+    <Compile Include="Commands\Alliances\AllianceHangerCommands.cs" />
+    <Compile Include="Commands\Faction\FactionHangerCommands.cs" />
     <Compile Include="Commands\HangarCommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />
     <Compile Include="Commands\Player\HangarCommands.cs" />
     <Compile Include="Hangar.cs" />
     <Compile Include="HangarChecks\AdminChecks.cs" />
-    <Compile Include="HangarChecks\Faction\FactionHangar.cs" />
+    <Compile Include="HangarChecks\Alliances\AllianceChecks.cs" />
+    <Compile Include="HangarChecks\Alliances\AllianceHanger.cs" />
+    <Compile Include="HangarChecks\Faction\FactionHanger.cs" />
     <Compile Include="HangarChecks\Faction\FactionChecks.cs" />
     <Compile Include="HangarChecks\Player\PlayerChecks.cs" />
     <Compile Include="HangarChecks\Player\PlayerHangar.cs" />
