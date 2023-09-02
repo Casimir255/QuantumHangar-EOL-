@@ -109,22 +109,18 @@ namespace QuantumHangar.HangarChecks
 
         public async void SaveGrid()
         {
-            _chat?.Respond("Finding grids");
             if (!PerformMainChecks(true))
                 return;
 
-            _chat?.Respond("Finding grids 1");
             if (!FactionsHangar.CheckHangarLimits())
                 return;
 
 
             var result = new GridResult();
-            _chat?.Respond("Finding grids 2");
             //Gets grids player is looking at
             if (!result.GetGrids(_chat, _userCharacter, null, FactionsHangar.FactionId))
                 return;
 
-            _chat?.Respond("Found grids 3");
             if (IsAnyGridInsideSafeZone(result))
                 return;
 
