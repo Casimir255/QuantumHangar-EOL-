@@ -64,6 +64,7 @@ namespace QuantumHangar.HangarChecks
         {
             try
             {
+                Log = LogManager.GetLogger($"Hangar.{from}");
                 Log.Error("Starting Grid Transfer!");
 
                 var fromInfo = new PlayerInfo();
@@ -112,6 +113,7 @@ namespace QuantumHangar.HangarChecks
         {
             try
             {
+                Log = LogManager.GetLogger($"Hangar.{to.SteamId}");
                 var gridName = stamp.GridName;
                 to.FormatGridName(stamp);
 

@@ -368,7 +368,7 @@ namespace QuantumHangar.HangarMarket
 
         private static void PurchasePlayerGrid(MarketListing offer, ulong buyer, MyIdentity buyerIdentity, ulong owner)
         {
-            //Log.Error("A");
+            Log.Error("A");
 
             MyIdentity ownerIdentity = null;
             if (MySession.Static.Players.TryGetPlayerBySteamId(owner, out var ownerId))
@@ -385,11 +385,12 @@ namespace QuantumHangar.HangarMarket
                 Log.Error($"Couldnt find owner identity for SteamId {owner}");
                 return;
             }
-              
 
+            Log.Error($"1");
             //Have a successful buy
             RemoveMarketListing(owner, offer.Name);
 
+            Log.Error($"2");
             //Transfer grid
             if (!PlayerHangar.TransferGrid(owner, buyer, offer.Name)) return;
             Chat.Send($"Successfully purchased {offer.Name} from {ownerIdentity.DisplayName}! Check your hangar!",
