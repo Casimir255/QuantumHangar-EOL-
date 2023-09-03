@@ -18,6 +18,20 @@ namespace QuantumHangar.Commands
     [Category("alliancehanger")]
     public class AllianceHangarCommands : CommandModule
     {
+        [Command("webhook", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Webhook(string webhook)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new AllianceChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWebhook(webhook), Context);
+        }
+
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()
@@ -88,6 +102,19 @@ namespace QuantumHangar.Commands
     [Category("ah")]
     public class AllianceHangarSimpCommands : CommandModule
     {
+        [Command("webhook", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Webhook(string webhook)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new AllianceChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWebhook(webhook), Context);
+        }
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()

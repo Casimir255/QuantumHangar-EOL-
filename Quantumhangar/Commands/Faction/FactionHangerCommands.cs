@@ -5,6 +5,8 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
+using System.Linq;
+using Sandbox.Game.World;
 using Torch.Commands;
 using Torch.Commands.Permissions;
 using Torch.Mod;
@@ -18,6 +20,32 @@ namespace QuantumHangar.Commands
     [Category("factionhanger")]
     public class FactionHangarCommands : CommandModule
     {
+        [Command("whitelist", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Whitelist(string targetNameOrSteamId)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWhitelist(targetNameOrSteamId), Context);
+        }
+        [Command("webhook", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Webhook(string webhook)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWebhook(webhook), Context);
+        }
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()
@@ -88,6 +116,32 @@ namespace QuantumHangar.Commands
     [Category("fh")]
     public class FactionHangarSimpCommands : CommandModule
     {
+        [Command("whitelist", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Whitelist(string targetNameOrSteamId)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWhitelist(targetNameOrSteamId), Context);
+        }
+        [Command("webhook", "Add or remove a player from whitelist")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Webhook(string webhook)
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ChangeWebhook(webhook), Context);
+        }
         [Command("save", "Saves the grid you are looking at to hangar")]
         [Permission(MyPromoteLevel.None)]
         public async void SaveGrid()

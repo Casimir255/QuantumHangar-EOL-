@@ -70,12 +70,7 @@ namespace QuantumHangar.HangarChecks
                 _chat?.Respond("Players without a faction cannot use faction hangar!");
                 return false;
             }
-            if (!faction.IsFounder(_identityId) && !faction.IsLeader(_identityId) &&
-                !faction.PrivateInfo.Contains(SteamId.ToString()))
-            {
-                _chat?.Respond("Only leaders, founders or players with steam id in private info can use faction hangar.");
-                return false;
-            }
+
             if (FactionHanger.IsServerSaving(_chat))
             {
                 _chat?.Respond("Server is saving or is paused!");
@@ -95,16 +90,71 @@ namespace QuantumHangar.HangarChecks
             }
 
             FactionsHanger = new FactionHanger(SteamId, _chat);
+            if (!faction.IsFounder(_identityId) && !faction.IsLeader(_identityId) &&
+                !FactionsHanger.IsWhitelisted(SteamId))
+            {
+                _chat?.Respond("Only leaders, founders or players whitelisted with !fh whitelist");
+                return false;
+            }
             if (FactionsHanger.CheckPlayerTimeStamp()) return true;
             _chat?.Respond("Command cooldown is still in affect!");
             return false;
 
-        
+
             /*
             if (CheckEnemyDistance(LoadingAtSave, PlayerPosition))
                 return false;
             */
 
+        }
+
+        public async void ChangeWebhook(string webhook)
+        {
+            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            if (faction == null)
+            {
+                _chat?.Respond("Players without a faction cannot use faction hangar!");
+                return;
+            }
+            if (!faction.IsFounder(_identityId))
+            {
+                _chat?.Respond("Only the founder can edit the webhook");
+                return;
+            }
+            FactionsHanger = new FactionHanger(SteamId, _chat);
+            FactionsHanger.ChangeWebhook(webhook);
+            _chat?.Respond("Webhook changed");
+        }
+
+        public async void ChangeWhitelist(string targetNameOrSteamId)
+        {
+            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            if (faction == null)
+            {
+                _chat?.Respond("Players without a faction cannot use faction hangar!");
+                return;
+            }
+            if (!faction.IsFounder(_identityId) && !faction.IsLeader(_identityId))
+            {
+                _chat?.Respond("Only the founder or leader can edit the whitelist");
+                return;
+            }
+            if (CharacterUtilities.TryGetPlayerSteamId(targetNameOrSteamId, _chat, out ulong steamId))
+            {
+                FactionsHanger = new FactionHanger(SteamId, _chat);
+
+                var result = FactionsHanger.ChangeWhitelist(steamId);
+                if (result)
+                {
+                    _chat?.Respond("Player added to whitelist.");
+                    return;
+                }
+                _chat?.Respond("Player removed from whitelist.");
+            }
+            else
+            {
+                _chat?.Respond("Couldn't find that player.");
+            }
         }
 
         public async void SaveGrid()
@@ -127,7 +177,7 @@ namespace QuantumHangar.HangarChecks
 
             //Calculates incoming grids data
             var gridData = result.GenerateGridStamp();
-         
+
 
             //PlayersHanger.CheckGridLimits(GridData);
 
@@ -146,13 +196,12 @@ namespace QuantumHangar.HangarChecks
 
             FactionsHanger.SelectedFactionFile.FormatGridName(gridData);
 
-       
-
             var val = await FactionsHanger.SaveGridsToFile(result, gridData.GridName, _identityId);
             if (val)
             {
                 FactionsHanger.SaveGridStamp(gridData);
                 _chat?.Respond("Save Complete!");
+                FactionsHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} saved grid {gridData.GridName}");
             }
             else
             {
@@ -279,7 +328,7 @@ namespace QuantumHangar.HangarChecks
                         loadCost = Convert.ToInt64(grid.NumberOfBlocks * Config.LoadStaticGridCurrency);
                         break;
 
-                        
+
                     case CostType.Fixed:
 
                         loadCost = Convert.ToInt64(Config.LoadStaticGridCurrency);
@@ -420,6 +469,7 @@ namespace QuantumHangar.HangarChecks
             {
                 _chat?.Respond("Spawning Complete!");
                 FactionsHanger.RemoveGridStamp(id);
+                FactionsHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} loaded grid {stamp.GridName}");
             }
             else
             {

@@ -38,8 +38,7 @@ namespace QuantumHangar
         public static string MainAllianceDirectory { get; private set; }
 
         public static MethodInfo GetAllianceId;
-        public static MethodInfo CanSaveToAlliance;
-        public static MethodInfo CanLoadFromAlliance;
+        public static MethodInfo HasAccess;
 
         public static ITorchPlugin Alliances;
 
@@ -169,8 +168,7 @@ namespace QuantumHangar
                             AlliancePlugin.GetType().Assembly.GetType("AlliancesPlugin.Integrations.AllianceIntegrationCore");
 
                         GetAllianceId = AllianceIntegration.GetMethod("GetAllianceId", BindingFlags.Public | BindingFlags.Static);
-                        CanSaveToAlliance = AllianceIntegration.GetMethod("CanSaveToHangar", BindingFlags.Public | BindingFlags.Static);
-                        CanLoadFromAlliance = AllianceIntegration.GetMethod("CanLoadFromHangar", BindingFlags.Public | BindingFlags.Static);
+                        HasAccess = AllianceIntegration.GetMethod("HasAccess", BindingFlags.Public | BindingFlags.Static);
                         Alliances = AlliancePlugin;
                     }
                     catch (Exception ex)

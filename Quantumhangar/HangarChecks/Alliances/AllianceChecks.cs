@@ -84,6 +84,27 @@ namespace QuantumHangar.HangarChecks
 
             return allianceId;
         }
+
+        public async void ChangeWebhook(string webhook)
+        {
+            this.AllianceId = GetAllianceId();
+            if (this.AllianceId == Guid.Empty)
+            {
+                return;
+            }
+            var methodInputAccess = new object[] { SteamId, this.AllianceId, "Everything" };
+            var hasAccess = (bool)(Hangar.HasAccess?.Invoke(null, methodInputAccess));
+            if (!hasAccess)
+            {
+                _chat?.Respond("You do not have access to change !");
+                return;
+            }
+            AllianceHanger = new AllianceHanger(SteamId, _chat, AllianceId);
+            AllianceHanger.ChangeWebhook(webhook);
+            _chat?.Respond("Webhook changed");
+        }
+
+
         private bool PerformMainChecks(bool isSaving, bool isLoading)
         {
             if (DateTime.Now < new DateTime(2023, 10, 1))
@@ -107,11 +128,11 @@ namespace QuantumHangar.HangarChecks
                 _chat?.Respond("Server is saving or is paused!");
                 return false;
             }
-            var methodInputAccess = new object[] { SteamId, this.AllianceId };
+   
             if (isSaving)
             {
-
-                var hasAccess = (bool)(Hangar.CanSaveToAlliance?.Invoke(null, methodInputAccess));
+                var methodInputAccess = new object[] { SteamId, this.AllianceId, "HangarSave" };
+                var hasAccess = (bool)(Hangar.HasAccess?.Invoke(null, methodInputAccess));
                 if (!hasAccess)
                 {
                     _chat?.Respond("You do not have access to save to alliance hanger!");
@@ -120,7 +141,8 @@ namespace QuantumHangar.HangarChecks
             }
             if (isLoading)
             {
-                var hasAccess = (bool)(Hangar.CanLoadFromAlliance?.Invoke(null, methodInputAccess));
+                var methodInputAccess = new object[] { SteamId, this.AllianceId, "HangarLoad" };
+                var hasAccess = (bool)(Hangar.HasAccess?.Invoke(null, methodInputAccess));
                 if (!hasAccess)
                 {
                     _chat?.Respond("You do not have access to load from alliance hanger!");
@@ -199,6 +221,7 @@ namespace QuantumHangar.HangarChecks
             {
                 AllianceHanger.SaveGridStamp(gridData);
                 _chat?.Respond("Save Complete!");
+                AllianceHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} saved grid {gridData.GridName}");
             }
             else
             {
@@ -473,6 +496,7 @@ namespace QuantumHangar.HangarChecks
             {
                 _chat?.Respond("Spawning Complete!");
                 AllianceHanger.RemoveGridStamp(id);
+                AllianceHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} loaded grid {stamp.GridName}");
             }
             else
             {

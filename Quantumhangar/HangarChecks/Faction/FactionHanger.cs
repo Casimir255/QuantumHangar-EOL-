@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -845,6 +846,65 @@ namespace QuantumHangar.HangarChecks
 
             return false;
         }
+
+        public bool IsWhitelisted(ulong steamId)
+        {
+            return SelectedFactionFile.Whitelist.Contains(steamId);
+        }
+
+        public bool ChangeWhitelist(ulong steamId)
+        {
+            if (IsWhitelisted(steamId))
+            {
+                SelectedFactionFile.Whitelist.Remove(steamId);
+                SelectedFactionFile.SaveFile();
+                return false;
+            }
+            SelectedFactionFile.Whitelist.Add(steamId);
+            SelectedFactionFile.SaveFile();
+            return true;
+        }
+
+        public bool ChangeWebhook(string webhook)
+        {
+            SelectedFactionFile.Webhook = webhook;
+            SelectedFactionFile.SaveFile();
+            return true;
+        }
+
+        public void SendWebHookMessage(string message)
+        {
+            if (SelectedFactionFile.Webhook == "default") return;
+            try
+            {
+                var client = new WebClient();
+                client.Headers.Add("Content-Type", "application/json");
+                //send to ingame and nexus 
+                var payloadJson = JsonConvert.SerializeObject(new
+                {
+                    username = "Faction hangar Log",
+                    embeds = new[]
+                        {
+                            new
+                            {
+                                description = message,
+                                title = "Faction hangar Log",
+                            }
+                        }
+                }
+                );
+
+                var payload = payloadJson;
+
+                var utf8 = Encoding.UTF8.GetBytes(payload);
+
+                client.UploadData(SelectedFactionFile.Webhook, utf8);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Faction Hangar {_faction.Name} {SelectedFactionFile.Webhook} Discord webhook error, {e}");
+            }
+        }
     }
 
 
@@ -854,6 +914,8 @@ namespace QuantumHangar.HangarChecks
         //This is the factions info file. Should contain methods for finding grids/checking timers 
 
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
+        [JsonProperty] public List<ulong> Whitelist = new List<ulong>();
+        [JsonProperty] public string Webhook = "default";
         [JsonProperty] public TimeStamp Timer;
         [JsonProperty] private int? _maxHangarSlots;
         [JsonProperty] private Dictionary<string, int> _serverOfferPurchases = new Dictionary<string, int>();
@@ -894,7 +956,8 @@ namespace QuantumHangar.HangarChecks
                 Grids = scannedFile.Grids;
                 Timer = scannedFile.Timer;
                 _serverOfferPurchases = scannedFile._serverOfferPurchases;
-
+                Webhook = scannedFile.Webhook;
+                Whitelist = scannedFile.Whitelist;
                 if (scannedFile._maxHangarSlots.HasValue)
                     MaxHangarSlots = scannedFile._maxHangarSlots.Value;
                 PerformDataScan();

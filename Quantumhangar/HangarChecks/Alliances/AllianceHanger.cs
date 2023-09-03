@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -749,6 +750,46 @@ namespace QuantumHangar.HangarChecks
             return false;
         }
 
+        public bool ChangeWebhook(string webhook)
+        {
+            SelectedAllianceFile.Webhook = webhook;
+            SelectedAllianceFile.SaveFile();
+            return true;
+        }
+
+        public void SendWebHookMessage(string message)
+        {
+            if (SelectedAllianceFile.Webhook == "default") return;
+            try
+            {
+                var client = new WebClient();
+                client.Headers.Add("Content-Type", "application/json");
+                //send to ingame and nexus 
+                var payloadJson = JsonConvert.SerializeObject(new
+                    {
+                        username = "Alliance hangar Log",
+                        embeds = new[]
+                        {
+                            new
+                            {
+                                description = message,
+                                title = "Alliance hangar Log",
+                            }
+                        }
+                    }
+                );
+
+                var payload = payloadJson;
+
+                var utf8 = Encoding.UTF8.GetBytes(payload);
+
+                client.UploadData(SelectedAllianceFile.Webhook, utf8);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Faction Hangar {_allianceId} {SelectedAllianceFile.Webhook} Discord webhook error, {e}");
+            }
+        }
         public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids, long playerId)
         {
             if (!stamp.TryGetGrids(AllianceFolderPath, out grids))
@@ -843,7 +884,7 @@ namespace QuantumHangar.HangarChecks
         [JsonProperty] public TimeStamp Timer;
         [JsonProperty] private int? _maxHangarSlots;
         [JsonProperty] private Dictionary<string, int> _serverOfferPurchases = new Dictionary<string, int>();
-
+        [JsonProperty] public string Webhook = "default";
 
         public int MaxHangarSlots { get; set; }
         public string FilePath { get; set; }
@@ -879,7 +920,7 @@ namespace QuantumHangar.HangarChecks
                 Grids = scannedFile.Grids;
                 Timer = scannedFile.Timer;
                 _serverOfferPurchases = scannedFile._serverOfferPurchases;
-
+                Webhook = scannedFile.Webhook;
                 if (scannedFile._maxHangarSlots.HasValue)
                     MaxHangarSlots = scannedFile._maxHangarSlots.Value;
                 PerformDataScan();
