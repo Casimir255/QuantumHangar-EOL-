@@ -394,6 +394,12 @@ namespace QuantumHangar.HangarChecks
 
         public void ListGrids()
         {
+            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
+            if (faction == null)
+            {
+                _chat?.Respond("Only members of a faction can use faction hangar.");
+                return;
+            }
             FactionsHanger = new FactionHanger(SteamId, _chat);
             FactionsHanger.ListAllGrids();
         }
