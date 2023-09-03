@@ -45,14 +45,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoHangar\Autohangar.cs" />
+    <Compile Include="Commands\Alliances\AllianceHangerCommands.cs" />
+    <Compile Include="Commands\Faction\FactionHangerCommands.cs" />
     <Compile Include="Commands\HangarCommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />
-    <Compile Include="Commands\HangarCommands.cs" />
+    <Compile Include="Commands\Player\HangarCommands.cs" />
     <Compile Include="Hangar.cs" />
     <Compile Include="HangarChecks\AdminChecks.cs" />
-    <Compile Include="HangarChecks\FactionHangar.cs" />
-    <Compile Include="HangarChecks\PlayerChecks.cs" />
-    <Compile Include="HangarChecks\PlayerHangar.cs" />
+    <Compile Include="HangarChecks\Alliances\AllianceChecks.cs" />
+    <Compile Include="HangarChecks\Alliances\AllianceHanger.cs" />
+    <Compile Include="HangarChecks\Faction\FactionHanger.cs" />
+    <Compile Include="HangarChecks\Faction\FactionChecks.cs" />
+    <Compile Include="HangarChecks\Player\PlayerChecks.cs" />
+    <Compile Include="HangarChecks\Player\PlayerHangar.cs" />
     <Compile Include="Commands\HangarMarketCommands.cs" />
     <Compile Include="HangarMarket\ClientCommunication.cs" />
     <Compile Include="HangarMarket\HangarMarketController.cs" />
@@ -178,6 +183,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

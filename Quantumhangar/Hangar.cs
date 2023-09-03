@@ -5,6 +5,8 @@ using QuantumHangar.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows.Controls;
 using Torch;
 using Torch.API;
@@ -32,7 +34,13 @@ namespace QuantumHangar
         public static bool ServerRunning { get; private set; }
 
         public static string MainPlayerDirectory { get; private set; }
+        public static string MainFactionDirectory { get; private set; }
+        public static string MainAllianceDirectory { get; private set; }
 
+        public static MethodInfo GetAllianceId;
+        public static MethodInfo HasAccess;
+
+        public static ITorchPlugin Alliances;
 
         public enum ErrorType
         {
@@ -71,6 +79,12 @@ namespace QuantumHangar
 
             MainPlayerDirectory = Path.Combine(Config.FolderDirectory, "PlayerHangars");
             Directory.CreateDirectory(MainPlayerDirectory);
+
+            MainFactionDirectory = Path.Combine(Config.FolderDirectory, "FactionHangars");
+            Directory.CreateDirectory(MainFactionDirectory);
+
+            MainAllianceDirectory = Path.Combine(Config.FolderDirectory, "AllianceHangars");
+            Directory.CreateDirectory(MainAllianceDirectory);
 
 
             TorchSession = Torch.Managers.GetManager<TorchSessionManager>();
@@ -139,9 +153,30 @@ namespace QuantumHangar
         private static readonly int _maxUpdateTimeSeconds = 60;
         private static int _currentFrameCountSeconds = 0;
 
+        private bool LoadedPlugins = false;
         public override void Update()
         {
+            if (!LoadedPlugins)
+            {
+                LoadedPlugins = true;
+                if (Torch.Managers.GetManager<PluginManager>().Plugins.TryGetValue(Guid.Parse("74796707-646f-4ebd-8700-d077a5f47af3"),
+                        out var AlliancePlugin))
+                {
+                    try
+                    {
+                        var AllianceIntegration =
+                            AlliancePlugin.GetType().Assembly.GetType("AlliancesPlugin.Integrations.AllianceIntegrationCore");
 
+                        GetAllianceId = AllianceIntegration.GetMethod("GetAllianceId", BindingFlags.Public | BindingFlags.Static);
+                        HasAccess = AllianceIntegration.GetMethod("HasAccess", BindingFlags.Public | BindingFlags.Static);
+                        Alliances = AlliancePlugin;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("Error loading the alliance integration for upgrades");
+                    }
+                }
+            }
             _currentFrameCount++;
             _currentFrameCountSeconds++;
 

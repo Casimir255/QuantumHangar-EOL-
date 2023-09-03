@@ -1,16 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using NLog;
 using QuantumHangar.HangarMarket;
 using QuantumHangar.Serialization;
 using QuantumHangar.Utils;
 using Sandbox.Definitions;
 using Sandbox.Game.World;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
@@ -18,41 +20,41 @@ using VRage.Game.ModAPI;
 
 namespace QuantumHangar.HangarChecks
 {
-    //This is for all users. Doesn't matter who is invoking it. (Admin or different). Should contain main functions for the player hangar. (Either removing grids and saving, checking stamps etc)
-    public class PlayerHangar : IDisposable
+    public class AllianceHanger : IDisposable
     {
         private static Logger Log;
         private readonly Chat _chat;
-        public readonly PlayerInfo SelectedPlayerFile;
+        public readonly AllianceInfo SelectedAllianceFile;
 
         private bool _isAdminCalling;
         private readonly ulong _steamId;
         //private readonly MyPlayer _player;
-        private readonly MyIdentity _identity;
+        private readonly Guid _allianceId;
 
-
-        public string PlayersFolderPath { get; }
+        public string AllianceFolderPath { get; }
 
 
         private static Settings Config => Hangar.Config;
 
 
-        public PlayerHangar(ulong steamId, Chat respond, bool isAdminCalling = false)
+        public AllianceHanger(ulong steamId, Chat respond, Guid allianceId, bool isAdminCalling = false)
         {
             try
             {
-                MySession.Static.Players.TryGetIdentityFromSteamId(steamId, out _identity);
-                Log = LogManager.GetLogger($"Hangar.{_identity.DisplayName}");
-
+                MySession.Static.Players.TryGetIdentityFromSteamId(steamId, out var _identity);
+                _allianceId = allianceId;
+                Log = LogManager.GetLogger($"Hangar.{_allianceId}");
+             
+                
                 this._steamId = steamId;
 
                 this._isAdminCalling = isAdminCalling;
                 _chat = respond;
-                SelectedPlayerFile = new PlayerInfo();
+                SelectedAllianceFile = new AllianceInfo();
 
 
-                PlayersFolderPath = Path.Combine(Hangar.MainPlayerDirectory, steamId.ToString());
-                SelectedPlayerFile.LoadFile(Hangar.MainPlayerDirectory, steamId);
+                AllianceFolderPath = Path.Combine(Hangar.MainAllianceDirectory, _allianceId.ToString());
+                SelectedAllianceFile.LoadFile(Hangar.MainAllianceDirectory, _allianceId);
             }
             catch (Exception ex)
             {
@@ -60,14 +62,14 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        public static bool TransferGrid(ulong from, ulong to, string gridName)
+        public static bool TransferGrid(Guid allianceIdFrom, Guid allianceIdTo, string gridName)
         {
             try
             {
                 Log.Error("Starting Grid Transfer!");
 
-                var fromInfo = new PlayerInfo();
-                fromInfo.LoadFile(Hangar.MainPlayerDirectory, from);
+                var fromInfo = new AllianceInfo();
+                fromInfo.LoadFile(Hangar.MainPlayerDirectory, allianceIdFrom);
 
                 if (!fromInfo.GetGrid(gridName, out var stamp, out var error))
                 {
@@ -76,14 +78,14 @@ namespace QuantumHangar.HangarChecks
                 }
 
 
-                var gridPath = stamp.GetGridPath(fromInfo.PlayerFolderPath);
+                var gridPath = stamp.GetGridPath(fromInfo.AllianceFolderpath);
                 var fileName = Path.GetFileName(gridPath);
 
                 fromInfo.Grids.Remove(stamp);
                 fromInfo.SaveFile();
 
-                var toInfo = new PlayerInfo();
-                toInfo.LoadFile(Hangar.MainPlayerDirectory, to);
+                var toInfo = new AllianceInfo();
+                toInfo.LoadFile(Hangar.MainPlayerDirectory, allianceIdTo);
                 toInfo.FormatGridName(stamp);
 
 
@@ -93,8 +95,8 @@ namespace QuantumHangar.HangarChecks
                 toInfo.Grids.Add(stamp);
 
                 //Make sure to create directory
-                Directory.CreateDirectory(toInfo.PlayerFolderPath);
-                File.Move(gridPath, Path.Combine(toInfo.PlayerFolderPath, stamp.GridName + ".sbc"));
+                Directory.CreateDirectory(toInfo.AllianceFolderpath);
+                File.Move(gridPath, Path.Combine(toInfo.AllianceFolderpath, stamp.GridName + ".sbc"));
 
                 toInfo.SaveFile();
                 Log.Error("Moved Grid!");
@@ -108,7 +110,7 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        public static bool TransferGrid(PlayerInfo to, GridStamp stamp)
+        public static bool TransferGrid(AllianceInfo to, GridStamp stamp)
         {
             try
             {
@@ -116,9 +118,9 @@ namespace QuantumHangar.HangarChecks
                 to.FormatGridName(stamp);
 
                 //Make sure to create the directory!
-                Directory.CreateDirectory(to.PlayerFolderPath);
+                Directory.CreateDirectory(to.AllianceFolderpath);
 
-                File.Copy(stamp.OriginalGridPath, Path.Combine(to.PlayerFolderPath, stamp.GridName + ".sbc"));
+                File.Copy(stamp.OriginalGridPath, Path.Combine(to.AllianceFolderpath, stamp.GridName + ".sbc"));
                 stamp.Transferred();
 
                 to.ServerOfferPurchased(gridName);
@@ -141,7 +143,7 @@ namespace QuantumHangar.HangarChecks
             //Log.Warn($"HitA: {ID}");
 
             //Input valid for ID - X
-            if (!SelectedPlayerFile.IsInputValid(id, out string error))
+            if (!SelectedAllianceFile.IsInputValid(id, out string error))
             {
                 _chat.Respond(error);
                 return false;
@@ -154,18 +156,18 @@ namespace QuantumHangar.HangarChecks
                 {
                     OldTime = DateTime.Now
                 };
-                SelectedPlayerFile.Timer = stamp;
+                SelectedAllianceFile.Timer = stamp;
             }
 
             //Log.Warn("HitC");
             try
             {
-                var a = Path.Combine(PlayersFolderPath, SelectedPlayerFile.Grids[id - 1].GridName + ".sbc");
+                var a = Path.Combine(AllianceFolderPath, SelectedAllianceFile.Grids[id - 1].GridName + ".sbc");
                 Log.Info(a);
 
                 File.Delete(a);
-                SelectedPlayerFile.Grids.RemoveAt(id - 1);
-                SelectedPlayerFile.SaveFile();
+                SelectedAllianceFile.Grids.RemoveAt(id - 1);
+                SelectedAllianceFile.SaveFile();
 
 
                 return true;
@@ -177,7 +179,7 @@ namespace QuantumHangar.HangarChecks
             }
         }
 
-        private bool CheckGridLimits(GridStamp grid)
+        private bool CheckGridLimits(GridStamp grid, MyIdentity playerIdentity)
         {
             //Backwards compatibale
             if (Config.OnLoadTransfer)
@@ -185,7 +187,7 @@ namespace QuantumHangar.HangarChecks
 
             if (grid.ShipPcu.Count == 0)
             {
-                var blockLimits = _identity.BlockLimits;
+                var blockLimits = playerIdentity.BlockLimits;
 
                 var a = MySession.Static.GlobalBlockLimits;
 
@@ -267,12 +269,12 @@ namespace QuantumHangar.HangarChecks
             return true;
         }
 
-        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipBlueprints)
+        private bool BlockLimitChecker(IEnumerable<MyObjectBuilder_CubeGrid> shipBlueprints, long playerIdentityId)
         {
             var biggestGrid = 0;
             var blocksToBuild = 0;
             //failedBlockType = null;
-            //Need dictionary for each player AND their blocks they own. (Players could own stuff on the same grid)
+            //Need dictionary for each player AND their blocks they own. (Factions could own stuff on the same grid)
             var blocksAndOwnerForLimits = new Dictionary<long, Dictionary<string, int>>();
 
 
@@ -376,7 +378,7 @@ namespace QuantumHangar.HangarChecks
             }
 
             var grids = shipBlueprints.ToList();
-            var valueReturn = PluginDependencies.CheckGridLimits(grids, _identity.IdentityId);
+            var valueReturn = PluginDependencies.CheckGridLimits(grids, playerIdentityId);
 
             //Convert to value return type
             if (!valueReturn)
@@ -454,8 +456,8 @@ namespace QuantumHangar.HangarChecks
         public bool CheckPlayerTimeStamp()
         {
             //Check timestamp before continuing!
-            if (SelectedPlayerFile.Timer == null) return true;
-            var old = SelectedPlayerFile.Timer;
+            if (SelectedAllianceFile.Timer == null) return true;
+            var old = SelectedAllianceFile.Timer;
             var lastUse = old.OldTime;
 
 
@@ -470,7 +472,7 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            SelectedPlayerFile.Timer = null;
+            SelectedAllianceFile.Timer = null;
             return true;
         }
 
@@ -561,7 +563,7 @@ namespace QuantumHangar.HangarChecks
             var smallGrids = 0;
 
             //Hangar total limit!
-            foreach (var grid in SelectedPlayerFile.Grids)
+            foreach (var grid in SelectedAllianceFile.Grids)
             {
                 totalBlocks += grid.NumberOfBlocks;
                 totalPcu += grid.GridPcu;
@@ -611,25 +613,11 @@ namespace QuantumHangar.HangarChecks
 
         public bool CheckHangarLimits()
         {
-            if (SelectedPlayerFile.Grids.Count < SelectedPlayerFile.MaxHangarSlots) return true;
+            if (SelectedAllianceFile.Grids.Count < SelectedAllianceFile.MaxHangarSlots) return true;
             _chat?.Respond("You have reached your hangar limit!");
             return false;
         }
 
-        public bool SellSelectedGrid(GridStamp stamp, long price, string description)
-        {
-            stamp.GridForSale = true;
-
-            var newListing = new MarketListing(stamp);
-            newListing.SetUserInputs(description, price);
-            newListing.Seller = _identity.DisplayName;
-            newListing.SetPlayerData(_steamId, _identity.IdentityId);
-            HangarMarketController.SaveNewMarketFile(newListing);
-            SavePlayerFile();
-
-            HangarMarketController.NewGridOfferListed(newListing);
-            return true;
-        }
 
         public void SaveGridStamp(GridStamp targetStamp, bool admin = false, bool ignoreSave = false)
         {
@@ -639,18 +627,18 @@ namespace QuantumHangar.HangarChecks
                 {
                     OldTime = DateTime.Now
                 };
-                SelectedPlayerFile.Timer = stamp;
+                SelectedAllianceFile.Timer = stamp;
             }
 
-            SelectedPlayerFile.Grids.Add(targetStamp);
+            SelectedAllianceFile.Grids.Add(targetStamp);
 
             if (!ignoreSave)
-                SelectedPlayerFile.SaveFile();
+                SelectedAllianceFile.SaveFile();
         }
 
         public void SavePlayerFile()
         {
-            SelectedPlayerFile.SaveFile();
+            SelectedAllianceFile.SaveFile();
         }
 
         public bool RemoveGridStamp(int id)
@@ -658,17 +646,17 @@ namespace QuantumHangar.HangarChecks
             return RemoveStamp(id);
         }
 
-        public async Task<bool> SaveGridsToFile(GridResult grids, string fileName)
+        public async Task<bool> SaveGridsToFile(GridResult grids, string fileName, long identity)
         {
-            return await GridSerializer.SaveGridsAndClose(grids.Grids, PlayersFolderPath, fileName, _identity.IdentityId);
+            return await GridSerializer.SaveGridsAndClose(grids.Grids, AllianceFolderPath, fileName, identity);
         }
 
         public void ListAllGrids()
         {
-            if (SelectedPlayerFile.Grids.Count == 0)
+            if (SelectedAllianceFile.Grids.Count == 0)
             {
                 _chat.Respond(_isAdminCalling
-                    ? "There are no grids in this players hangar!"
+                    ? "There are no grids in this factions hangar!"
                     : "You have no grids in your hangar!");
 
                 return;
@@ -677,14 +665,14 @@ namespace QuantumHangar.HangarChecks
             var sb = new StringBuilder();
 
             if (_isAdminCalling)
-                sb.AppendLine("Players has " + SelectedPlayerFile.Grids.Count() + "/" +
-                              SelectedPlayerFile.MaxHangarSlots + " stored grids:");
+                sb.AppendLine("Factions has " + SelectedAllianceFile.Grids.Count() + "/" +
+                              SelectedAllianceFile.MaxHangarSlots + " stored grids:");
             else
-                sb.AppendLine("You have " + SelectedPlayerFile.Grids.Count() + "/" + SelectedPlayerFile.MaxHangarSlots +
+                sb.AppendLine("You have " + SelectedAllianceFile.Grids.Count() + "/" + SelectedAllianceFile.MaxHangarSlots +
                               " stored grids:");
 
             var count = 1;
-            foreach (var grid in SelectedPlayerFile.Grids)
+            foreach (var grid in SelectedAllianceFile.Grids)
             {
                 if (grid.GridForSale)
                 {
@@ -707,18 +695,18 @@ namespace QuantumHangar.HangarChecks
             string prefix;
             if (id == 0)
             {
-                prefix = $"HangarSlots: {SelectedPlayerFile.Grids.Count()}/{SelectedPlayerFile.MaxHangarSlots}";
+                prefix = $"HangarSlots: {SelectedAllianceFile.Grids.Count()}/{SelectedAllianceFile.MaxHangarSlots}";
                 response.AppendLine("- - Global Limits - -");
-                response.AppendLine($"TotalBlocks: {SelectedPlayerFile.TotalBlocks}/{Config.PlayerMaxBlocks}");
-                response.AppendLine($"TotalPCU: {SelectedPlayerFile.TotalPcu}/{Config.PlayerMaxPcu}");
-                response.AppendLine($"StaticGrids: {SelectedPlayerFile.StaticGrids}/{Config.PlayerMaxStaticGrids}");
-                response.AppendLine($"LargeGrids: {SelectedPlayerFile.LargeGrids}/{Config.TotalMaxLargeGrids}");
-                response.AppendLine($"SmallGrids: {SelectedPlayerFile.SmallGrids}/{Config.PlayerMaxSmallGrids}");
+                response.AppendLine($"TotalBlocks: {SelectedAllianceFile.TotalBlocks}/{Config.PlayerMaxBlocks}");
+                response.AppendLine($"TotalPCU: {SelectedAllianceFile.TotalPcu}/{Config.PlayerMaxPcu}");
+                response.AppendLine($"StaticGrids: {SelectedAllianceFile.StaticGrids}/{Config.PlayerMaxStaticGrids}");
+                response.AppendLine($"LargeGrids: {SelectedAllianceFile.LargeGrids}/{Config.TotalMaxLargeGrids}");
+                response.AppendLine($"SmallGrids: {SelectedAllianceFile.SmallGrids}/{Config.PlayerMaxSmallGrids}");
                 response.AppendLine();
                 response.AppendLine("- - Individual Hangar Slots - -");
-                for (var i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+                for (var i = 0; i < SelectedAllianceFile.Grids.Count; i++)
                 {
-                    var stamp = SelectedPlayerFile.Grids[i];
+                    var stamp = SelectedAllianceFile.Grids[i];
                     response.AppendLine($" * * Slot {i + 1} : {stamp.GridName} * *");
                     response.AppendLine($"PCU: {stamp.GridPcu}/{Config.SingleMaxPcu}");
                     response.AppendLine($"Blocks: {stamp.NumberOfBlocks}/{Config.SingleMaxBlocks}");
@@ -734,7 +722,7 @@ namespace QuantumHangar.HangarChecks
             }
             else
             {
-                if (!SelectedPlayerFile.GetGrid(id, out var stamp, out var error))
+                if (!SelectedAllianceFile.GetGrid(id, out var stamp, out var error))
                 {
                     _chat.Respond(error);
                     return;
@@ -757,32 +745,72 @@ namespace QuantumHangar.HangarChecks
 
         public bool TryGetGridStamp(int id, out GridStamp stamp)
         {
-            if (SelectedPlayerFile.GetGrid(id, out stamp, out var error)) return true;
+            if (SelectedAllianceFile.GetGrid(id, out stamp, out var error)) return true;
             _chat.Respond(error);
             return false;
         }
 
-        public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids)
+        public bool ChangeWebhook(string webhook)
         {
-            if (!stamp.TryGetGrids(PlayersFolderPath, out grids))
+            SelectedAllianceFile.Webhook = webhook;
+            SelectedAllianceFile.SaveFile();
+            return true;
+        }
+
+        public void SendWebHookMessage(string message)
+        {
+            if (SelectedAllianceFile.Webhook == "default") return;
+            try
+            {
+                var client = new WebClient();
+                client.Headers.Add("Content-Type", "application/json");
+                //send to ingame and nexus 
+                var payloadJson = JsonConvert.SerializeObject(new
+                    {
+                        username = "Alliance hangar Log",
+                        embeds = new[]
+                        {
+                            new
+                            {
+                                description = message,
+                                title = "Alliance hangar Log",
+                            }
+                        }
+                    }
+                );
+
+                var payload = payloadJson;
+
+                var utf8 = Encoding.UTF8.GetBytes(payload);
+
+                client.UploadData(SelectedAllianceFile.Webhook, utf8);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Faction Hangar {_allianceId} {SelectedAllianceFile.Webhook} Discord webhook error, {e}");
+            }
+        }
+        public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids, long playerId)
+        {
+            if (!stamp.TryGetGrids(AllianceFolderPath, out grids))
                 return false;
 
 
-            PluginDependencies.BackupGrid(grids.ToList(), _identity.IdentityId);
-            GridSerializer.TransferGridOwnership(grids, _identity.IdentityId, stamp.TransferOwnerShipOnLoad);
+            PluginDependencies.BackupGrid(grids.ToList(), playerId);
+            GridSerializer.TransferGridOwnership(grids, playerId, stamp.TransferOwnerShipOnLoad);
 
             return true;
         }
 
         public void UpdateHangar()
         {
-            if (!Directory.Exists(PlayersFolderPath))
+            if (!Directory.Exists(AllianceFolderPath))
             {
-                _chat?.Respond("This players hangar doesn't exist! Skipping sync!");
+                _chat?.Respond("This factions hangar doesn't exist! Skipping sync!");
                 return;
             }
 
-            var myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly)
+            var myFiles = Directory.EnumerateFiles(AllianceFolderPath, "*.*", SearchOption.TopDirectoryOnly)
                 .Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
             if (!myFiles.Any())
@@ -796,7 +824,7 @@ namespace QuantumHangar.HangarChecks
             {
                 var name = Path.GetFileNameWithoutExtension(file);
                 Log.Info(name);
-                if (SelectedPlayerFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(name)))
+                if (SelectedAllianceFile.AnyGridsMatch(Path.GetFileNameWithoutExtension(name)))
                     continue;
 
                 addedGrids++;
@@ -805,16 +833,16 @@ namespace QuantumHangar.HangarChecks
             }
 
             var removedGrids = 0;
-            for (var i = SelectedPlayerFile.Grids.Count - 1; i >= 0; i--)
+            for (var i = SelectedAllianceFile.Grids.Count - 1; i >= 0; i--)
             {
-                if (myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
+                if (myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedAllianceFile.Grids[i].GridName))
                     continue;
                 removedGrids++;
-                SelectedPlayerFile.Grids.RemoveAt(i);
+                SelectedAllianceFile.Grids.RemoveAt(i);
             }
 
-            SelectedPlayerFile.Grids.AddRange(newGrids);
-            SelectedPlayerFile.SaveFile();
+            SelectedAllianceFile.Grids.AddRange(newGrids);
+            SelectedAllianceFile.SaveFile();
 
             _chat?.Respond(
                 $"Removed {removedGrids} grids and added {addedGrids} new grids to hangar for player {_steamId}");
@@ -824,9 +852,9 @@ namespace QuantumHangar.HangarChecks
         {
         }
 
-        public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint)
+        public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint, long playerIdentityId)
         {
-            return CheckGridLimits(grid) && BlockLimitChecker(blueprint);
+            return CheckGridLimits(grid, MySession.Static.Players.TryGetIdentity(playerIdentityId)) && BlockLimitChecker(blueprint, playerIdentityId);
         }
 
 
@@ -834,9 +862,9 @@ namespace QuantumHangar.HangarChecks
         {
             if (int.TryParse(selection, out id))
                 return true;
-            for (var i = 0; i < SelectedPlayerFile.Grids.Count; i++)
+            for (var i = 0; i < SelectedAllianceFile.Grids.Count; i++)
             {
-                var s = SelectedPlayerFile.Grids[i];
+                var s = SelectedAllianceFile.Grids[i];
                 if (s.GridName != selection) continue;
                 id = i + 1;
                 return true;
@@ -848,15 +876,15 @@ namespace QuantumHangar.HangarChecks
 
 
     [JsonObject(MemberSerialization.OptIn)]
-    public class PlayerInfo
+    public class AllianceInfo
     {
-        //This is the players info file. Should contain methods for finding grids/checking timers 
+        //This is the factions info file. Should contain methods for finding grids/checking timers 
 
         [JsonProperty] public List<GridStamp> Grids = new List<GridStamp>();
         [JsonProperty] public TimeStamp Timer;
         [JsonProperty] private int? _maxHangarSlots;
         [JsonProperty] private Dictionary<string, int> _serverOfferPurchases = new Dictionary<string, int>();
-
+        [JsonProperty] public string Webhook = "default";
 
         public int MaxHangarSlots { get; set; }
         public string FilePath { get; set; }
@@ -872,14 +900,13 @@ namespace QuantumHangar.HangarChecks
 
         private Settings Config => Hangar.Config;
 
-        public string PlayerFolderPath;
+        public string AllianceFolderpath;
 
 
-        public bool LoadFile(string folderPath, ulong steamId)
+        public bool LoadFile(string folderPath, Guid allianceId)
         {
-            this.SteamId = steamId;
-            PlayerFolderPath = Path.Combine(folderPath, steamId.ToString());
-            FilePath = Path.Combine(PlayerFolderPath, "PlayerInfo.json");
+            AllianceFolderpath = Path.Combine(folderPath, allianceId.ToString());
+            FilePath = Path.Combine(AllianceFolderpath, "AllianceInfo.json");
 
             GetMaxHangarSlot();
 
@@ -889,11 +916,11 @@ namespace QuantumHangar.HangarChecks
 
             try
             {
-                var scannedFile = JsonConvert.DeserializeObject<PlayerInfo>(File.ReadAllText(FilePath));
+                var scannedFile = JsonConvert.DeserializeObject<AllianceInfo>(File.ReadAllText(FilePath));
                 Grids = scannedFile.Grids;
                 Timer = scannedFile.Timer;
                 _serverOfferPurchases = scannedFile._serverOfferPurchases;
-
+                Webhook = scannedFile.Webhook;
                 if (scannedFile._maxHangarSlots.HasValue)
                     MaxHangarSlots = scannedFile._maxHangarSlots.Value;
                 PerformDataScan();
@@ -961,34 +988,34 @@ namespace QuantumHangar.HangarChecks
             switch (gridNameOrNumber)
             {
                 case int _:
-                {
-                    var target = Convert.ToInt32(gridNameOrNumber);
-                    if (!IsInputValid(target, out message))
-                        return false;
-
-
-                    stamp = Grids[target - 1];
-                    return true;
-                }
-                case string _:
-                {
-                    //IsInputValid(SelectedIndex); ;
-
-                    if (!int.TryParse(Convert.ToString(gridNameOrNumber), out var selectedIndex))
                     {
-                        stamp = Grids.FirstOrDefault(x => x.GridName == Convert.ToString(gridNameOrNumber));
-                        if (stamp != null)
-                            return true;
+                        var target = Convert.ToInt32(gridNameOrNumber);
+                        if (!IsInputValid(target, out message))
+                            return false;
+
+
+                        stamp = Grids[target - 1];
+                        return true;
                     }
+                case string _:
+                    {
+                        //IsInputValid(SelectedIndex); ;
+
+                        if (!int.TryParse(Convert.ToString(gridNameOrNumber), out var selectedIndex))
+                        {
+                            stamp = Grids.FirstOrDefault(x => x.GridName == Convert.ToString(gridNameOrNumber));
+                            if (stamp != null)
+                                return true;
+                        }
 
 
-                    if (!IsInputValid(selectedIndex, out message))
-                        return false;
+                        if (!IsInputValid(selectedIndex, out message))
+                            return false;
 
 
-                    stamp = Grids[selectedIndex - 1];
-                    return true;
-                }
+                        stamp = Grids[selectedIndex - 1];
+                        return true;
+                    }
                 default:
                     return false;
             }
@@ -996,22 +1023,7 @@ namespace QuantumHangar.HangarChecks
 
         private void GetMaxHangarSlot()
         {
-            if (_maxHangarSlots.HasValue)
-            {
-                MaxHangarSlots = _maxHangarSlots.Value;
-            }
-            else
-            {
-                var userLvl = MySession.Static.GetUserPromoteLevel(SteamId);
-                MaxHangarSlots = userLvl switch
-                {
-                    MyPromoteLevel.Scripter => Config.ScripterHangarAmount,
-                    MyPromoteLevel.Moderator => Config.ScripterHangarAmount * 2,
-                    MyPromoteLevel.Admin => Config.ScripterHangarAmount * 10,
-                    MyPromoteLevel.Owner => Config.ScripterHangarAmount * 10,
-                    _ => Config.NormalHangarAmount
-                };
-            }
+            MaxHangarSlots = _maxHangarSlots.HasValue ? _maxHangarSlots.Value : Config.AllianceHangarAmount;
         }
 
         public bool IsInputValid(int index, out string message)
@@ -1087,7 +1099,7 @@ namespace QuantumHangar.HangarChecks
 
         public async void SaveFile()
         {
-            Directory.CreateDirectory(PlayerFolderPath);
+            Directory.CreateDirectory(AllianceFolderpath);
             await FileSaver.SaveAsync(FilePath, this);
         }
     }
