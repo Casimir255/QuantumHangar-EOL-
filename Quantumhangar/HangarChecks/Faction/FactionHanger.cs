@@ -665,6 +665,25 @@ namespace QuantumHangar.HangarChecks
             return await GridSerializer.SaveGridsAndClose(grids.Grids, FactionFolderPath, fileName, identity);
         }
 
+        public void ListAllWhitelisted()
+        {
+
+            var sb = new StringBuilder();
+            if (_isAdminCalling)
+                sb.AppendLine(
+                    $"Factions has {SelectedFactionFile.Whitelist.Count()} whitelisted players");
+            else
+                sb.AppendLine(
+                    $"You have {SelectedFactionFile.Whitelist.Count()} whitelisted players");
+
+            foreach (var player in SelectedFactionFile.Whitelist)
+            {
+                sb.AppendLine($"{player}");
+            }
+
+            _chat?.Respond(sb.ToString());
+        }
+
         public void ListAllGrids()
         {
             if (SelectedFactionFile.Grids.Count == 0)

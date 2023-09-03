@@ -33,7 +33,20 @@ namespace QuantumHangar.Commands
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.ChangeWhitelist(targetNameOrSteamId), Context);
         }
-        [Command("webhook", "Add or remove a player from whitelist")]
+        [Command("whitelisted", "Output the whitelisted steam ids")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Whitelist()
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ListWhitelist(), Context);
+        }
+        [Command("webhook", "Change the webhook")]
         [Permission(MyPromoteLevel.None)]
         public async void Webhook(string webhook)
         {
@@ -129,7 +142,21 @@ namespace QuantumHangar.Commands
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.ChangeWhitelist(targetNameOrSteamId), Context);
         }
-        [Command("webhook", "Add or remove a player from whitelist")]
+
+        [Command("whitelisted", "Output the whitelisted steam ids")]
+        [Permission(MyPromoteLevel.None)]
+        public async void Whitelist()
+        {
+            if (Context.Player == null)
+            {
+                Context.Respond("This is a player only command!");
+                return;
+            }
+
+            var user = new FactionChecks(Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.ListWhitelist(), Context);
+        }
+        [Command("webhook", "change the webhook")]
         [Permission(MyPromoteLevel.None)]
         public async void Webhook(string webhook)
         {
