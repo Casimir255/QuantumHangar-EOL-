@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Timers;
 using System.Windows.Controls;
+using Sandbox.ModAPI;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
@@ -33,8 +35,8 @@ namespace QuantumHangar
 
         public TorchSessionManager TorchSession { get; private set; }
         public static bool ServerRunning { get; private set; }
-        private static System.Timers.Timer SaveDelayTimer;
-        public static bool DelayFromSaveActive;
+        private static readonly Timer SaveDelayTimer = new Timer();
+        public static bool DelayFromSaveActive = false;
 
         public static string MainPlayerDirectory { get; private set; }
         public static string MainFactionDirectory { get; private set; }
@@ -155,12 +157,14 @@ namespace QuantumHangar
 
         private void SaveDelayTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            Log.Warn("Hangar Save Delay Finished");
             DelayFromSaveActive = false;
             SaveDelayTimer?.Stop();
         }
 
         private void Static_OnSavingCheckpoint(VRage.Game.MyObjectBuilder_Checkpoint obj)
         {
+            Log.Warn("Hangar Save Delay Started");
             DelayFromSaveActive = true;
             SaveDelayTimer.Interval = TimeSpan.FromMinutes(Config.MinsToDisableTempUseAfterSave).TotalMilliseconds;
             SaveDelayTimer.Start();
