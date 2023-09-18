@@ -2,6 +2,7 @@
 using QuantumHangar.HangarMarket;
 using QuantumHangar.UI;
 using QuantumHangar.Utils;
+using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,6 +33,8 @@ namespace QuantumHangar
 
         public TorchSessionManager TorchSession { get; private set; }
         public static bool ServerRunning { get; private set; }
+        private static System.Timers.Timer SaveDelayTimer;
+        public static bool DelayFromSaveActive;
 
         public static string MainPlayerDirectory { get; private set; }
         public static string MainFactionDirectory { get; private set; }
@@ -136,14 +139,31 @@ namespace QuantumHangar
                     ServerRunning = true;
                     AutoHangar.StartAutoHangar();
                     _controller?.ServerStarted();
+                    MySession.Static.OnSavingCheckpoint += Static_OnSavingCheckpoint;
+                    SaveDelayTimer.Elapsed += SaveDelayTimer_Elapsed;
                     break;
 
 
                 case TorchSessionState.Unloading:
                     ServerRunning = false;
+                    MySession.Static.OnSavingCheckpoint -= Static_OnSavingCheckpoint;
+                    SaveDelayTimer.Elapsed -= SaveDelayTimer_Elapsed;
                     PluginDispose();
                     break;
             }
+        }
+
+        private void SaveDelayTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            DelayFromSaveActive = false;
+            SaveDelayTimer?.Stop();
+        }
+
+        private void Static_OnSavingCheckpoint(VRage.Game.MyObjectBuilder_Checkpoint obj)
+        {
+            DelayFromSaveActive = true;
+            SaveDelayTimer.Interval = TimeSpan.FromMinutes(Config.MinsToDisableTempUseAfterSave).TotalMilliseconds;
+            SaveDelayTimer.Start();
         }
 
         // 60 frames =~ 1 sec, run update about every min
@@ -208,6 +228,7 @@ namespace QuantumHangar
             _controller?.Close();
             AutoHangar.Dispose();
             PluginDependencies.Dispose();
+            SaveDelayTimer.Dispose();
         }
     }
 

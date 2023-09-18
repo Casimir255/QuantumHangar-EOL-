@@ -47,52 +47,52 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ProtoBuf.Net.Core">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\ProtoBuf.Net.Core.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\ProtoBuf.Net.Core.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Common">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Common.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\Sandbox.Common.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Game">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Game.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\Sandbox.Game.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Graphics">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Graphics.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\Sandbox.Graphics.dll</HintPath>
     </Reference>
     <Reference Include="SpaceEngineers.ObjectBuilders">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\SpaceEngineers.ObjectBuilders.dll</HintPath>
     </Reference>
     <Reference Include="VRage">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Game">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Game.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Game.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Input">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Input.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Input.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Library">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Library.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Library.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Math">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Math.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Math.dll</HintPath>
     </Reference>
     <Reference Include="VRage.NativeWrapper">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.NativeWrapper.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.NativeWrapper.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Network">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Network.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Network.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Render">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Render.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Render.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Render11">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Render11.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Render11.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Scripting">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Scripting.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.Scripting.dll</HintPath>
     </Reference>
     <Reference Include="VRage.UserInterface">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.UserInterface.dll</HintPath>
+      <HintPath>..\Quantumhangar\GameBinaries\VRage.UserInterface.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

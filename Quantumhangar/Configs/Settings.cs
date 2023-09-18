@@ -225,5 +225,13 @@ namespace QuantumHangar
 
         private bool _allowLoadNearEnemy;
         public bool AllowLoadNearEnemy { get => _allowLoadNearEnemy; set => SetValue(ref _allowLoadNearEnemy, value); }
+
+        private bool _disableTempUseAfterServerSave;
+        public bool DisableTempUseAfterServerSave { get => _disableTempUseAfterServerSave; set => SetValue(ref _disableTempUseAfterServerSave, value); }
+
+        private int _minsToDisableTempUseAfterSave = 2;
+        public int MinsToDisableTempUseAfterSave { get => _minsToDisableTempUseAfterSave; set => SetValue(ref _minsToDisableTempUseAfterSave, value); }
+
+
     }
 }

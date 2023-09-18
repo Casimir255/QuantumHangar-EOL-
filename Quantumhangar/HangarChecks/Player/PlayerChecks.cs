@@ -72,6 +72,12 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
+            if (Hangar.DelayFromSaveActive)
+            {
+                _chat?.Respond("Server is saving, paused, or restarting, please wait a minute or two and try again.");
+                return false;
+            }
+
 
             if (!CheckZoneRestrictions(isSaving))
             {

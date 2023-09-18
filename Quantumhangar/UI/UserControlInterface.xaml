@@ -397,6 +397,34 @@
                         </Grid>
                     </GroupBox>
 
+                    <GroupBox >
+                        <GroupBox.Header>
+                            <TextBlock>
+                                        <Span FontWeight="Bold">Restart Settings</Span>
+                                        <Span>(Prevent grid duping between save and restart)</Span>
+                            </TextBlock>
+                        </GroupBox.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            
+                            <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Content="Disable Saving/Loading after a system save." IsChecked="{Binding DisableTempUseAfterServerSave, Mode=TwoWay}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="How many mins?" HorizontalAlignment="Right"/>
+                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding MinsToDisableTempUseAfterSave, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
 
 
 
