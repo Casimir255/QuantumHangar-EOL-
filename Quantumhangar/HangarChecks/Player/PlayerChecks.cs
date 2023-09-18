@@ -74,13 +74,16 @@ namespace QuantumHangar.HangarChecks
 
             if (Hangar.DelayFromSaveActive)
             {
-                if (Config.MinsToDisableTempUseAfterSave < 2)
-                    _chat?.Respond($"Server is saving, paused, or restarting, please wait {Config.MinsToDisableTempUseAfterSave} minute and try again.");
+                if (Config.DisableTempUseAfterServerSave)
+                {
+                    if (Config.MinsToDisableTempUseAfterSave < 2)
+                        _chat?.Respond($"Server is saving, paused, or restarting, please wait {Config.MinsToDisableTempUseAfterSave} minute and try again.");
 
-                if (Config.MinsToDisableTempUseAfterSave >= 2)
-                    _chat?.Respond($"Server is saving, paused, or restarting, please wait {Config.MinsToDisableTempUseAfterSave} minutes and try again.");
+                    if (Config.MinsToDisableTempUseAfterSave >= 2)
+                        _chat?.Respond($"Server is saving, paused, or restarting, please wait {Config.MinsToDisableTempUseAfterSave} minutes and try again.");
 
-                return false;
+                    return false;
+                }
             }
 
 
