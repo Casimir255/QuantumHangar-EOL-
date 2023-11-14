@@ -581,11 +581,11 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            if (Config.PlayerMaxPcu != 0 && totalPcu > Config.PlayerMaxPcu)
+            if (Config.PlayerMaxPCU != 0 && totalPcu > Config.PlayerMaxPCU)
             {
-                var remainder = totalPcu - Config.PlayerMaxPcu;
+                var remainder = totalPcu - Config.PlayerMaxPCU;
                 _chat?.Respond("Grid is " + remainder + " PCU over your hangar PCU limit! " + totalPcu + "/" +
-                              Config.PlayerMaxPcu);
+                              Config.PlayerMaxPCU);
                 return false;
             }
 
@@ -596,9 +596,9 @@ namespace QuantumHangar.HangarChecks
                 return false;
             }
 
-            if (Config.TotalMaxLargeGrids != 0 && largeGrids > Config.TotalMaxLargeGrids)
+            if (Config.PlayerMaxLargeGrids != 0 && largeGrids > Config.PlayerMaxLargeGrids)
             {
-                var remainder = largeGrids - Config.TotalMaxLargeGrids;
+                var remainder = largeGrids - Config.PlayerMaxLargeGrids;
                 _chat?.Respond("You are " + remainder + " large grid over your hangar limit!");
                 return false;
             }
@@ -698,9 +698,9 @@ namespace QuantumHangar.HangarChecks
                 prefix = $"HangarSlots: {SelectedAllianceFile.Grids.Count()}/{SelectedAllianceFile.MaxHangarSlots}";
                 response.AppendLine("- - Global Limits - -");
                 response.AppendLine($"TotalBlocks: {SelectedAllianceFile.TotalBlocks}/{Config.PlayerMaxBlocks}");
-                response.AppendLine($"TotalPCU: {SelectedAllianceFile.TotalPcu}/{Config.PlayerMaxPcu}");
+                response.AppendLine($"TotalPCU: {SelectedAllianceFile.TotalPcu}/{Config.PlayerMaxPCU}");
                 response.AppendLine($"StaticGrids: {SelectedAllianceFile.StaticGrids}/{Config.PlayerMaxStaticGrids}");
-                response.AppendLine($"LargeGrids: {SelectedAllianceFile.LargeGrids}/{Config.TotalMaxLargeGrids}");
+                response.AppendLine($"LargeGrids: {SelectedAllianceFile.LargeGrids}/{Config.PlayerMaxLargeGrids}");
                 response.AppendLine($"SmallGrids: {SelectedAllianceFile.SmallGrids}/{Config.PlayerMaxSmallGrids}");
                 response.AppendLine();
                 response.AppendLine("- - Individual Hangar Slots - -");
