@@ -163,14 +163,14 @@ namespace QuantumHangar
         private int _playerMaxBlocks = 0;
         public int PlayerMaxBlocks { get => _playerMaxBlocks; set => SetValue(ref _playerMaxBlocks, value); }
 
-        private int _playerMaxPcu = 0;
-        public int PlayerMaxPcu { get => _playerMaxPcu; set => SetValue(ref _playerMaxPcu, value); }
+        private int _playerMaxPCU = 0;
+        public int PlayerMaxPCU { get => _playerMaxPCU; set => SetValue(ref _playerMaxPCU, value); }
 
         private int _playerMaxStaticGrids = 0;
         public int PlayerMaxStaticGrids { get => _playerMaxStaticGrids; set => SetValue(ref _playerMaxStaticGrids, value); }
 
-        private int _totalMaxLargeGrids = 0;
-        public int TotalMaxLargeGrids { get => _totalMaxLargeGrids; set => SetValue(ref _totalMaxLargeGrids, value); }
+        private int _playerMaxLargeGrids = 0;
+        public int PlayerMaxLargeGrids { get => _playerMaxLargeGrids; set => SetValue(ref _playerMaxLargeGrids, value); }
 
         private int _playerMaxSmallGrids = 0;
         public int PlayerMaxSmallGrids { get => _playerMaxSmallGrids; set => SetValue(ref _playerMaxSmallGrids, value); }
