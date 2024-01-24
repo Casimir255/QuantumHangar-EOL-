@@ -396,7 +396,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
             PluginDependencies.BackupGrid(grids.ToList(), _identityId);
-            var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition, loadNearPlayer || stamp.ForceSpawnNearPlayer);
+            var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition, stamp.ForceSpawnNearPlayer || loadNearPlayer);
 
             if (!CheckDistanceToLoadPoint(spawnPos))
                 return;
@@ -671,6 +671,13 @@ namespace QuantumHangar.HangarChecks
         private static Vector3D DetermineSpawnPosition(Vector3D gridPosition, Vector3D characterPosition,
             out bool keepOriginalPosition, bool playersSpawnNearPlayer = false)
         {
+
+            if (playersSpawnNearPlayer)
+            {
+                keepOriginalPosition = false;
+                return characterPosition;
+            }
+
             switch (Config.LoadType)
             {
                 //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
@@ -688,12 +695,6 @@ namespace QuantumHangar.HangarChecks
                 case LoadType.ForceLoadMearPlayer:
                     keepOriginalPosition = false;
                     return characterPosition;
-            }
-
-            if (playersSpawnNearPlayer)
-            {
-                keepOriginalPosition = false;
-                return characterPosition;
             }
             keepOriginalPosition = true;
             return gridPosition;
