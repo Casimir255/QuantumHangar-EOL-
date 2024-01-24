@@ -396,8 +396,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
             PluginDependencies.BackupGrid(grids.ToList(), _identityId);
-            var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition,
-                loadNearPlayer);
+            var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition, loadNearPlayer || stamp.ForceSpawnNearPlayer);
 
             if (!CheckDistanceToLoadPoint(spawnPos))
                 return;
