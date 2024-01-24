@@ -24,6 +24,60 @@ namespace QuantumHangar.HangarChecks
         private readonly bool _inConsole;
 
         private CommandContext _ctx;
+        public bool SetForceSpawnNearPlayer(string NameOrSteamID, int Index)
+        {
+            AdminChecks.Log.Info(nameof(SetForceSpawnNearPlayer));
+            ulong PSteamID;
+            if (!this.AdminTryGetPlayerSteamID(NameOrSteamID, out PSteamID))
+            {
+                AdminChecks.Log.Info("SetForceSpawnNearPlayer: AdminTryGetPlayerSteamID failed");
+                return false;
+            }
+            if (!new PlayerHangar(PSteamID, this._chat, true).ForceSpawnNearPlayer(Index))
+            {
+                AdminChecks.Log.Info("SetForceSpawnNearPlayer: ForceSpawnNearPlayer failed");
+                return false;
+            }
+            this._chat?.Respond("Grid " + Index.ToString() + " reset.");
+            return true;
+        }
+
+        public bool AdminTryGetPlayerSteamID(string NameOrSteamID, out ulong PSteamID)
+        {
+            ulong result;
+            if (ulong.TryParse(NameOrSteamID, out result))
+            {
+                if (MySession.Static.Players.TryGetPlayerIdentity(new MyPlayer.PlayerId(result, 0)) == null)
+                {
+                    this._chat?.Respond(NameOrSteamID + " doesnt exsist as an Identity!");
+                    PSteamID = 0UL;
+                    return false;
+                }
+                PSteamID = result;
+                return true;
+            }
+            ulong? nullable;
+            try
+            {
+                nullable = new ulong?(MySession.Static.Players.TryGetSteamId(MySession.Static.Players.GetAllIdentities().FirstOrDefault<MyIdentity>((Func<MyIdentity, bool>)(x => x.DisplayName.Equals(NameOrSteamID))).IdentityId));
+            }
+            catch (Exception ex)
+            {
+                this._chat?.Respond("Player " + NameOrSteamID + " dosnt exist on the server!");
+                PSteamID = 0UL;
+                return false;
+            }
+
+            if (nullable == null)
+            {
+                this._chat?.Respond(NameOrSteamID + " doest exist! Check logs for more details!");
+                PSteamID = 0UL;
+                return false;
+            }
+            PSteamID = nullable.Value;
+            return true;
+        }
+
 
         public AdminChecks(CommandContext context)
         {
@@ -49,7 +103,7 @@ namespace QuantumHangar.HangarChecks
         public async void SaveGrid(string nameOrIdentity = "")
         {
             var result = new GridResult(true);
-            
+
             //Gets grids player is looking at
             if (!result.GetGrids(_chat, _adminUserCharacter, nameOrIdentity))
                 return;
