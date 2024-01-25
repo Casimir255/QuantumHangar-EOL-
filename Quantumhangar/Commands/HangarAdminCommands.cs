@@ -154,7 +154,14 @@ namespace QuantumHangar.Commands
 
         }
 
+        [Command("reset", "changes the flag to allow grid to be unhangared at players location")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void Reset(string NameOrSteamID, int ID)
+        {
+            AdminChecks User = new AdminChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SetForceSpawnNearPlayer(NameOrSteamID, ID));
 
+        }
     }
 
 
@@ -265,7 +272,14 @@ namespace QuantumHangar.Commands
             await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, true, true, true, true));
         }
 
-
+        [Command("reset", "changes the flag to allow grid to be unhangared at players location")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void Reset(string NameOrSteamID, int ID)
+        {
+            AdminChecks User = new AdminChecks(Context); 
+            await HangarCommandSystem.RunAdminTaskAsync(() => User.SetForceSpawnNearPlayer(NameOrSteamID, ID));
+            
+        }
         /*
         [Command("exportgrid", "exportgrids to obj")]
         [Permission(MyPromoteLevel.Admin)]

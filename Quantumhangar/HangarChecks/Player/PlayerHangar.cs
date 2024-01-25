@@ -108,6 +108,18 @@ namespace QuantumHangar.HangarChecks
 
             return true;
         }
+        public bool ForceSpawnNearPlayer(int ID)
+        {
+            string Message;
+            if (!this.SelectedPlayerFile.IsInputValid(ID, out Message))
+            {
+                this._chat.Respond(Message);
+                return false;
+            }
+            this.SelectedPlayerFile.Grids[ID - 1].ForceSpawnNearPlayer = true;
+            this.SelectedPlayerFile.SaveFile();
+            return true;
+        }
 
         public static bool TransferGrid(PlayerInfo to, GridStamp stamp)
         {
@@ -1038,7 +1050,10 @@ namespace QuantumHangar.HangarChecks
             {
                 result.GridName = FileSaver.CheckInvalidCharacters(result.GridName);
                 // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
-
+                if (result.NumberOfGrids > 1)
+                {
+                    result.GridName += $" +{result.NumberOfGrids - 1} connected grids";
+                }
                 if (!AnyGridsMatch(result.GridName)) return;
                 //There is already a grid with that name!
                 var nameCheckDone = false;
@@ -1057,12 +1072,15 @@ namespace QuantumHangar.HangarChecks
                 }
 
                 //Main.Debug("Saving grid name: " + GridName);
+
                 result.GridName = result.GridName + "[" + a + "]";
             }
             catch (Exception e)
             {
                 Log.Warn(e);
             }
+
+         
         }
 
         public void ServerOfferPurchased(string name)
