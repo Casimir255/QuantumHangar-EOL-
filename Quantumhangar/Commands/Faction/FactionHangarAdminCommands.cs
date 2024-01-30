@@ -128,9 +128,6 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Admin)]
         public async void SaveGrid(string gridname)
         {
-            
-
-
             var user = new FactionAdminChecks(Context);
             await HangarCommandSystem.RunAdminTaskAsync(() => user.SaveGrid(gridname));
         }
@@ -147,8 +144,6 @@ namespace QuantumHangar.Commands
         [Permission(MyPromoteLevel.Admin)]
         public async void Load(string tag, string id, bool loadNearPlayer = false)
         {
-            
-
             var user = new FactionAdminChecks(tag, Context);
             await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(id, loadNearPlayer));
         }
