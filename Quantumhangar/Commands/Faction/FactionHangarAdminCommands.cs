@@ -57,7 +57,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void ListGrids(string tag)
         {
             var user = new FactionAdminChecks(tag, Context);
@@ -65,7 +65,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("load", "Loads the specified grid by index number")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Load(string tag, string id, bool loadNearPlayer = false)
         {
             
@@ -75,7 +75,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("remove", "removes the grid from your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Remove(string tag, string id)
         {
             
@@ -86,7 +86,7 @@ namespace QuantumHangar.Commands
 
 
         [Command("info", "Provides some info of the current grid in your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Info(string tag, string id = "")
         {
             
@@ -136,7 +136,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void ListGrids(string tag)
         {
             var user = new FactionAdminChecks(tag, Context);
@@ -144,7 +144,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("load", "Loads the specified grid by index number")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Load(string tag, string id, bool loadNearPlayer = false)
         {
             
@@ -154,7 +154,7 @@ namespace QuantumHangar.Commands
         }
 
         [Command("remove", "removes the grid from your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Remove(string tag, string id)
         {
             
@@ -165,7 +165,7 @@ namespace QuantumHangar.Commands
 
 
         [Command("info", "Provides some info of the current grid in your hangar")]
-        [Permission(MyPromoteLevel.None)]
+        [Permission(MyPromoteLevel.Admin)]
         public async void Info(string tag, string id = "")
         {
             
