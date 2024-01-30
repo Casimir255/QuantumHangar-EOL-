@@ -456,7 +456,8 @@ namespace QuantumHangar.HangarChecks
                 return;
             }
 
-            if (!FactionsHanger.CheckLimits(stamp, grids, _identityId))
+            var myObjectBuilderCubeGrids = grids as MyObjectBuilder_CubeGrid[] ?? grids.ToArray();
+            if (!FactionsHanger.CheckLimits(stamp, myObjectBuilderCubeGrids, _identityId))
                 return;
 
             if (!CheckEnemyDistance(Config.LoadType, stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
@@ -465,7 +466,7 @@ namespace QuantumHangar.HangarChecks
             if (!RequireLoadCurrency(stamp))
                 return;
 
-            PluginDependencies.BackupGrid(grids.ToList(), _identityId);
+            PluginDependencies.BackupGrid(myObjectBuilderCubeGrids.ToList(), _identityId);
             var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition,
                 loadNearPlayer);
 
@@ -477,7 +478,7 @@ namespace QuantumHangar.HangarChecks
                     _playerPosition))
                 return;
 
-            var spawner = new ParallelSpawner(grids, _chat, SteamId, SpawnedGridsSuccessful);
+            var spawner = new ParallelSpawner(myObjectBuilderCubeGrids, _chat, SteamId, SpawnedGridsSuccessful);
             spawner.setBounds(stamp.BoundingBox, stamp.Box, stamp.MatrixTranslation);
 
             Log.Info("Attempting Grid Spawning @" + spawnPos.ToString());

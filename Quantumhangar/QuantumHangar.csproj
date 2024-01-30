@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="AutoHangar\Autohangar.cs" />
     <Compile Include="Commands\Alliances\AllianceHangerCommands.cs" />
+    <Compile Include="Commands\Faction\FactionHangarAdminCommands.cs" />
     <Compile Include="Commands\Faction\FactionHangerCommands.cs" />
     <Compile Include="Commands\HangarCommandSystem.cs" />
     <Compile Include="Commands\HangarAdminCommands.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="HangarChecks\AdminChecks.cs" />
     <Compile Include="HangarChecks\Alliances\AllianceChecks.cs" />
     <Compile Include="HangarChecks\Alliances\AllianceHanger.cs" />
+    <Compile Include="HangarChecks\Faction\FactionAdminChecks.cs" />
     <Compile Include="HangarChecks\Faction\FactionHanger.cs" />
     <Compile Include="HangarChecks\Faction\FactionChecks.cs" />
     <Compile Include="HangarChecks\Player\PlayerChecks.cs" />
