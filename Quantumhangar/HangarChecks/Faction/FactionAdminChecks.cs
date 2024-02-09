@@ -13,6 +13,7 @@ using System.Linq;
 using Torch.Commands;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRageMath;
 using static QuantumHangar.Utils.CharacterUtilities;
 
@@ -32,6 +33,11 @@ namespace QuantumHangar.HangarChecks
         private FactionHanger FactionsHanger { get; set; }
 
         public static Settings Config => Hangar.Config;
+        private readonly bool _inConsole;
+        private Vector3D _adminPlayerPosition;
+        private MyCharacter _adminUserCharacter;
+
+        
 
 
         // PlayerChecks as initiated by another server to call LoadGrid.
@@ -39,15 +45,29 @@ namespace QuantumHangar.HangarChecks
         // but we receive all required data in the Nexus message.
         public FactionAdminChecks(string tag, CommandContext ctx)
         {
+            _inConsole = TryGetAdminPosition(ctx.Player);
             this.tag = tag;
-            _chat = new Chat(ctx);
+            _chat = new Chat(ctx, _inConsole);
             this.ctx = ctx;
         }
 
         public FactionAdminChecks(CommandContext ctx)
         {
-            _chat = new Chat(ctx);
+            _inConsole = TryGetAdminPosition(ctx.Player);
+            _chat = new Chat(ctx, _inConsole);
             this.ctx = ctx;
+        }
+        
+        private bool TryGetAdminPosition(IMyPlayer admin)
+        {
+            if (admin == null)
+                return true;
+
+
+            _adminPlayerPosition = admin.GetPosition();
+            _adminUserCharacter = (MyCharacter)admin.Character;
+
+            return false;
         }
 
         public bool initHangar(string tag)
