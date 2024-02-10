@@ -476,20 +476,33 @@ namespace QuantumHangar.HangarChecks
 
             var myObjectBuilderCubeGrids = grids as MyObjectBuilder_CubeGrid[] ?? grids.ToArray();
             if (!FactionsHanger.CheckLimits(stamp, myObjectBuilderCubeGrids, _identityId))
+            {
+                file.Close();
                 return;
+            }
+                
 
             if (!CheckEnemyDistance(Config.LoadType, stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
+            {
+                file.Close();
                 return;
+            }
 
             if (!RequireLoadCurrency(stamp))
+            {
+                file.Close();
                 return;
+            }
             
             //cooldown
             FactionsHanger.SelectedFactionFile.LoadFile(FactionsHanger.FactionFolderPath, (ulong)FactionsHanger.FactionId);
             if (!FactionsHanger.CheckPlayerTimeStamp())
             {
                 _chat?.Respond("Command cooldown is still in affect!");
+                
+                file.Close();
                 return;
+                
             }
             
             var st = new TimeStamp
@@ -504,12 +517,18 @@ namespace QuantumHangar.HangarChecks
                 loadNearPlayer);
 
             if (!CheckDistanceToLoadPoint(spawnPos))
+            {
+                file.Close();
                 return;
+            }
 
             if (PluginDependencies.NexusInstalled && Config.NexusApi &&
                 NexusSupport.RelayLoadIfNecessary(spawnPos, id, loadNearPlayer, _chat, SteamId, _identityId,
                     _playerPosition))
+            {
+                file.Close();
                 return;
+            }
 
             var spawner = new ParallelSpawner(myObjectBuilderCubeGrids, _chat, SteamId, SpawnedGridsSuccessful);
             spawner.setBounds(stamp.BoundingBox, stamp.Box, stamp.MatrixTranslation);
