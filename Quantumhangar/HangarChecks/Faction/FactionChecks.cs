@@ -9,6 +9,7 @@ using Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Torch.Commands;
 using VRage.Game;
@@ -194,6 +195,13 @@ namespace QuantumHangar.HangarChecks
                 return;
             
             //cooldown
+            FactionsHanger.SelectedFactionFile.LoadFile(FactionsHanger.FactionFolderPath, (ulong)FactionsHanger.FactionId);
+            if (!FactionsHanger.CheckPlayerTimeStamp())
+            {
+                _chat?.Respond("Command cooldown is still in affect!");
+                return;
+            }
+            
             var st = new TimeStamp
             {
                 OldTime = DateTime.Now
@@ -464,6 +472,8 @@ namespace QuantumHangar.HangarChecks
                 return;
             }
 
+            var file = File.Open(Path.Combine(FactionsHanger.FactionFolderPath, stamp.GridName + ".sbc"), FileMode.Open);
+
             var myObjectBuilderCubeGrids = grids as MyObjectBuilder_CubeGrid[] ?? grids.ToArray();
             if (!FactionsHanger.CheckLimits(stamp, myObjectBuilderCubeGrids, _identityId))
                 return;
@@ -475,6 +485,13 @@ namespace QuantumHangar.HangarChecks
                 return;
             
             //cooldown
+            FactionsHanger.SelectedFactionFile.LoadFile(FactionsHanger.FactionFolderPath, (ulong)FactionsHanger.FactionId);
+            if (!FactionsHanger.CheckPlayerTimeStamp())
+            {
+                _chat?.Respond("Command cooldown is still in affect!");
+                return;
+            }
+            
             var st = new TimeStamp
             {
                 OldTime = DateTime.Now
@@ -501,11 +518,13 @@ namespace QuantumHangar.HangarChecks
             if (spawner.Start(spawnPos, keepOriginalPosition))
             {
                 _chat?.Respond("Spawning Complete!");
+                file.Close();
                 FactionsHanger.RemoveGridStamp(id);
                 FactionsHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} loaded grid {stamp.GridName}");
             }
             else
             {
+                file.Close();
                 //_chat?.Respond("An error occured while spawning the grid!");
             }
         }
