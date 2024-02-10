@@ -192,6 +192,14 @@ namespace QuantumHangar.HangarChecks
 
             if (!RequireSaveCurrency(result))
                 return;
+            
+            //cooldown
+            var st = new TimeStamp
+            {
+                OldTime = DateTime.Now
+            };
+            FactionsHanger.SelectedFactionFile.Timer = st;
+            FactionsHanger.SelectedFactionFile.SaveFile();
 
 
             FactionsHanger.SelectedFactionFile.FormatGridName(gridData);
@@ -465,6 +473,14 @@ namespace QuantumHangar.HangarChecks
 
             if (!RequireLoadCurrency(stamp))
                 return;
+            
+            //cooldown
+            var st = new TimeStamp
+            {
+                OldTime = DateTime.Now
+            };
+            FactionsHanger.SelectedFactionFile.Timer = st;
+            FactionsHanger.SelectedFactionFile.SaveFile();
 
             PluginDependencies.BackupGrid(myObjectBuilderCubeGrids.ToList(), _identityId);
             var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition,
