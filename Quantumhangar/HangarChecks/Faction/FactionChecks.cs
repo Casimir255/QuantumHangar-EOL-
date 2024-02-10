@@ -314,7 +314,7 @@ namespace QuantumHangar.HangarChecks
         private bool RequireLoadCurrency(GridStamp grid)
         {
             //MyObjectBuilder_Definitions(MyParticlesManager)
-            if (!Config.RequireCurrency)
+            if (!Config.RequireLoadCurrency)
             {
                 return true;
             }
