@@ -15,6 +15,7 @@ using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using VRageMath;
 
 namespace QuantumHangar.HangarChecks
 {
@@ -116,6 +117,8 @@ namespace QuantumHangar.HangarChecks
                 this._chat.Respond(Message);
                 return false;
             }
+
+            this.SelectedPlayerFile.Grids[ID - 1].GridSavePosition = Vector3D.Zero;
             this.SelectedPlayerFile.Grids[ID - 1].ForceSpawnNearPlayer = true;
             this.SelectedPlayerFile.SaveFile();
             return true;

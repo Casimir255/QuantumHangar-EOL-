@@ -672,12 +672,7 @@ namespace QuantumHangar.HangarChecks
             out bool keepOriginalPosition, bool playersSpawnNearPlayer = false)
         {
 
-            if (playersSpawnNearPlayer)
-            {
-                keepOriginalPosition = false;
-                return characterPosition;
-            }
-
+       
             switch (Config.LoadType)
             {
                 //If the ship is loading from where it saved, we want to ignore aligning to gravity. (Needs to attempt to spawn in original position)
@@ -698,6 +693,14 @@ namespace QuantumHangar.HangarChecks
             }
             keepOriginalPosition = true;
             return gridPosition;
+
+
+            //if (playersSpawnNearPlayer)
+            //{
+            //    keepOriginalPosition = true;
+            //    return characterPosition;
+            //}
+
         }
 
         private void TryGetPlayerBalance(out long balance)

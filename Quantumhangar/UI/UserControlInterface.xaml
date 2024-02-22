@@ -459,9 +459,12 @@
 
                             <TextBlock Grid.Column="0" Grid.Row ="5" Text="AutoHangar Small Grids:" Margin="3"/>
                             <CheckBox Grid.Column="1" Grid.Row="5" VerticalAlignment="Center" IsChecked="{Binding AutoHangarSmallGrids}">(On/Off)</CheckBox>
-
-
-
+                            <TextBlock Grid.Column="1" Grid.Row ="3" Text="ST Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="3" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountStation}" IsEnabled="{Binding AutoHangarGrids}"/>
+                            <TextBlock Grid.Column="1" Grid.Row ="5" Text="LG Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="5" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountLargeGrid}" IsEnabled="{Binding AutoHangarGrids}"/>
+                            <TextBlock Grid.Column="1" Grid.Row ="4" Text="SG Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="4" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountSmallGrid}" IsEnabled="{Binding AutoHangarGrids}"/>
                         </Grid>
                     </GroupBox>
 

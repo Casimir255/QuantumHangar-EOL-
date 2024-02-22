@@ -62,7 +62,7 @@ namespace QuantumHangar
 
 
             var exportPlayerIdentities = new List<long>();
-
+            var playersOfflineDays = new Dictionary<long, int>();
             try
             {
                 //Scan all the identities we need
@@ -87,6 +87,7 @@ namespace QuantumHangar
                         case false when lastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now &&
                                         !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId):
                             exportPlayerIdentities.Add(identity.IdentityId);
+                            playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
                             break;
                     }
                 }
@@ -145,15 +146,15 @@ namespace QuantumHangar
                         if (MySession.Static.Players.IdentityIsNpc(gridList.Key))
                             continue;
                         var exportedGrids = new List<MyCubeGrid>();
-                        if (hangarStatic)
+                        if (hangarStatic && playersOfflineDays[gridList.Key] >= Config.AutoHangarDayAmountStation)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && x.IsStatic).ToList());
                         }
-                        if (hangarLarge)
+                        if (hangarLarge && playersOfflineDays[gridList.Key] >= Config.AutoHangarDayAmountLargeGrid)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && !x.IsStatic).ToList());
                         }
-                        if (hangarSmall)
+                        if (hangarSmall && playersOfflineDays[gridList.Key] >= Config.AutoHangarDayAmountSmallGrid)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Small).ToList());
                         }
