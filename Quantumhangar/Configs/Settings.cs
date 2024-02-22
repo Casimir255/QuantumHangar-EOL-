@@ -108,6 +108,8 @@ namespace QuantumHangar
 
         private bool _autoHangarGrids;
         public bool AutoHangarGrids { get => _autoHangarGrids; set => SetValue(ref _autoHangarGrids, value); }
+        private bool _autoHangarGridsByType;
+        public bool AutoHangarGridsByType { get => _autoHangarGridsByType; set => SetValue(ref _autoHangarGridsByType, value); }
 
         private bool _deleteRespawnPods;
         public bool DeleteRespawnPods { get => _deleteRespawnPods; set => SetValue(ref _deleteRespawnPods, value); }
