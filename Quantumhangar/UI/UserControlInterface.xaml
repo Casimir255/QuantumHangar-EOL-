@@ -326,7 +326,7 @@
                         <GroupBox.Header>
                             <TextBlock>
                                         <Span FontWeight="Bold">Hangar Per Player limits</Span>
-                                        <Span>(These are the limits for <Italic>PER PLAYER</Italic> hangar storage)</Span>
+                                        <Span>(These are the limits for hangar storage <Italic>PER PLAYER</Italic>)</Span>
                             </TextBlock>
 
                         </GroupBox.Header>
