@@ -12,8 +12,8 @@
         <converters:TextToBoolConverter x:Key="TextToBoolConverter"/>
     </UserControl.Resources>
 
-    
-    
+
+
     <Grid>
 
         <Grid.ColumnDefinitions>
@@ -401,7 +401,7 @@
 
 
 
-                    
+
 
 
                 </StackPanel>
@@ -459,8 +459,13 @@
 
                             <TextBlock Grid.Column="0" Grid.Row ="5" Text="AutoHangar Small Grids:" Margin="3"/>
                             <CheckBox Grid.Column="1" Grid.Row="5" VerticalAlignment="Center" IsChecked="{Binding AutoHangarSmallGrids}">(On/Off)</CheckBox>
-
-
+                            <TextBlock Grid.Column="1" Grid.Row ="3" Text="ST AH Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="3" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountStation}" IsEnabled="{Binding AutoHangarGridsByType}"/>
+                            <TextBlock Grid.Column="1" Grid.Row ="4" Text="LG AH Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="4" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountLargeGrid}" IsEnabled="{Binding AutoHangarGridsByType}"/>
+                            <TextBlock Grid.Column="1" Grid.Row ="5" Text="SG AH Days:" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="3" Grid.Row="5" Width="60" HorizontalAlignment="Left" Margin="2" Text="{Binding AutoHangarDayAmountSmallGrid}" IsEnabled="{Binding AutoHangarGridsByType}"/>
+                            <CheckBox Grid.Column="4" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="80,0,0,0"  IsChecked="{Binding AutoHangarGridsByType}" IsEnabled="{Binding AutoHangarGrids}" ToolTip="Days will be calculated by grid type" Content="Auto hangar by type?"/>
 
                         </Grid>
                     </GroupBox>
@@ -539,8 +544,8 @@
                             </Paragraph>
                         </FlowDocument>
                     </RichTextBox>
-                    
-           
+
+
                     <CheckBox x:Name="MarketEnabled" Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding GridMarketEnabled}"/>
                     <TextBlock Grid.Column="0" Grid.Row ="2" Text="Enable Grid Market (Requires Mod &amp; Restart):" Margin="3" Grid.ColumnSpan="2"/>
                     <TabControl Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SelectionChanged="TabController_SelectionChanged" IsEnabled="{Binding GridMarketEnabled}">
@@ -659,8 +664,8 @@
                                 </GroupBox>
                             </StackPanel>
                         </TabItem>
-                        
-                        
+
+
                         <TabItem Header="Server Offers" Visibility="Hidden">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -882,6 +887,6 @@
             </TabItem>
 
         </TabControl>
-
+       
     </Grid>
 </UserControl>

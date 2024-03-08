@@ -62,7 +62,7 @@ namespace QuantumHangar
 
 
             var exportPlayerIdentities = new List<long>();
-
+            var playersOfflineDays = new Dictionary<long, int>();
             try
             {
                 //Scan all the identities we need
@@ -79,14 +79,17 @@ namespace QuantumHangar
                     var steamId = MySession.Static.Players.TryGetSteamId(identity.IdentityId);
                     if (steamId == 0)
                         continue;
+                    int lowestValue = Math.Min(Config.AutoHangarDayAmountStation, Math.Min(Config.AutoHangarDayAmountLargeGrid, Config.AutoHangarDayAmountSmallGrid));
+                    var lowest = Config.AutoHangarGridsByType ? lowestValue : Config.AutoHangarDayAmount;
 
                     switch (saveAll)
                     {
                         //Need to see if we need to check this identity
                         case true:
-                        case false when lastLogin.AddDays(Config.AutoHangarDayAmount) < DateTime.Now &&
-                                        !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId):
+                        case false when lastLogin.AddDays(lowest) < DateTime.Now &&
+                                    !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId):
                             exportPlayerIdentities.Add(identity.IdentityId);
+                            playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
                             break;
                     }
                 }
@@ -110,7 +113,7 @@ namespace QuantumHangar
                         {
                             continue;
                         }
-            
+
                         grids.Add(grid);
                     }
 
@@ -126,7 +129,7 @@ namespace QuantumHangar
                         }
                         else
                         {
-                            ByPlayer.Add(owner, new List<MyCubeGrid>(){grid});
+                            ByPlayer.Add(owner, new List<MyCubeGrid>() { grid });
                         }
                     }
 
@@ -145,15 +148,20 @@ namespace QuantumHangar
                         if (MySession.Static.Players.IdentityIsNpc(gridList.Key))
                             continue;
                         var exportedGrids = new List<MyCubeGrid>();
-                        if (hangarStatic)
+
+                        var staticDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountStation : Config.AutoHangarDayAmount;
+                        var largeDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountLargeGrid : Config.AutoHangarDayAmount;
+                        var smallDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountSmallGrid : Config.AutoHangarDayAmount;
+
+                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && x.IsStatic).ToList());
                         }
-                        if (hangarLarge)
+                        if (hangarLarge && playersOfflineDays[gridList.Key] >= largeDays)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && !x.IsStatic).ToList());
                         }
-                        if (hangarSmall)
+                        if (hangarSmall && playersOfflineDays[gridList.Key] >= smallDays)
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Small).ToList());
                         }
@@ -163,7 +171,7 @@ namespace QuantumHangar
                             continue;
                         }
                         //Add this new grid into our planned export queue
-               
+
                         var hangar = new AutoHangarItem(totalBlocks, exportedGrids, largestGrid);
                         if (!scannedGrids.ContainsKey(gridList.Key))
                             scannedGrids.Add(gridList.Key, new List<AutoHangarItem>() { hangar });

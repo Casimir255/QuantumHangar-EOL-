@@ -108,12 +108,23 @@ namespace QuantumHangar
 
         private bool _autoHangarGrids;
         public bool AutoHangarGrids { get => _autoHangarGrids; set => SetValue(ref _autoHangarGrids, value); }
+        private bool _autoHangarGridsByType;
+        public bool AutoHangarGridsByType { get => _autoHangarGridsByType; set => SetValue(ref _autoHangarGridsByType, value); }
 
         private bool _deleteRespawnPods;
         public bool DeleteRespawnPods { get => _deleteRespawnPods; set => SetValue(ref _deleteRespawnPods, value); }
 
         private int _autoHangarDayAmount = 20;
         public int AutoHangarDayAmount { get => _autoHangarDayAmount; set => SetValue(ref _autoHangarDayAmount, value); }
+
+        private int _autoHangarDayAmountStation = 20;
+        public int AutoHangarDayAmountStation { get => _autoHangarDayAmountStation; set => SetValue(ref _autoHangarDayAmountStation, value); }
+
+        private int _autoHangarDayAmountLargeGrid = 20;
+        public int AutoHangarDayAmountLargeGrid { get => _autoHangarDayAmountLargeGrid; set => SetValue(ref _autoHangarDayAmountLargeGrid, value); }
+
+        private int _autoHangarDayAmountSmallGrid = 20;
+        public int AutoHangarDayAmountSmallGrid { get => _autoHangarDayAmountSmallGrid; set => SetValue(ref _autoHangarDayAmountSmallGrid, value); }
 
         private bool _hangarGridsFallenInPlanet;
         public bool HangarGridsFallenInPlanet { get => _hangarGridsFallenInPlanet; set => SetValue(ref _hangarGridsFallenInPlanet, value); }
