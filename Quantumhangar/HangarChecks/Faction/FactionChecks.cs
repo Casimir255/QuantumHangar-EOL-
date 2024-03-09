@@ -195,7 +195,7 @@ namespace QuantumHangar.HangarChecks
                 return;
             
             //cooldown
-            FactionsHanger.SelectedFactionFile.LoadFile(FactionsHanger.FactionFolderPath, (ulong)FactionsHanger.FactionId);
+            FactionsHanger.SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)FactionsHanger.FactionId);
             if (!FactionsHanger.CheckPlayerTimeStamp())
             {
                 _chat?.Respond("Command cooldown is still in affect!");
@@ -495,7 +495,7 @@ namespace QuantumHangar.HangarChecks
             }
             
             //cooldown
-            FactionsHanger.SelectedFactionFile.LoadFile(FactionsHanger.FactionFolderPath, (ulong)FactionsHanger.FactionId);
+            FactionsHanger.SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)FactionsHanger.FactionId);
             if (!FactionsHanger.CheckPlayerTimeStamp())
             {
                 _chat?.Respond("Command cooldown is still in affect!");
