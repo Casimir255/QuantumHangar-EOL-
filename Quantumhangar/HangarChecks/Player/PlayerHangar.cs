@@ -779,14 +779,14 @@ namespace QuantumHangar.HangarChecks
             return false;
         }
 
-        public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids, bool forceTransfer)
+        public bool LoadGrid(GridStamp stamp, out IEnumerable<MyObjectBuilder_CubeGrid> grids)
         {
             if (!stamp.TryGetGrids(PlayersFolderPath, out grids))
                 return false;
 
 
             PluginDependencies.BackupGrid(grids.ToList(), _identity.IdentityId);
-            GridSerializer.TransferGridOwnership(grids, _identity.IdentityId, forceTransfer || stamp.TransferOwnerShipOnLoad);
+            GridSerializer.TransferGridOwnership(grids, _identity.IdentityId, stamp.TransferOwnerShipOnLoad);
 
             return true;
         }

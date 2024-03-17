@@ -32,10 +32,10 @@ namespace QuantumHangar.Commands
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true, bool forceTransfer = false)
+        public async void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
             AdminChecks user = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos, forceTransfer));
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]
@@ -187,10 +187,10 @@ namespace QuantumHangar.Commands
 
         [Command("load", "loads selected grid from a users hangar")]
         [Permission(MyPromoteLevel.Moderator)]
-        public async void SaveGrid(string nameOrSteamId, int id, bool fromSavePos = true, bool forceTransfer = false)
+        public async void SaveGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
             AdminChecks user = new AdminChecks(Context);
-            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos, forceTransfer));
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.LoadGrid(nameOrSteamId, id, fromSavePos));
         }
 
         [Command("remove", "removes the grid from the players hangar")]

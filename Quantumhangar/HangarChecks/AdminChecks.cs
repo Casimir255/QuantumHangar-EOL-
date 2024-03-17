@@ -135,7 +135,7 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true, bool forceTransfer = false)
+        public void LoadGrid(string nameOrSteamId, int id, bool fromSavePos = true)
         {
             if (!AdminTryGetPlayerSteamId(nameOrSteamId, out var playerSteamId))
                 return;
@@ -145,7 +145,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!playersHanger.LoadGrid(stamp, out var grids, forceTransfer))
+            if (!playersHanger.LoadGrid(stamp, out var grids))
             {
                 Log.Error($"Loading grid {id} failed for {nameOrSteamId}!");
                 _chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
