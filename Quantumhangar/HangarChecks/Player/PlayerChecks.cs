@@ -379,7 +379,7 @@ namespace QuantumHangar.HangarChecks
                 return;
 
 
-            if (!PlayersHanger.LoadGrid(stamp, out var grids))
+            if (!PlayersHanger.LoadGrid(stamp, out var grids, false))
             {
                 Log.Error($"Loading grid {id} failed for {_identityId}!");
                 _chat.Respond("Loading grid failed! Report this to staff and check logs for more info!");
