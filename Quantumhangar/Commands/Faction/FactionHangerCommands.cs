@@ -1,4 +1,5 @@
-﻿using NLog.Targets;
+﻿using System;
+using NLog.Targets;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
@@ -13,10 +14,12 @@ using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using VRage.GameServices;
 using VRageMath;
 
 namespace QuantumHangar.Commands
 {
+
     [Category("factionhanger")]
     public class FactionHangarCommands : CommandModule
     {
@@ -92,6 +95,26 @@ namespace QuantumHangar.Commands
                 return;
             }
 
+            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
+            if (playersFaction == null)
+            {
+                Context.Respond("Need a faction to use faction hangar.");
+                return;
+            }
+
+            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this yet.");
+                    return;
+                }
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
@@ -201,7 +224,26 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
+            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
+            if (playersFaction == null)
+            {
+                Context.Respond("Need a faction to use faction hangar.");
+                return;
+            }
 
+            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this for 5 seconds.");
+                    return;
+                }
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }

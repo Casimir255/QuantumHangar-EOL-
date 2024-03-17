@@ -22,7 +22,8 @@ namespace QuantumHangar
     public class Hangar : TorchPluginBase, IWpfPlugin
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
+        public static Dictionary<long, DateTime> FactionAttempts = new Dictionary<long, DateTime>();
+        public static Dictionary<Guid, DateTime> AllianceAttempts = new Dictionary<Guid, DateTime>();
         public static Settings Config => _config?.Data;
         private static Persistent<Settings> _config;
 
