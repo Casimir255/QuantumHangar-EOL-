@@ -44,6 +44,39 @@ namespace QuantumHangar.Commands
                 return;
             }
 
+            if (Hangar.Alliances == null)
+            {
+                Context?.Respond("Alliances is not installed!");
+                return;
+            }
+            var faction = MySession.Static.Factions.GetPlayerFaction(Context.Player.IdentityId);
+            if (faction == null)
+            {
+                Context.Respond("Players without a faction cannot use alliance hanger!");
+                return;
+            }
+            var methodInput = new object[] { faction.Tag };
+
+            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
+            if (allianceId == null || allianceId == Guid.Empty)
+            {
+                Context?.Respond("Players without an alliance cannot use alliance hanger!");
+                return;
+            }
+            if (Hangar.AllianceAttempts.TryGetValue(allianceId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this for 5 seconds.");
+                    return;
+                }
+                Hangar.AllianceAttempts[allianceId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.AllianceAttempts[allianceId] = DateTime.Now.AddSeconds(5);
+            }
+
 
             var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
@@ -157,7 +190,38 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
+            if (Hangar.Alliances == null)
+            {
+                Context?.Respond("Alliances is not installed!");
+                return;
+            }
+            var faction = MySession.Static.Factions.GetPlayerFaction(Context.Player.IdentityId);
+            if (faction == null)
+            {
+                Context.Respond("Players without a faction cannot use alliance hanger!");
+                return;
+            }
+            var methodInput = new object[] { faction.Tag };
 
+            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
+            if (allianceId == null || allianceId == Guid.Empty)
+            {
+                Context?.Respond("Players without an alliance cannot use alliance hanger!");
+                return;
+            }
+            if (Hangar.AllianceAttempts.TryGetValue(allianceId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this for 5 seconds.");
+                    return;
+                }
+                Hangar.AllianceAttempts[allianceId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.AllianceAttempts[allianceId] = DateTime.Now.AddSeconds(5);
+            }
 
             var user = new AllianceChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);

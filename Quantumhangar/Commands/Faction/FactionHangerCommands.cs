@@ -72,7 +72,26 @@ namespace QuantumHangar.Commands
                 return;
             }
 
+            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
+            if (playersFaction == null)
+            {
+                Context.Respond("Need a faction to use faction hangar.");
+                return;
+            }
 
+            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this for 5 seconds.");
+                    return;
+                }
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
@@ -201,7 +220,26 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
+            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
+            if (playersFaction == null)
+            {
+                Context.Respond("Need a faction to use faction hangar.");
+                return;
+            }
 
+            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
+            {
+                if (DateTime.Now < timer)
+                {
+                    Context.Respond("Cannot use this for 5 seconds.");
+                    return;
+                }
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
+            else
+            {
+                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
+            }
 
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
