@@ -36,7 +36,11 @@ namespace QuantumHangar.HangarChecks
 
         private static Settings Config => Hangar.Config;
 
-
+        private FileLock Lock { get; set; }
+        ~AllianceHanger()
+        {
+            Dispose();
+        }
         public AllianceHanger(ulong steamId, Chat respond, Guid allianceId, bool isAdminCalling = false)
         {
             try
@@ -54,7 +58,10 @@ namespace QuantumHangar.HangarChecks
 
 
                 AllianceFolderPath = Path.Combine(Hangar.MainAllianceDirectory, _allianceId.ToString());
-                SelectedAllianceFile.LoadFile(Hangar.MainAllianceDirectory, _allianceId);
+                if (SelectedAllianceFile.LoadFile(Hangar.MainAllianceDirectory, _allianceId))
+                {
+                    Lock = new FileLock(AllianceFolderPath);
+                }
             }
             catch (Exception ex)
             {
@@ -850,6 +857,7 @@ namespace QuantumHangar.HangarChecks
 
         public void Dispose()
         {
+            Lock?.Dispose();
         }
 
         public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint, long playerIdentityId)

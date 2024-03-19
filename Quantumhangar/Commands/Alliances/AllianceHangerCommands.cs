@@ -1,10 +1,12 @@
-﻿using NLog.Targets;
+﻿using System;
+using NLog.Targets;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
 using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
+using Sandbox.Game.World;
 using Torch.Commands;
 using Torch.Commands.Permissions;
 using Torch.Mod;
@@ -41,10 +43,10 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-
+            if (CommandCooldownChecker.FailsAlliancePreChecks(Context, out var allianceId)) return;
 
             var user = new AllianceChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(allianceId), Context);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -64,9 +66,10 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
+            if (CommandCooldownChecker.FailsAlliancePreChecks(Context,out var allianceId)) return;
 
             var user = new AllianceChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer, allianceId), Context);
         }
 
         [Command("remove", "removes the grid from your hangar")]
@@ -124,10 +127,10 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-
+            if (CommandCooldownChecker.FailsAlliancePreChecks(Context, out var allianceId)) return;
 
             var user = new AllianceChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(allianceId), Context);
         }
 
         [Command("list", "Lists all the grids saved in your hangar")]
@@ -147,10 +150,13 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
+            if (CommandCooldownChecker.FailsAlliancePreChecks(Context, out var allianceId)) return;
 
             var user = new AllianceChecks(Context);
-            await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
+            await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer, allianceId), Context);
         }
+
+       
 
         [Command("remove", "removes the grid from your hangar")]
         [Permission(MyPromoteLevel.None)]

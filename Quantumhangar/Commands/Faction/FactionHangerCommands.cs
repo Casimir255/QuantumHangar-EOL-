@@ -1,4 +1,5 @@
-﻿using NLog.Targets;
+﻿using System;
+using NLog.Targets;
 using QuantumHangar.HangarChecks;
 using QuantumHangar.Utils;
 using Sandbox.Game.Entities;
@@ -13,10 +14,12 @@ using Torch.Mod;
 using Torch.Mod.Messages;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using VRage.GameServices;
 using VRageMath;
 
 namespace QuantumHangar.Commands
 {
+
     [Category("factionhanger")]
     public class FactionHangarCommands : CommandModule
     {
@@ -69,10 +72,12 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
+
+
 
         [Command("list", "Lists all the grids saved in your hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -92,6 +97,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
@@ -178,8 +184,7 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-
-
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
@@ -201,7 +206,7 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
@@ -252,7 +257,7 @@ namespace QuantumHangar.Commands
             DrawDebug s = new DrawDebug("Hangar_Debug");
             Color color = new Color(255, 255, 0, 10);
 
-            foreach(var grid in Grids)
+            foreach (var grid in Grids)
                 s.addOBBLinkedEntity(grid.EntityId, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
 
 

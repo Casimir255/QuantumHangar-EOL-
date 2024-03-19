@@ -60,29 +60,7 @@ namespace QuantumHangar.HangarChecks
 
         private Guid GetAllianceId()
         {
-            if (Hangar.Alliances == null)
-            {
-                _chat?.Respond("Alliances is not installed!");
-                return Guid.Empty;
-            }
-            var faction = MySession.Static.Factions.GetPlayerFaction(_identityId);
-            if (faction == null)
-            {
-                _chat?.Respond("Players without a faction cannot use alliance hanger!");
-                return Guid.Empty;
-            }
-
-            PlayersFaction = faction;
-            var methodInput = new object[] { faction.Tag };
-
-            var allianceId = (Guid)(Hangar.GetAllianceId?.Invoke(null, methodInput));
-            if (allianceId == null || allianceId == Guid.Empty)
-            {
-                _chat?.Respond("Players without an alliance cannot use alliance hanger!");
-                return Guid.Empty;
-            }
-
-            return allianceId;
+            return this.AllianceId;
         }
 
         public async void ChangeWebhook(string webhook)
@@ -175,8 +153,9 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public async void SaveGrid()
+        public async void SaveGrid(Guid allianceId)
         {
+            this.AllianceId = allianceId;
             if (!PerformMainChecks(true, false))
                 return;
 
@@ -438,12 +417,12 @@ namespace QuantumHangar.HangarChecks
             AllianceHanger.DetailedReport(id);
         }
 
-        public async void LoadGrid(string input, bool loadNearPlayer)
+        public async void LoadGrid(string input, bool loadNearPlayer, Guid allianceId)
         {
             if (!PerformMainChecks(false, true))
                 return;
 
-
+            this.AllianceId = allianceId;
             if (!AllianceHanger.ParseInput(input, out var id))
             {
                 _chat.Respond($"Grid {input} could not be found!");
