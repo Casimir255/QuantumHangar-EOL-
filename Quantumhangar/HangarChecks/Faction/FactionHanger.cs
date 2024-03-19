@@ -37,6 +37,7 @@ namespace QuantumHangar.HangarChecks
 
         private static Settings Config => Hangar.Config;
 
+        private FileLock Lock { get; set; }
 
         public FactionHanger(ulong steamId, Chat respond, bool isAdminCalling = false)
         {
@@ -54,7 +55,11 @@ namespace QuantumHangar.HangarChecks
 
 
                 FactionFolderPath = Path.Combine(Hangar.MainFactionDirectory, _faction.FactionId.ToString());
-                SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)_faction.FactionId);
+                if (SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)_faction.FactionId))
+                {
+                    Lock = new FileLock(FactionFolderPath);
+                }
+
             }
             catch (Exception ex)
             {
@@ -843,6 +848,7 @@ namespace QuantumHangar.HangarChecks
 
         public void Dispose()
         {
+            Lock?.Dispose();
         }
 
         public bool CheckLimits(GridStamp grid, IEnumerable<MyObjectBuilder_CubeGrid> blueprint, long playerIdentityId)
@@ -983,7 +989,7 @@ namespace QuantumHangar.HangarChecks
             }
             catch (Exception e)
             {
-                Log.Warn(e, "For some reason the file is broken");
+                Log.Warn(e, "For some reason the file is broken or in use by another process");
                 return false;
             }
 
