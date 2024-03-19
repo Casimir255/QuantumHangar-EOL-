@@ -37,7 +37,10 @@ namespace QuantumHangar.HangarChecks
         private static Settings Config => Hangar.Config;
 
         private FileLock Lock { get; set; }
-
+        ~AllianceHanger()
+        {
+            Dispose();
+        }
         public AllianceHanger(ulong steamId, Chat respond, Guid allianceId, bool isAdminCalling = false)
         {
             try
