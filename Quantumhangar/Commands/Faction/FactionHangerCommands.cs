@@ -72,29 +72,12 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
-            if (playersFaction == null)
-            {
-                Context.Respond("Need a faction to use faction hangar.");
-                return;
-            }
-
-            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
-            {
-                if (DateTime.Now < timer)
-                {
-                    Context.Respond("Cannot use this for 5 seconds.");
-                    return;
-                }
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
-            else
-            {
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
+
+
 
         [Command("list", "Lists all the grids saved in your hangar")]
         [Permission(MyPromoteLevel.None)]
@@ -114,26 +97,7 @@ namespace QuantumHangar.Commands
                 return;
             }
 
-            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
-            if (playersFaction == null)
-            {
-                Context.Respond("Need a faction to use faction hangar.");
-                return;
-            }
-
-            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
-            {
-                if (DateTime.Now < timer)
-                {
-                    Context.Respond("Cannot use this yet.");
-                    return;
-                }
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
-            else
-            {
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
@@ -220,27 +184,7 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
-            if (playersFaction == null)
-            {
-                Context.Respond("Need a faction to use faction hangar.");
-                return;
-            }
-
-            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
-            {
-                if (DateTime.Now < timer)
-                {
-                    Context.Respond("Cannot use this for 5 seconds.");
-                    return;
-                }
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
-            else
-            {
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
-
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.SaveGrid(), Context);
         }
@@ -262,26 +206,7 @@ namespace QuantumHangar.Commands
                 Context.Respond("This is a player only command!");
                 return;
             }
-            var playersFaction = MySession.Static.Factions.TryGetPlayerFaction(Context.Player.IdentityId);
-            if (playersFaction == null)
-            {
-                Context.Respond("Need a faction to use faction hangar.");
-                return;
-            }
-
-            if (Hangar.FactionAttempts.TryGetValue(playersFaction.FactionId, out var timer))
-            {
-                if (DateTime.Now < timer)
-                {
-                    Context.Respond("Cannot use this for 5 seconds.");
-                    return;
-                }
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
-            else
-            {
-                Hangar.FactionAttempts[playersFaction.FactionId] = DateTime.Now.AddSeconds(5);
-            }
+            if (CommandCooldownChecker.FailsFactionPreChecks(Context)) return;
             var user = new FactionChecks(Context);
             await HangarCommandSystem.RunTaskAsync(() => user.LoadGrid(id, loadNearPlayer), Context);
         }
@@ -332,7 +257,7 @@ namespace QuantumHangar.Commands
             DrawDebug s = new DrawDebug("Hangar_Debug");
             Color color = new Color(255, 255, 0, 10);
 
-            foreach(var grid in Grids)
+            foreach (var grid in Grids)
                 s.addOBBLinkedEntity(grid.EntityId, color, MySimpleObjectRasterizer.Wireframe, 1f, 0.005f);
 
 

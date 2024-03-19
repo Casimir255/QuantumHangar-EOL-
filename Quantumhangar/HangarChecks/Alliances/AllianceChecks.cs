@@ -153,8 +153,9 @@ namespace QuantumHangar.HangarChecks
 
         }
 
-        public async void SaveGrid()
+        public async void SaveGrid(Guid allianceId)
         {
+            this.AllianceId = allianceId;
             if (!PerformMainChecks(true, false))
                 return;
 

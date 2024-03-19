@@ -64,6 +64,7 @@
     <Compile Include="HangarMarket\MarketListing.cs" />
     <Compile Include="Properties\Debug.cs" />
     <Compile Include="Serialization\GridSerializer.cs" />
+    <Compile Include="Utils\CommandCooldownChecker.cs" />
     <Compile Include="Utils\GameEvents.cs" />
     <Compile Include="Utils\ParallelSpawner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -190,7 +191,7 @@
     </PostBuildEvent>
   </PropertyGroup>
   <Target Name="Zip" BeforeTargets="AfterBuild">
-	<MakeDir Directories="$(SolutionDir)\Build\" />
-	<ZipDirectory SourceDirectory="$(OutputPath)" DestinationFile="$(SolutionDir)\Build\$(MSBuildProjectName).zip" Overwrite="true" />
+    <MakeDir Directories="$(SolutionDir)\Build\" />
+    <ZipDirectory SourceDirectory="$(OutputPath)" DestinationFile="$(SolutionDir)\Build\$(MSBuildProjectName).zip" Overwrite="true" />
   </Target>
 </Project>
