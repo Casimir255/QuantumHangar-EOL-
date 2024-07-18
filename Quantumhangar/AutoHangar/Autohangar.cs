@@ -153,15 +153,15 @@ namespace QuantumHangar
                         var largeDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountLargeGrid : Config.AutoHangarDayAmount;
                         var smallDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountSmallGrid : Config.AutoHangarDayAmount;
 
-                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays)
+                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays || (saveAll && hangarStatic) )
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && x.IsStatic).ToList());
                         }
-                        if (hangarLarge && playersOfflineDays[gridList.Key] >= largeDays)
+                        if (hangarLarge && playersOfflineDays[gridList.Key] >= largeDays || (saveAll && hangarLarge))
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && !x.IsStatic).ToList());
                         }
-                        if (hangarSmall && playersOfflineDays[gridList.Key] >= smallDays)
+                        if (hangarSmall && playersOfflineDays[gridList.Key] >= smallDays || (saveAll && hangarSmall))
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Small).ToList());
                         }
