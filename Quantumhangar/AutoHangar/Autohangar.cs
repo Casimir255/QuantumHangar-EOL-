@@ -87,7 +87,7 @@ namespace QuantumHangar
                     var lowest = Config.AutoHangarGridsByType ? lowestValue : Config.AutoHangarDayAmount;
 
 
-                    if (saveAll || (lastLogin.AddDays(lowest) < DateTime.Now && !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId)))
+                    if (saveAll || (lastLogin.AddDays(lowest) < DateTime.Now && Config.AutoHangarPlayerBlacklist.All(x => x.SteamId != steamId)))
                     {
                         exportPlayerIdentities.Add(identity.IdentityId);
                         playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
