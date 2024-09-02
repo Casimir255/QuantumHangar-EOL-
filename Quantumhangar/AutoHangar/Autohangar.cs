@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
 using System.Timers;
 using VRage.Game;
@@ -87,8 +88,7 @@ namespace QuantumHangar
                     {
                         //Need to see if we need to check this identity
                         case true:
-                        case false when lastLogin.AddDays(lowest) < DateTime.Now &&
-                                    !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId):
+                        case false when lastLogin.AddDays(lowest) < DateTime.Now && Config.AutoHangarPlayerBlacklist.All(x => x.SteamId != steamId):
                             exportPlayerIdentities.Add(identity.IdentityId);
                             playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
                             break;
@@ -163,7 +163,7 @@ namespace QuantumHangar
                         var largeDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountLargeGrid : Config.AutoHangarDayAmount;
                         var smallDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountSmallGrid : Config.AutoHangarDayAmount;
 
-                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays || (saveAll && hangarStatic) )
+                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays || (saveAll && hangarStatic))
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && x.IsStatic).ToList());
                         }

@@ -247,11 +247,11 @@ namespace QuantumHangar.Commands
         {
             if (Context.Player != null && x == 0 && y == 0 && z == 0)
             {
-                await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(false, Hangar.Config.AutoHangarStaticGrids, Hangar.Config.AutoHangarLargeGrids, Hangar.Config.AutoHangarSmallGrids, Hangar.Config.KeepPlayersLargestGrid, Context.Player.GetPosition(), distance));
+                await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, location: Context.Player.GetPosition(), distance: distance));
             }
             else
             {
-                await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(false, Hangar.Config.AutoHangarStaticGrids, Hangar.Config.AutoHangarLargeGrids, Hangar.Config.AutoHangarSmallGrids, Hangar.Config.KeepPlayersLargestGrid, new Vector3(x,y,z), distance));
+                await HangarCommandSystem.RunAdminTaskAsync(() => AutoHangar.RunAutoHangar(true, location: new Vector3(x, y, z), distance: distance));
             }
 
         }
