@@ -8,11 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
 using System.Timers;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.Network;
+using VRageMath;
 
 namespace QuantumHangar
 {
@@ -55,7 +57,7 @@ namespace QuantumHangar
 
 
         public static void RunAutoHangar(bool saveAll, bool hangarStatic = true, bool hangarLarge = true,
-            bool hangarSmall = true, bool hangarLargest = true)
+            bool hangarSmall = true, bool hangarLargest = true, Vector3? location = null, long distance = 0l)
         {
             if (!Hangar.ServerRunning || !MySession.Static.Ready || MySandboxGame.IsPaused)
                 return;
@@ -107,6 +109,15 @@ namespace QuantumHangar
                     var grids = new List<MyCubeGrid>();
                     foreach (var grid in group.Nodes.Select(groupNodes => groupNodes.NodeData).Where(grid => grid != null && !grid.MarkedForClose && !grid.MarkedAsTrash))
                     {
+                        if (location != null)
+                        {
+                            var gridsDistance = Vector3.Distance(grid.PositionComp.GetPosition(), location.Value);
+                            if (gridsDistance > distance)
+                            {
+                                continue;
+                            }
+                        }
+
                         var owner = GridUtilities.GetBiggestOwner(grid);
                         if (!exportPlayerIdentities.Contains(owner))
                         {
@@ -154,7 +165,7 @@ namespace QuantumHangar
                         var largeDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountLargeGrid : Config.AutoHangarDayAmount;
                         var smallDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountSmallGrid : Config.AutoHangarDayAmount;
 
-                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays || (saveAll && hangarStatic) )
+                        if (hangarStatic && playersOfflineDays[gridList.Key] >= staticDays || (saveAll && hangarStatic))
                         {
                             exportedGrids.AddRange(gridList.Value.Where(x => x.GridSizeEnum == MyCubeSize.Large && x.IsStatic).ToList());
                         }
