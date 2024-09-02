@@ -79,20 +79,20 @@ namespace QuantumHangar
                     //Funcky SteamID check
                     var lastLogin = identity.LastLoginTime;
                     var steamId = MySession.Static.Players.TryGetSteamId(identity.IdentityId);
+                   
                     if (steamId == 0)
                         continue;
+
                     int lowestValue = Math.Min(Config.AutoHangarDayAmountStation, Math.Min(Config.AutoHangarDayAmountLargeGrid, Config.AutoHangarDayAmountSmallGrid));
                     var lowest = Config.AutoHangarGridsByType ? lowestValue : Config.AutoHangarDayAmount;
 
-                    switch (saveAll)
+
+                    if (saveAll || (lastLogin.AddDays(lowest) < DateTime.Now && !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId)))
                     {
-                        //Need to see if we need to check this identity
-                        case true:
-                        case false when lastLogin.AddDays(lowest) < DateTime.Now && Config.AutoHangarPlayerBlacklist.All(x => x.SteamId != steamId):
-                            exportPlayerIdentities.Add(identity.IdentityId);
-                            playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
-                            break;
+                        exportPlayerIdentities.Add(identity.IdentityId);
+                        playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
                     }
+
                 }
 
                 Log.Warn($"AutoHangar Running! Total players to check {exportPlayerIdentities.Count()}");
@@ -155,8 +155,10 @@ namespace QuantumHangar
                         //Get biggest grid owner, and see if they are an identity that we need to export
                         gridList.Value.BiggestGrid(out var largestGrid);
                         //No need to autohangar if the largest owner is an NPC
+
                         if (MySession.Static.Players.IdentityIsNpc(gridList.Key))
                             continue;
+
                         var exportedGrids = new List<MyCubeGrid>();
 
                         var staticDays = Config.AutoHangarGridsByType ? Config.AutoHangarDayAmountStation : Config.AutoHangarDayAmount;

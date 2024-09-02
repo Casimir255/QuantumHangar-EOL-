@@ -338,11 +338,11 @@ namespace QuantumHangar
             Log.Warn($"T{Targetdistance} L{lowestPointDistance}");
             if (Targetdistance < lowestPointDistance || Targetdistance - lowestPointDistance < 350)
             {
-                return MyEntities.FindFreePlaceCustom(closestSurfacePoint, (float)_sphereD.Radius, 125, 15, 1.5f, 2.5f);
+                return MyEntities.FindFreePlaceCustom(closestSurfacePoint, (float)_sphereD.Radius, 125, 15, 1.5f, 2.5f, null, true);
             }
           
 
-            return MyEntities.FindFreePlaceCustom(target, (float)_sphereD.Radius, 125, 15, 1.5f, 5);
+            return MyEntities.FindFreePlaceCustom(target, (float)_sphereD.Radius, 125, 15, 1.5f, 5, null, true);
         }
 
 
