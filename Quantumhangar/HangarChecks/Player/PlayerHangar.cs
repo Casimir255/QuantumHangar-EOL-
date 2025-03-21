@@ -802,8 +802,7 @@ namespace QuantumHangar.HangarChecks
             var myFiles = Directory.EnumerateFiles(PlayersFolderPath, "*.*", SearchOption.TopDirectoryOnly)
                 .Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
 
-            if (!myFiles.Any())
-                return;
+
             //Scan for new grids
 
 
@@ -826,6 +825,7 @@ namespace QuantumHangar.HangarChecks
             {
                 if (myFiles.Any(x => Path.GetFileNameWithoutExtension(x) == SelectedPlayerFile.Grids[i].GridName))
                     continue;
+
                 removedGrids++;
                 SelectedPlayerFile.Grids.RemoveAt(i);
             }
