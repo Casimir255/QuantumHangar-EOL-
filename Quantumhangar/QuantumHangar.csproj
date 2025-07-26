@@ -85,93 +85,73 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="HavokWrapper">
-      <HintPath>TorchBinaries\DedicatedServer64\HavokWrapper.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\HavokWrapper.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>TorchBinaries\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog">
-      <HintPath>GameBinaries\NLog.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\NLog.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="ProtoBuf.Net">
-      <HintPath>GameBinaries\ProtoBuf.Net.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\ProtoBuf.Net.dll</HintPath>
     </Reference>
     <Reference Include="ProtoBuf.Net.Core">
-      <HintPath>GameBinaries\ProtoBuf.Net.Core.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\ProtoBuf.Net.Core.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Common">
-      <HintPath>GameBinaries\Sandbox.Common.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Common.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Game">
-      <HintPath>GameBinaries\Sandbox.Game.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Game.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Game.XmlSerializers">
-      <HintPath>GameBinaries\Sandbox.Game.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Game.XmlSerializers.dll</HintPath>
     </Reference>
     <Reference Include="SpaceEngineers.Game">
-      <HintPath>GameBinaries\SpaceEngineers.Game.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\SpaceEngineers.Game.dll</HintPath>
     </Reference>
     <Reference Include="SpaceEngineers.ObjectBuilders">
-      <HintPath>GameBinaries\SpaceEngineers.ObjectBuilders.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
     </Reference>
     <Reference Include="SpaceEngineers.ObjectBuilders.XmlSerializers">
-      <HintPath>GameBinaries\SpaceEngineers.ObjectBuilders.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\SpaceEngineers.ObjectBuilders.XmlSerializers.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="Torch">
-      <HintPath>TorchBinaries\Torch.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\Torch.dll</HintPath>
     </Reference>
     <Reference Include="Torch.API">
-      <HintPath>TorchBinaries\Torch.API.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\Torch.API.dll</HintPath>
     </Reference>
     <Reference Include="VRage">
-      <HintPath>GameBinaries\VRage.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Game">
-      <HintPath>GameBinaries\VRage.Game.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Game.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Game.XmlSerializers">
-      <HintPath>GameBinaries\VRage.Game.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Game.XmlSerializers.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Input">
-      <HintPath>GameBinaries\VRage.Input.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Input.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Library">
-      <HintPath>GameBinaries\VRage.Library.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Library.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Math">
-      <HintPath>GameBinaries\VRage.Math.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Math.XmlSerializers">
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Math.XmlSerializers.dll</HintPath>
     </Reference>
     <Reference Include="VRage.Mod.Io">
-      <HintPath>GameBinaries\VRage.Mod.Io.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="VRage.XmlSerializers">
-      <HintPath>GameBinaries\VRage.XmlSerializers.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Mod.Io.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
