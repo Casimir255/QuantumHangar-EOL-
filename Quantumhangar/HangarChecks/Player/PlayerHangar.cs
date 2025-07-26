@@ -804,8 +804,6 @@ namespace QuantumHangar.HangarChecks
 
 
             //Scan for new grids
-
-
             var newGrids = new List<GridStamp>();
             var addedGrids = 0;
             foreach (var file in myFiles)
