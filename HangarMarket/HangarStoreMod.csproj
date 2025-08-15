@@ -46,53 +46,88 @@
     <Compile Include="TerminalControls.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="ProtoBuf.Net.Core">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\ProtoBuf.Net.Core.dll</HintPath>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\ProtoBuf.Net.Core.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Sandbox.Common">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Common.dll</HintPath>
+    <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Common.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Sandbox.Game">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Game.dll</HintPath>
+    <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Game.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Sandbox.Graphics">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\Sandbox.Graphics.dll</HintPath>
+    <Reference Include="Sandbox.Graphics, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\Sandbox.Graphics.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="SpaceEngineers.ObjectBuilders">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+    <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.dll</HintPath>
+    <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Game">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Game.dll</HintPath>
+    <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Game.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Input">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Input.dll</HintPath>
+    <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Input.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Library">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Library.dll</HintPath>
+    <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Library.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Math">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Math.dll</HintPath>
+    <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Math.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.NativeWrapper">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.NativeWrapper.dll</HintPath>
+    <Reference Include="VRage.NativeWrapper, Version=0.1.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.NativeWrapper.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Network">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Network.dll</HintPath>
+    <Reference Include="VRage.Network, Version=1.0.53.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Network.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Render">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Render.dll</HintPath>
+    <Reference Include="VRage.Render, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Render.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Render11">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Render11.dll</HintPath>
+    <Reference Include="VRage.Render11, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Render11.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.Scripting">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.Scripting.dll</HintPath>
+    <Reference Include="VRage.Scripting, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.Scripting.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="VRage.UserInterface">
-      <HintPath>..\..\..\4 Torch Server\DedicatedServer64\VRage.UserInterface.dll</HintPath>
+    <Reference Include="VRage.UserInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\TorchBinaries\DedicatedServer64\VRage.UserInterface.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -30,7 +30,6 @@ namespace QuantumHangar
         public static Dictionary<long, CurrentCooldown> ConfirmationsMap { get; } =
             new Dictionary<long, CurrentCooldown>();
 
-
         public TorchSessionManager TorchSession { get; private set; }
         public static bool ServerRunning { get; private set; }
 
