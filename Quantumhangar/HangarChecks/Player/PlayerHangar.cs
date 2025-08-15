@@ -959,12 +959,12 @@ namespace QuantumHangar.HangarChecks
 
         public bool AnyGridsMatch(string gridName)
         {
-            return Grids.Any(x => x.GridName.Equals(gridName, StringComparison.Ordinal));
+            return Grids.Any(x => x.GridName.Equals(gridName, StringComparison.OrdinalIgnoreCase));
         }
 
         public bool TryFindGridIndex(string gridName, int result)
         {
-            var foundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(gridName, StringComparison.Ordinal));
+            var foundIndex = (short?)Grids.FindIndex(x => x.GridName.Equals(gridName, StringComparison.OrdinalIgnoreCase));
             return foundIndex != -1;
         }
 
