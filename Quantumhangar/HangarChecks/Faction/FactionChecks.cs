@@ -9,6 +9,7 @@ using Sandbox.Game.GameSystems.BankingAndCurrency;
 using Sandbox.Game.World;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Torch.Commands;
 using VRage.Game;
@@ -192,6 +193,21 @@ namespace QuantumHangar.HangarChecks
 
             if (!RequireSaveCurrency(result))
                 return;
+            
+            //cooldown
+            FactionsHanger.SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)FactionsHanger.FactionId);
+            if (!FactionsHanger.CheckPlayerTimeStamp())
+            {
+                _chat?.Respond("Command cooldown is still in affect!");
+                return;
+            }
+            
+            var st = new TimeStamp
+            {
+                OldTime = DateTime.Now
+            };
+            FactionsHanger.SelectedFactionFile.Timer = st;
+            FactionsHanger.SelectedFactionFile.SaveFile();
 
 
             FactionsHanger.SelectedFactionFile.FormatGridName(gridData);
@@ -456,39 +472,78 @@ namespace QuantumHangar.HangarChecks
                 return;
             }
 
-            if (!FactionsHanger.CheckLimits(stamp, grids, _identityId))
+            var file = File.Open(Path.Combine(FactionsHanger.FactionFolderPath, stamp.GridName + ".sbc"), FileMode.Open);
+
+            var myObjectBuilderCubeGrids = grids as MyObjectBuilder_CubeGrid[] ?? grids.ToArray();
+            if (!FactionsHanger.CheckLimits(stamp, myObjectBuilderCubeGrids, _identityId))
+            {
+                file.Close();
                 return;
+            }
+                
 
             if (!CheckEnemyDistance(Config.LoadType, stamp.GridSavePosition) && !Config.AllowLoadNearEnemy)
+            {
+                file.Close();
                 return;
+            }
 
             if (!RequireLoadCurrency(stamp))
+            {
+                file.Close();
                 return;
+            }
+            
+            //cooldown
+            FactionsHanger.SelectedFactionFile.LoadFile(Hangar.MainFactionDirectory, (ulong)FactionsHanger.FactionId);
+            if (!FactionsHanger.CheckPlayerTimeStamp())
+            {
+                _chat?.Respond("Command cooldown is still in affect!");
+                
+                file.Close();
+                return;
+                
+            }
+            
+            var st = new TimeStamp
+            {
+                OldTime = DateTime.Now
+            };
+            FactionsHanger.SelectedFactionFile.Timer = st;
+            FactionsHanger.SelectedFactionFile.SaveFile();
 
-            PluginDependencies.BackupGrid(grids.ToList(), _identityId);
+            PluginDependencies.BackupGrid(myObjectBuilderCubeGrids.ToList(), _identityId);
             var spawnPos = DetermineSpawnPosition(stamp.GridSavePosition, _playerPosition, out var keepOriginalPosition,
                 loadNearPlayer);
 
             if (!CheckDistanceToLoadPoint(spawnPos))
+            {
+                file.Close();
                 return;
+            }
 
             if (PluginDependencies.NexusInstalled && Config.NexusApi &&
                 NexusSupport.RelayLoadIfNecessary(spawnPos, id, loadNearPlayer, _chat, SteamId, _identityId,
                     _playerPosition))
+            {
+                file.Close();
                 return;
+            }
 
-            var spawner = new ParallelSpawner(grids, _chat, SteamId, SpawnedGridsSuccessful);
+            var spawner = new ParallelSpawner(myObjectBuilderCubeGrids, _chat, SteamId, SpawnedGridsSuccessful);
             spawner.setBounds(stamp.BoundingBox, stamp.Box, stamp.MatrixTranslation);
 
             Log.Info("Attempting Grid Spawning @" + spawnPos.ToString());
             if (spawner.Start(spawnPos, keepOriginalPosition))
             {
                 _chat?.Respond("Spawning Complete!");
+                file.Close();
                 FactionsHanger.RemoveGridStamp(id);
                 FactionsHanger.SendWebHookMessage($"{_userCharacter?.DisplayNameText ?? "Name not found"} {SteamId} loaded grid {stamp.GridName}");
             }
             else
             {
+                file.Close();
                 //_chat?.Respond("An error occured while spawning the grid!");
             }
         }
