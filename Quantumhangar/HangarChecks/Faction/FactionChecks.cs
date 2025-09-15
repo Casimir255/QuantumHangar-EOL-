@@ -414,6 +414,7 @@ namespace QuantumHangar.HangarChecks
             FactionsHanger.ListAllGrids();
         }
 
+
         public void DetailedInfo(string input)
         {
             FactionsHanger = new FactionHanger(SteamId, _chat);

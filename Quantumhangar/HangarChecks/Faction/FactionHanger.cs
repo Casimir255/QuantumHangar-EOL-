@@ -694,6 +694,14 @@ namespace QuantumHangar.HangarChecks
 
         public void ListAllGrids()
         {
+            var myFiles = Directory.EnumerateFiles(FactionFolderPath, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "sbc");
+
+            if (myFiles.Count() != SelectedFactionFile.Grids.Count)
+            {
+                UpdateHangar();
+            }
+
             if (SelectedFactionFile.Grids.Count == 0)
             {
                 _chat.Respond(_isAdminCalling
@@ -702,6 +710,8 @@ namespace QuantumHangar.HangarChecks
 
                 return;
             }
+
+        
 
             var sb = new StringBuilder();
 
@@ -712,6 +722,7 @@ namespace QuantumHangar.HangarChecks
                 sb.AppendLine("You have " + SelectedFactionFile.Grids.Count() + "/" + SelectedFactionFile.MaxHangarSlots +
                               " stored grids:");
 
+     
             var count = 1;
             foreach (var grid in SelectedFactionFile.Grids)
             {
