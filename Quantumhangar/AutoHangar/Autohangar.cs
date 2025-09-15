@@ -79,7 +79,7 @@ namespace QuantumHangar
                     //Funcky SteamID check
                     var lastLogin = identity.LastLoginTime;
                     var steamId = MySession.Static.Players.TryGetSteamId(identity.IdentityId);
-                   
+
                     if (steamId == 0)
                         continue;
 
@@ -87,7 +87,7 @@ namespace QuantumHangar
                     var lowest = Config.AutoHangarGridsByType ? lowestValue : Config.AutoHangarDayAmount;
 
 
-                    if (saveAll || (lastLogin.AddDays(lowest) < DateTime.Now && !Config.AutoHangarPlayerBlacklist.Any(x => x.SteamId == steamId)))
+                    if (saveAll || (lastLogin.AddDays(lowest) < DateTime.Now && Config.AutoHangarPlayerBlacklist.All(x => x.SteamId != steamId)))
                     {
                         exportPlayerIdentities.Add(identity.IdentityId);
                         playersOfflineDays[identity.IdentityId] = (int)(DateTime.Now - lastLogin).TotalDays;
@@ -185,6 +185,16 @@ namespace QuantumHangar
                         //Add this new grid into our planned export queue
 
                         var hangar = new AutoHangarItem(totalBlocks, exportedGrids, largestGrid);
+                        if (largestGrid.DisplayName.EndsWith("[FH]"))
+                        {
+                            var faction = MySession.Static.Factions.GetPlayerFaction(gridList.Key);
+                            if (faction != null)
+                            {
+                                hangar.FactionHangar = true;
+                            }
+
+                        }
+
                         if (!scannedGrids.ContainsKey(gridList.Key))
                             scannedGrids.Add(gridList.Key, new List<AutoHangarItem>() { hangar });
                         else
@@ -229,50 +239,10 @@ namespace QuantumHangar
                     if (allGrids.Count == 0)
                         continue;
 
+                    gridCounter += await SendToFactionHangar(k, allGrids.Where(x => x.FactionHangar).ToList());
 
-                    //Grab Players Hangar
-                    var id = MySession.Static.Players.TryGetSteamId(k);
-                    var playersHangar = new PlayerHangar(id, null);
+                    gridCounter += await SendToPlayerHangar(k, allGrids.Where(x => !x.FactionHangar).ToList());
 
-                    foreach (var item in allGrids)
-                    {
-                        //remove respawn grids
-                        if (item.LargestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
-                        {
-                            //Close all grids
-                            item.Grids.Close("AutoHangar deleted respawn pod");
-                            continue;
-                        }
-
-
-                        var result = new GridResult
-                        {
-                            Grids = item.Grids,
-                            BiggestGrid = item.LargestGrid
-                        };
-
-
-                        var stamp = result.GenerateGridStamp();
-                        playersHangar.SelectedPlayerFile.FormatGridName(stamp);
-
-
-                        var val = await playersHangar.SaveGridsToFile(result, stamp.GridName);
-                        if (val)
-                        {
-                            //Load player file and update!
-                            //Fill out grid info and store in file
-                            playersHangar.SaveGridStamp(stamp, false, true);
-                            gridCounter++;
-                            Log.Info(result.BiggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
-                        }
-                        else
-                        {
-                            Log.Info(result.BiggestGrid.DisplayName +
-                                     " FAILED to Hangar! Check read error above for more info!");
-                        }
-                    }
-
-                    playersHangar.SavePlayerFile();
                 }
 
                 _watcher.Stop();
@@ -289,6 +259,102 @@ namespace QuantumHangar
             return gridCounter;
         }
 
+        private static async Task<int> SendToFactionHangar(long k, List<AutoHangarItem> allGrids)
+        {
+            var id = MySession.Static.Players.TryGetSteamId(k);
+            var factionHangar = new FactionHanger(id, null);
+            var gridCounter = 0;
+            foreach (var item in allGrids)
+            {
+                //remove respawn grids
+                if (item.LargestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
+                {
+                    //Close all grids
+                    item.Grids.Close("AutoHangar deleted respawn pod");
+                    continue;
+                }
+
+
+                var result = new GridResult
+                {
+                    Grids = item.Grids,
+                    BiggestGrid = item.LargestGrid
+                };
+
+
+                var stamp = result.GenerateGridStamp();
+                factionHangar.SelectedFactionFile.FormatGridName(stamp);
+
+
+                var val = await factionHangar.SaveGridsToFile(result, stamp.GridName, k);
+                if (val)
+                {
+                    //Load player file and update!
+                    //Fill out grid info and store in file
+                    factionHangar.SaveGridStamp(stamp, false, true);
+                    gridCounter++;
+                    Log.Info(result.BiggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
+                }
+                else
+                {
+                    Log.Info(result.BiggestGrid.DisplayName +
+                             " FAILED to Hangar! Check read error above for more info!");
+                }
+            }
+
+            factionHangar.SavePlayerFile();
+
+            return gridCounter;
+        }
+
+        private static async Task<int> SendToPlayerHangar(long k, List<AutoHangarItem> allGrids)
+        {
+            //Grab Players Hangar
+            var id = MySession.Static.Players.TryGetSteamId(k);
+            var playersHangar = new PlayerHangar(id, null);
+            var gridCounter = 0;
+            foreach (var item in allGrids)
+            {
+                //remove respawn grids
+                if (item.LargestGrid.IsRespawnGrid && Config.DeleteRespawnPods)
+                {
+                    //Close all grids
+                    item.Grids.Close("AutoHangar deleted respawn pod");
+                    continue;
+                }
+
+
+                var result = new GridResult
+                {
+                    Grids = item.Grids,
+                    BiggestGrid = item.LargestGrid
+                };
+
+
+                var stamp = result.GenerateGridStamp();
+                playersHangar.SelectedPlayerFile.FormatGridName(stamp);
+
+
+                var val = await playersHangar.SaveGridsToFile(result, stamp.GridName);
+                if (val)
+                {
+                    //Load player file and update!
+                    //Fill out grid info and store in file
+                    playersHangar.SaveGridStamp(stamp, false, true);
+                    gridCounter++;
+                    Log.Info(result.BiggestGrid.DisplayName + " was sent to Hangar due to inactivity!");
+                }
+                else
+                {
+                    Log.Info(result.BiggestGrid.DisplayName +
+                             " FAILED to Hangar! Check read error above for more info!");
+                }
+            }
+
+            playersHangar.SavePlayerFile();
+
+            return gridCounter;
+        }
 
         public static void Dispose()
         {
@@ -302,7 +368,7 @@ namespace QuantumHangar
         public int BlocksCount = 0;
         public List<MyCubeGrid> Grids;
         public MyCubeGrid LargestGrid;
-
+        public bool FactionHangar = false;
         public AutoHangarItem(int blocks, List<MyCubeGrid> grids, MyCubeGrid largestGrid)
         {
             BlocksCount = blocks;
