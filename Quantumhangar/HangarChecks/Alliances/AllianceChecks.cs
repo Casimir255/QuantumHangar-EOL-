@@ -616,8 +616,8 @@ namespace QuantumHangar.HangarChecks
                         continue;
 
                     Vector3D pos;
-                    if (p.Character.IsUsing is MyCryoChamber || p.Character.IsUsing is MyCockpit)
-                        pos = (p.Character.IsUsing as MyCockpit).PositionComp.GetPosition();
+                    if (p.Character.Parent is MyCryoChamber || p.Character.Parent is MyCockpit)
+                        pos = (p.Character.Parent as MyCockpit).PositionComp.GetPosition();
                     else
                         pos = p.GetPosition();
 

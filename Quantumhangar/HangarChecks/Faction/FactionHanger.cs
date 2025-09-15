@@ -1113,6 +1113,10 @@ namespace QuantumHangar.HangarChecks
             {
                 result.GridName = FileSaver.CheckInvalidCharacters(result.GridName);
                 // Log.Warn("Running GridName Checks: {" + GridName + "} :" + Test);
+                if (result.NumberOfGrids > 1)
+                {
+                    result.GridName += $" +{result.NumberOfGrids - 1} connected grids";
+                }
 
                 if (!AnyGridsMatch(result.GridName)) return;
                 //There is already a grid with that name!
