@@ -856,5 +856,24 @@ namespace QuantumHangar.HangarChecks
                 }
             }
         }
+
+        public void SyncHangar(string factionTag)
+        {
+            var faction = MySession.Static.Factions.TryGetFactionByTag(factionTag);
+            if (faction == null)
+            {
+                _chat.Respond("Faction not found");
+                return;
+            }
+
+            var founderSteamId = MySession.Static.Players.TryGetSteamId(faction.FounderId);
+            if (founderSteamId != 0)
+            {
+                var playersHanger = new FactionHanger(founderSteamId, _chat, true);
+                playersHanger.UpdateHangar();
+                _chat.Respond("Syncing?");
+            }
+            _chat.Respond("Couldnt get founders steam id");
+        }
     }
 }
