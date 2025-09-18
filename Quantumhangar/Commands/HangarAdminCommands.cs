@@ -55,6 +55,15 @@ namespace QuantumHangar.Commands
 
         }
 
+        [Command("fhsync", "Re-scans the folder for added or removed grids")]
+        [Permission(MyPromoteLevel.Moderator)]
+        public async void FHSync(string factionTag)
+        {
+            FactionChecks user = new FactionChecks(Context);
+            await HangarCommandSystem.RunAdminTaskAsync(() => user.SyncHangar(factionTag));
+
+        }
+
         [Command("syncall", "Re-scans all folders for added or removed grids")]
         [Permission(MyPromoteLevel.Moderator)]
         public async void SyncAll()
