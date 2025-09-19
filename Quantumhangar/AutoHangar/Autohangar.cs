@@ -262,6 +262,10 @@ namespace QuantumHangar
         private static async Task<int> SendToFactionHangar(long k, List<AutoHangarItem> allGrids)
         {
             var id = MySession.Static.Players.TryGetSteamId(k);
+
+            if(MySession.Static.Factions.GetPlayerFaction(k) == null)
+                return 0;
+
             var factionHangar = new FactionHanger(id, null);
             var gridCounter = 0;
             foreach (var item in allGrids)

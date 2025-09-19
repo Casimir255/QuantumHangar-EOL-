@@ -48,6 +48,9 @@ namespace QuantumHangar.HangarChecks
             {
                 MySession.Static.Players.TryGetIdentityFromSteamId(steamId, out var _identity);
                 _faction = MySession.Static.Factions.GetPlayerFaction(_identity.IdentityId);
+
+                
+
                 Log = LogManager.GetLogger($"Hangar.{_faction.Name}");
                 this.FactionId = _faction.FactionId;
                 this._steamId = steamId;
